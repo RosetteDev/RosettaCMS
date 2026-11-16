@@ -29,7 +29,7 @@
                 
                 <div class="form-group">
                     <label for="content">Content</label>
-                    <div id="editor-container" style="height: 300px;"></div>
+                    <div id="editor-container"></div>
                     <textarea name="content" id="content" style="display: none;"></textarea>
                 </div>
                 
@@ -57,39 +57,166 @@
 @endsection
 
 @push('styles')
-<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tiptap/pm@2.4.0/dist/style.css" rel="stylesheet">
 <style>
-    .ql-container {
-        font-size: 16px;
-        min-height: 300px;
+    .ProseMirror {
+        min-height: 400px;
+        padding: 1rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+    }
+    .ProseMirror p {
+        margin-bottom: 1rem;
+    }
+    .ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .ProseMirror ul, .ProseMirror ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .ProseMirror blockquote {
+        border-left: 4px solid #6b7280;
+        padding-left: 1rem;
+        margin-left: 0;
+        color: #6b7280;
+    }
+    .ProseMirror img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+    }
+    .tiptap-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+    .tiptap-toolbar button {
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        background: white;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+    .tiptap-toolbar button:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+    }
+    .tiptap-toolbar button.is-active {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
     }
 </style>
 @endpush
 
 @push('scripts')
-<script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tiptap/core@2.4.0/dist/tiptap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tiptap/starter-kit@2.4.0/dist/tiptap.starter-kit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-image@2.4.0/dist/tiptap.extension-image.min.js"></script>
 <script>
-    var quill = new Quill('#editor-container', {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                [{ header: [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline'],
-                [{ list: 'ordered'}, { list: 'bullet' }],
-                ['link', 'image'],
-                ['clean']
-            ]
+document.addEventListener('DOMContentLoaded', function() {
+    const editor = new Tiptap.Editor({
+        element: document.querySelector('#editor-container'),
+        extensions: [
+            Tiptap.StarterKit.configure({
+                bulletList: {
+                    HTMLAttributes: {
+                        class: 'list-disc list-outside ml-6',
+                    },
+                },
+                orderedList: {
+                    HTMLAttributes: {
+                        class: 'list-decimal list-outside ml-6',
+                    },
+                },
+                blockquote: {
+                    HTMLAttributes: {
+                        class: 'border-l-4 border-gray-500 pl-4 italic text-gray-600',
+                    },
+                },
+                heading: {
+                    levels: [1, 2, 3],
+                },
+            }),
+            Tiptap.Image.configure({
+                HTMLAttributes: {
+                    class: 'rounded-lg',
+                },
+            }),
+        ],
+        content: @if($post->content ?? null) '{!! $post->content !!}' @else '' @endif,
+        onUpdate: ({ editor }) => {
+            document.getElementById('content').value = editor.getHTML();
+        },
+    });
+
+    // Toolbar buttons
+    const toolbar = document.createElement('div');
+    toolbar.className = 'tiptap-toolbar';
+    
+    const buttons = [
+        { label: 'H1', command: () => editor.chain().focus().toggleHeading({ level: 1 }).run(), active: () => editor.isActive('heading', { level: 1 }) },
+        { label: 'H2', command: () => editor.chain().focus().toggleHeading({ level: 2 }).run(), active: () => editor.isActive('heading', { level: 2 }) },
+        { label: 'H3', command: () => editor.chain().focus().toggleHeading({ level: 3 }).run(), active: () => editor.isActive('heading', { level: 3 }) },
+        { label: 'B', command: () => editor.chain().focus().toggleBold().run(), active: () => editor.isActive('bold') },
+        { label: 'I', command: () => editor.chain().focus().toggleItalic().run(), active: () => editor.isActive('italic') },
+        { label: 'UL', command: () => editor.chain().focus().toggleBulletList().run(), active: () => editor.isActive('bulletList') },
+        { label: 'OL', command: () => editor.chain().focus().toggleOrderedList().run(), active: () => editor.isActive('orderedList') },
+        { label: 'Quote', command: () => editor.chain().focus().toggleBlockquote().run(), active: () => editor.isActive('blockquote') },
+        { 
+            label: 'Img', 
+            command: () => {
+                const url = prompt('Enter image URL:');
+                if (url) editor.chain().focus().setImage({ src: url }).run();
+            }
+        },
+    ];
+
+    buttons.forEach(btn => {
+        const button = document.createElement('button');
+        button.textContent = btn.label;
+        button.onclick = btn.command;
+        button.className = 'is-active';
+        button.style.display = 'none';
+        
+        // Update active state
+        editor.on('selectionUpdate', () => {
+            if (btn.active()) {
+                button.classList.add('is-active');
+                button.style.display = 'inline-flex';
+            } else {
+                button.classList.remove('is-active');
+                button.style.display = 'inline-flex';
+            }
+        });
+        
+        toolbar.appendChild(button);
+    });
+
+    editor.on('focus', () => {
+        if (!editor.getHTML().trim()) {
+            editor.chain().focus().setParagraph().run();
         }
     });
 
-    // Sync Quill content to textarea on form submit
+    // Insert toolbar before editor
+    editor.element.parentNode.insertBefore(toolbar, editor.element);
+
+    // Sync on form submit
     document.querySelector('form').addEventListener('submit', function() {
-        document.getElementById('content').value = quill.root.innerHTML;
+        document.getElementById('content').value = editor.getHTML();
     });
 
-    // Initialize with existing content if editing
-    @if($post->content ?? null)
-    quill.root.innerHTML = '{!! $post->content !!}';
-    @endif
+    window.tiptapEditor = editor;
+});
 </script>
 @endpush
