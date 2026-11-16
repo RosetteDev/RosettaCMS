@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Post;
+use App\Models\Category;
+use App\Models\Tag;
 
 class PostController extends Controller
 {
@@ -13,7 +15,10 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::with('user', 'site')->paginate(20);
+        // Filter posts to exclude pages (post_type = 'page')
+        $posts = Post::where('post_type', 'post')
+            ->with('user', 'site')
+            ->paginate(20);
         return view('admin.posts.index', compact('posts'));
     }
 
@@ -22,9 +27,14 @@ class PostController extends Controller
      */
     public function create()
     {
+        $categories = Category::orderBy('name')->get();
+        $tags = Tag::orderBy('name')->get();
+        
         return view('admin.posts.form', [
             'action' => 'Create',
             'post' => new Post(),
+            'categories' => $categories,
+            'tags' => $tags,
         ]);
     }
 
@@ -41,6 +51,10 @@ class PostController extends Controller
             'post_type' => 'nullable|string|max:50',
             'status' => 'nullable|string|max:50',
             'site_id' => 'nullable|exists:sites,id',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
+            'tags' => 'nullable|array',
+            'tags.*' => 'exists:tags,id',
         ]);
 
         $post = Post::create([
@@ -53,6 +67,16 @@ class PostController extends Controller
             'post_type' => $validated['post_type'] ?? 'post',
             'status' => $validated['status'] ?? 'draft',
         ]);
+
+        // Attach categories
+        if (isset($validated['categories'])) {
+            $post->categories()->sync($validated['categories']);
+        }
+
+        // Attach tags
+        if (isset($validated['tags'])) {
+            $post->tags()->sync($validated['tags']);
+        }
 
         return redirect()->route('admin.posts.edit', $post->id)
             ->with('success', 'Post created successfully.');
@@ -71,9 +95,14 @@ class PostController extends Controller
      */
     public function edit(Post $post)
     {
+        $categories = Category::orderBy('name')->get();
+        $tags = Tag::orderBy('name')->get();
+        
         return view('admin.posts.form', [
             'action' => 'Edit',
             'post' => $post,
+            'categories' => $categories,
+            'tags' => $tags,
         ]);
     }
 
@@ -89,6 +118,10 @@ class PostController extends Controller
             'slug' => 'nullable|string|max:255',
             'post_type' => 'nullable|string|max:50',
             'status' => 'nullable|string|max:50',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
+            'tags' => 'nullable|array',
+            'tags.*' => 'exists:tags,id',
         ]);
 
         $post->update([
@@ -99,6 +132,16 @@ class PostController extends Controller
             'post_type' => $validated['post_type'] ?? 'post',
             'status' => $validated['status'] ?? 'draft',
         ]);
+
+        // Sync categories
+        if (isset($validated['categories'])) {
+            $post->categories()->sync($validated['categories']);
+        }
+
+        // Sync tags
+        if (isset($validated['tags'])) {
+            $post->tags()->sync($validated['tags']);
+        }
 
         return redirect()->route('admin.posts.edit', $post->id)
             ->with('success', 'Post updated successfully.');

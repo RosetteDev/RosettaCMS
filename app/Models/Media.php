@@ -14,6 +14,7 @@ class Media extends Model
         'user_id',
         'file_name',
         'file_path',
+        'folder',
         'mime_type',
         'file_size',
         'alt_text',

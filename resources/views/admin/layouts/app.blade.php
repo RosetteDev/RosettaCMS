@@ -41,12 +41,25 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.6;
+            overflow-x: hidden;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .container > .sidebar {
+            flex: 0 0 250px;
+            order: 1;
+        }
+        
+        .container > .main-content {
+            flex: 1;
+            order: 2;
         }
         
         header {
@@ -54,6 +67,8 @@
             color: white;
             padding: 1rem 0;
             margin-bottom: 2rem;
+            position: relative;
+            z-index: 1000;
         }
         
         .header-content {
@@ -94,8 +109,8 @@
             display: flex;
             flex-direction: column;
             width: 250px;
-            float: left;
-            margin-right: 2rem;
+            position: relative;
+            z-index: 1000;
         }
         
         .sidebar a {
@@ -118,8 +133,30 @@
             color: white;
         }
         
+        .sidebar-group {
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-group > a {
+            font-weight: 600;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .sidebar-submenu {
+            margin-left: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .sidebar-submenu a {
+            font-size: 0.9rem;
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+        
         .main-content {
-            margin-left: 270px;
+            margin-left: 0;
         }
         
         .section-title {
@@ -254,17 +291,28 @@
 
     <div class="container">
         <div class="sidebar">
-            <a href="{{ url('/admin') }}">Dashboard</a>
-            <a href="{{ url('/admin/posts') }}">Posts</a>
-            <a href="{{ url('/admin/media') }}">Media</a>
-            <a href="{{ url('/admin/sites') }}">Sites</a>
-            <a href="{{ url('/admin/settings') }}">Settings</a>
+            <a href="{{ url('/admin') }}" class="{{ request()->is('admin') ? 'active' : '' }}">Dashboard</a>
+            
+            <div class="sidebar-group">
+                <a href="{{ url('/admin/posts') }}" class="{{ request()->is('admin/posts*') ? 'active' : '' }}">Posts</a>
+                <div class="sidebar-submenu">
+                    <a href="{{ url('/admin/categories') }}" class="{{ request()->is('admin/categories*') ? 'active' : '' }}">Categories</a>
+                    <a href="{{ url('/admin/tags') }}" class="{{ request()->is('admin/tags*') ? 'active' : '' }}">Tags</a>
+                </div>
+            </div>
+            
+            <a href="{{ url('/admin/pages') }}" class="{{ request()->is('admin/pages*') ? 'active' : '' }}">Pages</a>
+            <a href="{{ url('/admin/media') }}" class="{{ request()->is('admin/media*') ? 'active' : '' }}">Media</a>
+            <a href="{{ url('/admin/sites') }}" class="{{ request()->is('admin/sites*') ? 'active' : '' }}">Sites</a>
+            <a href="{{ url('/admin/settings') }}" class="{{ request()->is('admin/settings*') ? 'active' : '' }}">Settings</a>
         </div>
         
         <div class="main-content">
             @yield('content')
         </div>
     </div>
+    
+    <div class="clearfix"></div>
 
     @stack('scripts')
 </body>

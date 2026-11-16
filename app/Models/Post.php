@@ -70,6 +70,22 @@ class Post extends Model
     }
 
     /**
+     * Get the categories associated with the post.
+     */
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'category_post');
+    }
+
+    /**
+     * Get the tags associated with the post.
+     */
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'tag_post');
+    }
+
+    /**
      * Get the media associated with the post.
      */
     public function media()

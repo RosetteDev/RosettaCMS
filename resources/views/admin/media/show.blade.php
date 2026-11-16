@@ -1,0 +1,203 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Media Detail')
+
+@section('content')
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Media Detail</h1>
+            <p class="text-gray-600 mt-1">File: {{ $media->file_name }}</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.media.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                Back to Library
+            </a>
+            <a href="{{ Storage::url($media->file_path) }}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                View File
+            </a>
+            <button onclick="deleteMedia()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                Delete
+            </button>
+        </div>
+    </div>
+
+    @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="p-8">
+            <div class="flex flex-col md:flex-row gap-8">
+                <!-- Media Preview -->
+                <div class="w-full md:w-1/2">
+                    @php
+                        $isImage = Str::startsWith($media->mime_type, 'image/');
+                        $isVideo = Str::startsWith($media->mime_type, 'video/');
+                        $isPdf = $media->mime_type === 'application/pdf';
+                    @endphp
+                    
+                    @if($isImage)
+                        <div class="bg-gray-100 rounded-lg overflow-hidden">
+                            <img src="{{ Storage::url($media->file_path) }}" alt="{{ $media->alt_text ?: 'Media' }}" class="w-full h-auto max-h-[500px] object-contain">
+                        </div>
+                    @elseif($isVideo)
+                        <div class="bg-gray-100 rounded-lg overflow-hidden">
+                            <video src="{{ Storage::url($media->file_path) }}" controls class="w-full h-auto max-h-[500px]">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                    @elseif($isPdf)
+                        <div class="bg-white rounded-lg p-8 flex items-center justify-center min-h-[400px]">
+                            <div class="text-center">
+                                <svg class="w-24 h-24 mx-auto text-red-500 mb-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                                    <path d="M14 2v6h6"/>
+                                </svg>
+                                <p class="text-gray-600 font-medium">PDF Document</p>
+                                <p class="text-gray-500 text-sm mt-1">{{ number_format($media->file_size / 1024, 2) }} KB</p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="bg-white rounded-lg p-8 flex items-center justify-center min-h-[400px]">
+                            <div class="text-center">
+                                <svg class="w-24 h-24 mx-auto text-gray-400 mb-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                                    <path d="M14 2v6h6"/>
+                                    <path d="M9 13h6v2H9z"/>
+                                    <path d="M9 17h6v2H9z"/>
+                                </svg>
+                                <p class="text-gray-600 font-medium">File</p>
+                                <p class="text-gray-500 text-sm mt-1">{{ $media->mime_type }}</p>
+                                <p class="text-gray-500 text-sm">{{ number_format($media->file_size / 1024, 2) }} KB</p>
+                            </div>
+                        </div>
+                    @endif
+                    
+                    @if($media->folder)
+                        <div class="mt-4 flex items-center gap-2">
+                            <span class="text-sm text-gray-500">Folder:</span>
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                                {{ $media->folder }}
+                            </span>
+                        </div>
+                    @endif
+                </div>
+                
+                <!-- Media Details -->
+                <div class="w-full md:w-1/2 space-y-6">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Details</h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">File Name</label>
+                                <p class="mt-1 text-gray-800 font-mono text-sm">{{ $media->file_name }}</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">File Path</label>
+                                <p class="mt-1 text-gray-800 font-mono text-sm">{{ $media->file_path }}</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">MIME Type</label>
+                                <p class="mt-1 text-gray-800 font-mono text-sm">{{ $media->mime_type }}</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">File Size</label>
+                                <p class="mt-1 text-gray-800">
+                                    {{ number_format($media->file_size / 1024, 2) }} KB ({{ $media->file_size }} bytes)
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">Uploaded By</label>
+                                <p class="mt-1 text-gray-800">{{ $media->user->name ?? 'Unknown' }}</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">Site</label>
+                                <p class="mt-1 text-gray-800">{{ $media->site->name ?? 'Unknown' }}</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">Date Uploaded</label>
+                                <p class="mt-1 text-gray-800">{{ \Carbon\Carbon::parse($media->created_at)->format('M d, Y H:i') }}</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">Last Updated</label>
+                                <p class="mt-1 text-gray-800">{{ \Carbon\Carbon::parse($media->updated_at)->format('M d, Y H:i') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Accessibility & Metadata</h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">Alt Text</label>
+                                <p class="mt-1 text-gray-800">
+                                    @if($media->alt_text)
+                                        {{ $media->alt_text }}
+                                    @else
+                                        <span class="text-gray-500 italic">No alt text provided</span>
+                                    @endif
+                                </p>
+                            </div>
+                            
+                            @if($media->caption)
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600">Caption</label>
+                                    <div class="mt-1 text-gray-800">{{ $media->caption }}</div>
+                                </div>
+                            @endif
+                            
+                            @if($media->meta)
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600">Meta Data</label>
+                                    <div class="mt-1 bg-gray-50 p-3 rounded text-sm font-mono">
+                                        <pre class="whitespace-pre-wrap">{{ json_encode($media->meta, JSON_PRETTY_PRINT) }}</pre>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteMedia() {
+    if (confirm('Are you sure you want to delete this media? This action cannot be undone.')) {
+        const formData = new FormData();
+        formData.append('_method', 'DELETE');
+        formData.append('_token', '{{ csrf_token() }}');
+        
+        fetch("{{ route('admin.media.destroy', $media) }}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = "{{ route('admin.media.index') }}";
+            } else {
+                alert('Error: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting media');
+        });
+    }
+}
+</script>
+@endsection

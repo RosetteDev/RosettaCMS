@@ -21,10 +21,15 @@
                             @endif
                             <div style="padding: 1.5rem;">
                                 <div style="margin-bottom: 0.5rem;">
-                                    @foreach($post->terms as $term)
-                                        <span style="display: inline-block; background-color: var(--primary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; margin-right: 0.25rem;">
-                                            {{ $term->name }}
-                                        </span>
+                                    @foreach($post->categories as $category)
+                                        <a href="{{ url('/categories/' . $category->slug) }}" style="display: inline-block; background-color: var(--primary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; margin-right: 0.25rem; text-decoration: none;">
+                                            {{ $category->name }}
+                                        </a>
+                                    @endforeach
+                                    @foreach($post->tags as $tag)
+                                        <a href="{{ url('/tags/' . $tag->slug) }}" style="display: inline-block; background-color: #6b7280; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; margin-right: 0.25rem; text-decoration: none;">
+                                            {{ $tag->name }}
+                                        </a>
                                     @endforeach
                                 </div>
                                 <h2 style="margin-bottom: 0.75rem;">
