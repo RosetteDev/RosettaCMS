@@ -94,6 +94,22 @@ class Post extends Model
     }
 
     /**
+     * Get the comments associated with the post.
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * Get approved comments for the post.
+     */
+    public function approvedComments()
+    {
+        return $this->hasMany(Comment::class)->where('status', 'approved');
+    }
+
+    /**
      * Scope a query to only include published posts.
      */
     public function scopePublished($query)

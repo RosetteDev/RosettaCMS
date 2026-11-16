@@ -19,6 +19,10 @@ class DashboardController extends Controller
             'total_media' => \App\Models\Media::count(),
             'total_sites' => \App\Models\Site::count(),
             'total_users' => \App\Models\User::count(),
+            'total_comments' => \App\Models\Comment::count(),
+            'pending_comments' => \App\Models\Comment::where('status', 'pending')->count(),
+            'approved_comments' => \App\Models\Comment::where('status', 'approved')->count(),
+            'spam_comments' => \App\Models\Comment::where('status', 'spam')->count(),
         ];
 
         // Get recent posts

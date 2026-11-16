@@ -32,6 +32,14 @@ class SettingsController extends Controller
             'custom_js' => 'nullable|text',
             'maintenance_mode' => 'nullable|boolean',
             'disable_comments' => 'nullable|boolean',
+            // Spam protection settings
+            'akismet_api_key' => 'nullable|string',
+            'enable_akismet' => 'nullable|boolean',
+            'spam_keywords' => 'nullable|string',
+            'rate_limit_enabled' => 'nullable|boolean',
+            'rate_limit_per_minute' => 'nullable|integer|min:1|max:100',
+            'captcha_enabled' => 'nullable|boolean',
+            'enable_comment_approval' => 'nullable|boolean',
         ]);
 
         $settings = SiteSetting::firstOrNew([]);

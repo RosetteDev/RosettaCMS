@@ -42,6 +42,18 @@
                     <h3 style="color: var(--primary-color);">{{ $stats['total_users'] ?? 0 }}</h3>
                     <p>Users</p>
                 </div>
+                
+                <div class="card" style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">💬</div>
+                    <h3 style="color: var(--primary-color);">{{ $stats['total_comments'] ?? 0 }}</h3>
+                    <p>Total Comments</p>
+                </div>
+                
+                <div class="card" style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⏳</div>
+                    <h3 style="color: #f59e0b;">{{ $stats['pending_comments'] ?? 0 }}</h3>
+                    <p>Pending</p>
+                </div>
             </div>
         </div>
     </section>

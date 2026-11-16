@@ -70,6 +70,102 @@
                 @enderror
             </div>
             
+            <h2 class="text-xl font-bold text-gray-800 mb-4 mt-6">Comments Settings</h2>
+            
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="hidden" name="disable_comments" value="0">
+                    <input type="checkbox" name="disable_comments" value="1" {{ old('disable_comments', $settings->disable_comments ?? 0) ? 'checked' : '' }} class="mr-2">
+                    <span class="text-gray-700">Disable comments on all posts</span>
+                </label>
+            </div>
+            
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="hidden" name="enable_comment_approval" value="0">
+                    <input type="checkbox" name="enable_comment_approval" value="1" {{ old('enable_comment_approval', $settings->enable_comment_approval ?? 1) ? 'checked' : '' }} class="mr-2">
+                    <span class="text-gray-700">Require manual approval for guest comments</span>
+                </label>
+                <p class="text-sm text-gray-600 mt-1">Comments from registered users will auto-publish.</p>
+            </div>
+            
+            <h2 class="text-xl font-bold text-gray-800 mb-4 mt-6">Spam Protection</h2>
+            
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="hidden" name="enable_akismet" value="0">
+                    <input type="checkbox" name="enable_akismet" value="1" {{ old('enable_akismet', $settings->enable_akismet ?? 0) ? 'checked' : '' }} class="mr-2">
+                    <span class="text-gray-700">Enable Akismet spam filtering</span>
+                </label>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="akismet_api_key">
+                    Akismet API Key
+                </label>
+                <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('akismet_api_key') border-red-500 @enderror" 
+                       id="akismet_api_key" 
+                       type="text" 
+                       name="akismet_api_key" 
+                       value="{{ old('akismet_api_key', $settings->akismet_api_key ?? '') }}" 
+                       placeholder="Enter your Akismet API key">
+                <p class="text-sm text-gray-600 mt-1">Get your API key from <a href="https://akismet.com" target="_blank" class="text-blue-600 hover:underline">akismet.com</a></p>
+                
+                @error('akismet_api_key')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="spam_keywords">
+                    Blocked Keywords (comma-separated)
+                </label>
+                <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('spam_keywords') border-red-500 @enderror" 
+                          id="spam_keywords" 
+                          name="spam_keywords" 
+                          rows="3" 
+                          placeholder="viagra, cialis, lotto">{{ old('spam_keywords', $settings->spam_keywords ?? '') }}</textarea>
+                <p class="text-sm text-gray-600 mt-1">Comments containing these keywords will be marked as spam.</p>
+                
+                @error('spam_keywords')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="hidden" name="rate_limit_enabled" value="0">
+                    <input type="checkbox" name="rate_limit_enabled" value="1" {{ old('rate_limit_enabled', $settings->rate_limit_enabled ?? 1) ? 'checked' : '' }} class="mr-2">
+                    <span class="text-gray-700">Enable comment rate limiting</span>
+                </label>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="rate_limit_per_minute">
+                    Comments per minute limit
+                </label>
+                <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('rate_limit_per_minute') border-red-500 @enderror" 
+                       id="rate_limit_per_minute" 
+                       type="number" 
+                       name="rate_limit_per_minute" 
+                       value="{{ old('rate_limit_per_minute', $settings->rate_limit_per_minute ?? 3) }}" 
+                       min="1" 
+                       max="100">
+                <p class="text-sm text-gray-600 mt-1">Maximum comments a user can post per minute.</p>
+                
+                @error('rate_limit_per_minute')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="hidden" name="captcha_enabled" value="0">
+                    <input type="checkbox" name="captcha_enabled" value="1" {{ old('captcha_enabled', $settings->captcha_enabled ?? 0) ? 'checked' : '' }} class="mr-2">
+                    <span class="text-gray-700">Enable CAPTCHA for guest comments</span>
+                </label>
+            </div>
+            
             <h2 class="text-xl font-bold text-gray-800 mb-4 mt-6">Display Settings</h2>
             
             <div class="mb-4">

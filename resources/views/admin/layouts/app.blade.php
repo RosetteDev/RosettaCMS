@@ -298,6 +298,8 @@
                 <div class="sidebar-submenu">
                     <a href="{{ url('/admin/categories') }}" class="{{ request()->is('admin/categories*') ? 'active' : '' }}">Categories</a>
                     <a href="{{ url('/admin/tags') }}" class="{{ request()->is('admin/tags*') ? 'active' : '' }}">Tags</a>
+                    <a href="{{ url('/admin/comments') }}" class="{{ request()->is('admin/comments*') ? 'active' : '' }}">Comments</a>
+                    <a href="{{ url('/admin/comments/pending') }}" class="{{ request()->is('admin/comments/pending') ? 'active' : '' }}">Pending</a>
                 </div>
             </div>
             

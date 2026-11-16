@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TagController;
+use App\Http\Controllers\Admin\CommentController;
 use App\Models\Site;
 use App\Models\Category;
 use App\Models\Tag;
@@ -178,6 +179,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{tag}/edit', [TagController::class, 'edit'])->name('edit');
         Route::put('/{tag}', [TagController::class, 'update'])->name('update');
         Route::delete('/{tag}', [TagController::class, 'destroy'])->name('destroy');
+    });
+
+    // Comments management
+    Route::prefix('admin/comments')->name('admin.comments.')->group(function () {
+        Route::get('/', [CommentController::class, 'index'])->name('index');
+        Route::get('/pending', [CommentController::class, 'pending'])->name('pending');
+        Route::get('/{comment}/edit', [CommentController::class, 'edit'])->name('edit');
+        Route::delete('/{comment}', [CommentController::class, 'destroy'])->name('destroy');
+        
+        // Action routes
+        Route::post('/{comment}/approve', [CommentController::class, 'approve'])->name('approve');
+        Route::post('/{comment}/reject', [CommentController::class, 'reject'])->name('reject');
+        Route::post('/{comment}/spam', [CommentController::class, 'spam'])->name('spam');
+        Route::post('/{comment}/reply', [CommentController::class, 'reply'])->name('reply');
+        
+        // Bulk actions
+        Route::post('/bulk/approve', [CommentController::class, 'bulkApprove'])->name('bulk.approve');
+        Route::post('/bulk/reject', [CommentController::class, 'bulkReject'])->name('bulk.reject');
+        Route::post('/bulk/destroy', [CommentController::class, 'bulkDestroy'])->name('bulk.destroy');
     });
 
     // Settings
