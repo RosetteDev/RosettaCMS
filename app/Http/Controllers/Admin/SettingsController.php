@@ -23,11 +23,15 @@ class SettingsController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'site_name' => 'required|string|max:255',
+            'site_title' => 'nullable|string|max:255',
             'site_description' => 'nullable|string',
-            'admin_email' => 'required|email',
-            'posts_per_page' => 'required|integer|min:1|max:100',
+            'post_per_page' => 'nullable|integer|min:1|max:100',
             'theme' => 'nullable|string|max:255',
+            'analytics_code' => 'nullable|text',
+            'custom_css' => 'nullable|text',
+            'custom_js' => 'nullable|text',
+            'maintenance_mode' => 'nullable|boolean',
+            'disable_comments' => 'nullable|boolean',
         ]);
 
         $settings = SiteSetting::firstOrNew([]);

@@ -11,11 +11,21 @@ class SiteSetting extends Model
 
     protected $fillable = [
         'site_id',
-        'settings',
+        'analytics_code',
+        'custom_css',
+        'custom_js',
+        'maintenance_mode',
+        'disable_comments',
+        'post_per_page',
+        'theme',
+        'site_title',
+        'site_description',
     ];
 
     protected $casts = [
-        'settings' => 'array',
+        'maintenance_mode' => 'boolean',
+        'disable_comments' => 'boolean',
+        'post_per_page' => 'integer',
     ];
 
     /**
