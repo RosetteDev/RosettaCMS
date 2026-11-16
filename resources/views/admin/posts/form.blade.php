@@ -54,42 +54,42 @@
             </form>
         </div>
     </div>
-
-    @push('styles')
-    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-    <style>
-        .ql-container {
-            font-size: 16px;
-            min-height: 300px;
-        }
-    </style>
-    @endpush
-
-    @push('scripts')
-    <script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
-    <script>
-        var quill = new Quill('#editor-container', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ header: [1, 2, 3, false] }],
-                    ['bold', 'italic', 'underline'],
-                    [{ list: 'ordered'}, { list: 'bullet' }],
-                    ['link', 'image'],
-                    ['clean']
-                ]
-            }
-        });
-
-        // Sync Quill content to textarea on form submit
-        document.querySelector('form').addEventListener('submit', function() {
-            document.getElementById('content').value = quill.root.innerHTML;
-        });
-
-        // Initialize with existing content if editing
-        @if($post->content ?? null)
-        quill.root.innerHTML = '{!! $post->content !!}';
-        @endif
-    </script>
-    @endpush
 @endsection
+
+@push('styles')
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+    .ql-container {
+        font-size: 16px;
+        min-height: 300px;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
+<script>
+    var quill = new Quill('#editor-container', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline'],
+                [{ list: 'ordered'}, { list: 'bullet' }],
+                ['link', 'image'],
+                ['clean']
+            ]
+        }
+    });
+
+    // Sync Quill content to textarea on form submit
+    document.querySelector('form').addEventListener('submit', function() {
+        document.getElementById('content').value = quill.root.innerHTML;
+    });
+
+    // Initialize with existing content if editing
+    @if($post->content ?? null)
+    quill.root.innerHTML = '{!! $post->content !!}';
+    @endif
+</script>
+@endpush
