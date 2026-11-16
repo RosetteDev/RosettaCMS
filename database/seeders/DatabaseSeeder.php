@@ -20,7 +20,6 @@ class DatabaseSeeder extends Seeder
         // Create default site
         $site = Site::create([
             'name' => 'My Website',
-            'slug' => 'default',
             'domain' => null,
             'description' => 'Default website for Rosetta CMS',
             'timezone' => 'UTC',
@@ -79,5 +78,8 @@ class DatabaseSeeder extends Seeder
                 'media' => true,
             ],
         ]);
+
+        // Run sample content seeder
+        $this->call(SampleContentSeeder::class);
     }
 }

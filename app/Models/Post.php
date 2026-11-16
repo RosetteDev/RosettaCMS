@@ -20,6 +20,7 @@ class Post extends Model
         'post_type',
         'status',
         'published_at',
+        'comment_status',
     ];
 
     protected $casts = [
@@ -58,6 +59,14 @@ class Post extends Model
     public function terms()
     {
         return $this->belongsToMany(Term::class);
+    }
+
+    /**
+     * Get the taxonomies associated with the post.
+     */
+    public function taxonomies()
+    {
+        return $this->belongsToMany(Taxonomy::class, 'post_term');
     }
 
     /**

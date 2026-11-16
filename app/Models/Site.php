@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Site extends Model
 {
@@ -23,6 +24,20 @@ class Site extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    /**
+     * Boot method to register model events
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($site) {
+            if (empty($site->slug)) {
+                $site->slug = Str::slug($site->name);
+            }
+        });
+    }
 
     /**
      * Get the posts for the site.
@@ -54,5 +69,13 @@ class Site extends Model
     public function settings()
     {
         return $this->hasOne(SiteSetting::class);
+    }
+
+    /**
+     * Get the users for the site.
+     */
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'site_user')->withTimestamps();
     }
 }
