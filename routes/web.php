@@ -49,6 +49,7 @@ Route::get('/tags/{slug}', [FrontendController::class, 'tag'])->name('tag.show')
 Route::get('/search', [FrontendController::class, 'search'])->name('search');
 Route::get('/sitemap.xml', [FrontendController::class, 'sitemap'])->name('sitemap');
 Route::get('/feed', [FrontendController::class, 'feed'])->name('feed');
+Route::get('/robots.txt', [FrontendController::class, 'robots'])->name('robots');
 
 // Dashboard
 Route::get('/dashboard', [DashboardController::class, 'index'])

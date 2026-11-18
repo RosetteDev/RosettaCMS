@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
+use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class RegisterController extends Controller
 {
@@ -17,6 +19,8 @@ class RegisterController extends Controller
      */
     public function showRegistrationForm()
     {
+        abort_unless($this->registrationEnabled(), 404);
+
         return view('auth.register');
     }
 
@@ -25,6 +29,8 @@ class RegisterController extends Controller
      */
     public function register(Request $request)
     {
+        abort_unless($this->registrationEnabled(), 404);
+
         $this->ensureIsNotRateLimited($request);
 
         $request->validate([
@@ -36,14 +42,30 @@ class RegisterController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => $request->password,
         ]);
+
+        if ($role = Role::where('slug', 'subscriber')->first()) {
+            $user->roles()->syncWithoutDetaching([$role->id]);
+        }
 
         RateLimiter::clear($this->registerRateLimiterKey($request));
 
         Auth::login($user);
 
         return redirect(route('dashboard'));
+    }
+
+    /**
+     * Check whether public registration is enabled for the site.
+     */
+    protected function registrationEnabled(): bool
+    {
+        try {
+            return (bool) (SiteSetting::forSite()->enable_user_registration ?? true);
+        } catch (Throwable $e) {
+            return true;
+        }
     }
 
     /**

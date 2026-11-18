@@ -409,6 +409,27 @@ class FrontendController extends Controller
     }
 
     /**
+     * Plain-text robots.txt.
+     */
+    public function robots()
+    {
+        $lines = [
+            'User-agent: *',
+            'Disallow: /admin',
+            'Disallow: /login',
+            'Disallow: /search',
+        ];
+
+        if (($this->settings->enable_xml_sitemap ?? true)) {
+            $lines[] = '';
+            $lines[] = 'Sitemap: ' . url('/sitemap.xml');
+        }
+
+        return response(implode("\n", $lines) . "\n")
+            ->header('Content-Type', 'text/plain; charset=UTF-8');
+    }
+
+    /**
      * Render a theme view, falling back to the default theme when the active
      * theme does not provide it.
      */
@@ -480,6 +501,7 @@ class FrontendController extends Controller
         return $this->seo([
             'title' => $meta['seo_title'] ?? $post->title,
             'description' => $meta['seo_description'] ?? \Illuminate\Support\Str::limit($post->plain_excerpt, 160),
+            'keywords' => $meta['focus_keyword'] ?? $this->settings->seo_default_keywords ?? '',
             'canonical' => $meta['canonical_url'] ?? url(
                 ($post->post_type === 'page' ? '/pages/' : '/posts/') . $post->slug
             ),
@@ -514,6 +536,7 @@ class FrontendController extends Controller
         return [
             'title' => $title,
             'description' => $values['description'] ?? $this->settings->site_description ?? '',
+            'keywords' => $values['keywords'] ?? $this->settings->seo_default_keywords ?? '',
             'canonical' => $values['canonical'] ?? url()->current(),
             'robots' => $robots,
             'image' => $values['image'] ?? null,

@@ -365,6 +365,12 @@
         .pagination { display: flex; gap: .5rem; justify-content: center; margin: 2rem 0; }
         .pagination a, .pagination span { padding: .5rem .85rem; border: 1px solid var(--border-color); border-radius: 6px; text-decoration: none; }
     </style>
+    @if(!empty($settings->custom_css))
+        <style id="site-custom-css">{!! $settings->custom_css !!}</style>
+    @endif
+    @if(!empty($settings->analytics_code))
+        {!! $settings->analytics_code !!}
+    @endif
     @if(function_exists('wp_head'))
         @php wp_head(); @endphp
     @endif
@@ -401,6 +407,9 @@
         @include('themes._shared.footer')
     </footer>
     
+    @if(!empty($settings->custom_js))
+        <script id="site-custom-js">{!! $settings->custom_js !!}</script>
+    @endif
     @if(function_exists('wp_footer'))
         @php wp_footer(); @endphp
     @endif

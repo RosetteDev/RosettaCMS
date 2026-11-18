@@ -52,6 +52,12 @@ class SettingsController extends Controller
             'seo_default_keywords' => 'nullable|string',
             'enable_xml_sitemap' => 'nullable|boolean',
 
+            // Site code and maintenance
+            'analytics_code' => 'nullable|string|max:20000',
+            'custom_css' => 'nullable|string|max:200000',
+            'custom_js' => 'nullable|string|max:200000',
+            'maintenance_mode' => 'nullable|boolean',
+
             // Security
             'enable_debug_mode' => 'nullable|boolean',
             'disable_file_editor' => 'nullable|boolean',

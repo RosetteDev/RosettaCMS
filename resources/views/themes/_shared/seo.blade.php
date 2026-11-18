@@ -16,6 +16,10 @@
     <meta name="description" content="{{ $seoDescription }}">
 @endif
 
+@if(!empty($seo['keywords']))
+    <meta name="keywords" content="{{ $seo['keywords'] }}">
+@endif
+
 @if($robots)
     <meta name="robots" content="{{ $robots }}">
 @endif
