@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use App\Models\Post;
 
@@ -14,9 +15,12 @@ class PageController extends PostController
     {
         $pages = Post::where('post_type', 'page')
             ->with('user', 'site')
+            ->latest()
             ->paginate(20);
-        
-        return view('admin.pages.index', compact('pages'));
+
+        $settings = SiteSetting::forSite();
+
+        return view('admin.pages.index', compact('pages', 'settings'));
     }
 
     /**
@@ -27,6 +31,9 @@ class PageController extends PostController
         return view('admin.pages.form', [
             'action' => 'Create',
             'post' => new Post(),
+            'postType' => 'page',
+            'categories' => collect(),
+            'tags' => collect(),
         ]);
     }
 
@@ -35,26 +42,10 @@ class PageController extends PostController
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'nullable',
-            'blocks' => 'nullable|array',
-            'slug' => 'nullable|string|max:255|unique:posts',
-            'post_type' => 'nullable|string|max:50',
-            'status' => 'nullable|string|max:50',
-            'site_id' => 'nullable|exists:sites,id',
-        ]);
+        $page = new Post();
+        $page->user_id = auth()->id();
 
-        $page = Post::create([
-            'user_id' => auth()->id(),
-            'site_id' => $request->site_id ?? 1,
-            'title' => $validated['title'],
-            'slug' => $validated['slug'] ?? \Str::slug($validated['title']),
-            'content' => $validated['content'] ?? null,
-            'blocks' => $validated['blocks'] ?? null,
-            'post_type' => 'page',  // Force page type
-            'status' => $validated['status'] ?? 'draft',
-        ]);
+        $this->savePost($request, $page, 'page');
 
         return redirect()->route('admin.pages.edit', $page->id)
             ->with('success', 'Page created successfully.');
@@ -65,7 +56,6 @@ class PageController extends PostController
      */
     public function show(Post $page)
     {
-        // Ensure it's a page
         if ($page->post_type !== 'page') {
             return redirect()->route('admin.pages.index')
                 ->with('error', 'This is not a page.');
@@ -79,7 +69,6 @@ class PageController extends PostController
      */
     public function edit(Post $page)
     {
-        // Ensure it's a page
         if ($page->post_type !== 'page') {
             return redirect()->route('admin.pages.index')
                 ->with('error', 'This is not a page.');
@@ -88,6 +77,9 @@ class PageController extends PostController
         return view('admin.pages.form', [
             'action' => 'Edit',
             'post' => $page,
+            'postType' => 'page',
+            'categories' => collect(),
+            'tags' => collect(),
         ]);
     }
 
@@ -96,29 +88,12 @@ class PageController extends PostController
      */
     public function update(Request $request, Post $page)
     {
-        // Ensure it's a page
         if ($page->post_type !== 'page') {
             return redirect()->route('admin.pages.index')
                 ->with('error', 'This is not a page.');
         }
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'nullable',
-            'blocks' => 'nullable|array',
-            'slug' => 'nullable|string|max:255',
-            'post_type' => 'nullable|string|max:50',
-            'status' => 'nullable|string|max:50',
-        ]);
-
-        $page->update([
-            'title' => $validated['title'],
-            'slug' => $validated['slug'] ?? \Str::slug($validated['title']),
-            'content' => $validated['content'] ?? null,
-            'blocks' => $validated['blocks'] ?? null,
-            'post_type' => 'page',  // Force page type
-            'status' => $validated['status'] ?? 'draft',
-        ]);
+        $this->savePost($request, $page, 'page');
 
         return redirect()->route('admin.pages.edit', $page->id)
             ->with('success', 'Page updated successfully.');
@@ -129,13 +104,13 @@ class PageController extends PostController
      */
     public function destroy(Post $page)
     {
-        // Ensure it's a page
         if ($page->post_type !== 'page') {
             return redirect()->route('admin.pages.index')
                 ->with('error', 'This is not a page.');
         }
 
         $page->delete();
+
         return redirect()->route('admin.pages.index')
             ->with('success', 'Page deleted successfully.');
     }

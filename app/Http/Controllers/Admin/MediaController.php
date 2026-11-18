@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use App\Models\Media;
 use Illuminate\Support\Facades\Storage;
@@ -60,8 +61,10 @@ class MediaController extends Controller
             ->toArray();
         
         $folders[] = 'Uploads';
-
-        return view('admin.media.index', compact('media', 'folders'));
+        
+        $settings = SiteSetting::forSite();
+        
+        return view('admin.media.index', compact('media', 'folders', 'settings'));
     }
 
     /**
@@ -78,7 +81,8 @@ class MediaController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'file' => 'required|file|mimes:jpeg,png,gif,svg,pdf,mp4,mov,webm',
+            'file' => 'required|file|mimes:jpeg,jpg,png,gif,svg,pdf,mp4,mov,webm,webp,mp3,wav,ogg',
+            'max_size:10240', // Max 10MB
             'alt_text' => 'nullable|string|max:255',
             'caption' => 'nullable|string',
             'folder' => 'nullable|string|max:255',
@@ -87,7 +91,39 @@ class MediaController extends Controller
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            
+            // Validate MIME type
+            $allowedMimeTypes = [
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'image/svg+xml',
+                'image/webp',
+                'application/pdf',
+                'video/mp4',
+                'video/quicktime',
+                'video/webm',
+                'audio/mpeg',
+                'audio/wav',
+                'audio/ogg',
+            ];
+            
+            $detectedMimeType = $file->getMimeType();
+            
+            if (!in_array($detectedMimeType, $allowedMimeTypes)) {
+                return back()->withErrors(['file' => 'Invalid file type. Only images, PDFs, and videos are allowed.']);
+            }
+            
+            // Validate file extension
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'pdf', 'mp4', 'mov', 'webm', 'webp', 'mp3', 'wav', 'ogg'];
+            $extension = strtolower($file->getClientOriginalExtension());
+            
+            if (!in_array($extension, $allowedExtensions)) {
+                return back()->withErrors(['file' => 'Invalid file extension.']);
+            }
+            
+            // Generate unique filename
+            $filename = time() . '_' . preg_replace('/[^A-Za-z0-9_\-]/', '', $file->getClientOriginalName()) . '.' . $extension;
             
             // Build folder path
             $folder = trim($validated['folder'] ?? '', '/');
@@ -107,7 +143,7 @@ class MediaController extends Controller
                 'file_name' => $filename,
                 'file_path' => $storagePath,
                 'folder' => $folder ?: null,
-                'mime_type' => $file->getMimeType(),
+                'mime_type' => $detectedMimeType,
                 'file_size' => $file->getSize(),
                 'alt_text' => $validated['alt_text'],
                 'caption' => $validated['caption'],

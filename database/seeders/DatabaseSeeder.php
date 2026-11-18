@@ -5,9 +5,8 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Role;
 use App\Models\Site;
+use App\Models\SiteSetting;
 use App\Models\User;
-use App\Models\Taxonomy;
-use App\Models\Term;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
@@ -17,67 +16,103 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create default site
-        $site = Site::create([
-            'name' => 'My Website',
-            'domain' => null,
-            'description' => 'Default website for Rosetta CMS',
-            'timezone' => 'UTC',
-            'locale' => 'en',
-            'currency' => 'USD',
-            'is_active' => true,
-        ]);
+        // Create (or reuse) the default site
+        $site = Site::firstOrCreate(
+            ['name' => 'My Website'],
+            [
+                'domain' => null,
+                'description' => 'Default website for Rosetta CMS',
+                'timezone' => 'UTC',
+                'locale' => 'en',
+                'currency' => 'USD',
+                'is_active' => true,
+            ]
+        );
 
-        // Create default roles
-        $adminRole = Role::create([
-            'name' => 'Administrator',
-            'slug' => 'admin',
-            'description' => 'Full access to all features',
-            'permissions' => [
-                'dashboard' => true,
-                'posts' => true,
-                'pages' => true,
-                'media' => true,
-                'users' => true,
-                'settings' => true,
-                'plugins' => true,
-                'themes' => true,
-                'seo' => true,
-                'multi_site' => true,
-            ],
-        ]);
+        // Ensure the site has a settings row
+        SiteSetting::firstOrCreate(
+            ['site_id' => $site->id],
+            [
+                'site_title' => 'Rosetta CMS',
+                'site_description' => 'A modern, flexible content management system',
+                'admin_email' => 'admin@rosettacms.com',
+                'post_per_page' => 10,
+            ]
+        );
 
-        // Create default admin user
-        $adminUser = User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@rosettacms.com',
-            'password' => Hash::make('password'),
-        ]);
-        $adminUser->roles()->attach($adminRole->id);
+        // Create (or reuse) the default roles
+        $adminRole = Role::firstOrCreate(
+            ['slug' => 'admin'],
+            [
+                'name' => 'Administrator',
+                'description' => 'Full access to all features',
+                'permissions' => [
+                    'dashboard' => true,
+                    'posts' => true,
+                    'pages' => true,
+                    'media' => true,
+                    'users' => true,
+                    'settings' => true,
+                    'plugins' => true,
+                    'themes' => true,
+                    'seo' => true,
+                    'multi_site' => true,
+                ],
+            ]
+        );
 
-        $editorRole = Role::create([
-            'name' => 'Editor',
-            'slug' => 'editor',
-            'description' => 'Manage content and media',
-            'permissions' => [
-                'dashboard' => true,
-                'posts' => true,
-                'pages' => true,
-                'media' => true,
-                'seo' => true,
-            ],
-        ]);
+        $editorRole = Role::firstOrCreate(
+            ['slug' => 'editor'],
+            [
+                'name' => 'Editor',
+                'description' => 'Manage content and media',
+                'permissions' => [
+                    'dashboard' => true,
+                    'posts' => true,
+                    'pages' => true,
+                    'media' => true,
+                    'seo' => true,
+                ],
+            ]
+        );
 
-        $authorRole = Role::create([
-            'name' => 'Author',
-            'slug' => 'author',
-            'description' => 'Create and manage own content',
-            'permissions' => [
-                'dashboard' => true,
-                'posts' => true,
-                'media' => true,
-            ],
-        ]);
+        $authorRole = Role::firstOrCreate(
+            ['slug' => 'author'],
+            [
+                'name' => 'Author',
+                'description' => 'Create and manage own content',
+                'permissions' => [
+                    'dashboard' => true,
+                    'posts' => true,
+                    'media' => true,
+                ],
+            ]
+        );
+
+        $subscriberRole = Role::firstOrCreate(
+            ['slug' => 'subscriber'],
+            [
+                'name' => 'Subscriber',
+                'description' => 'Basic access with limited permissions',
+                'permissions' => [
+                    'dashboard' => true,
+                    'comments' => true,
+                ],
+            ]
+        );
+
+        // Create (or reuse) the default admin user
+        $adminUser = User::firstOrCreate(
+            ['email' => 'admin@rosettacms.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // Attach roles without duplicating existing pivots
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
 
         // Run sample content seeder
         $this->call(SampleContentSeeder::class);

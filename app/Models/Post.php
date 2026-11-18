@@ -15,6 +15,8 @@ class Post extends Model
         'title',
         'slug',
         'content',
+        'excerpt',
+        'featured_image',
         'blocks',
         'meta',
         'post_type',
@@ -102,6 +104,22 @@ class Post extends Model
     }
 
     /**
+     * Get the count of comments for the post.
+     */
+    public function getCommentsCountAttribute()
+    {
+        return $this->comments()->count();
+    }
+
+    /**
+     * Get the count of approved comments for the post.
+     */
+    public function getApprovedCommentsCountAttribute()
+    {
+        return $this->comments()->where('status', 'approved')->count();
+    }
+
+    /**
      * Get approved comments for the post.
      */
     public function approvedComments()
@@ -115,8 +133,85 @@ class Post extends Model
     public function scopePublished($query)
     {
         return $query->where('status', 'published')
-            ->whereNull('published_at')
-            ->orWhere('published_at', '<=', now());
+            ->where(function ($query) {
+                $query->whereNull('published_at')
+                    ->orWhere('published_at', '<=', now());
+            });
+    }
+
+    /**
+     * Render the post content as HTML, converting Markdown when the stored
+     * value is not already HTML.
+     */
+    public function getRenderedContentAttribute(): string
+    {
+        $content = (string) $this->content;
+
+        if ($content === '') {
+            return '';
+        }
+
+        if (preg_match('/<\/[a-z][^>]*>/i', $content)) {
+            return $content;
+        }
+
+        $converter = new \League\CommonMark\CommonMarkConverter([
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+        ]);
+
+        return (string) $converter->convert($content);
+    }
+
+    /**
+     * Get a plain-text excerpt for listings and meta descriptions.
+     */
+    public function getPlainExcerptAttribute(): string
+    {
+        if ($this->excerpt) {
+            return trim(strip_tags($this->excerpt));
+        }
+
+        return trim(preg_replace('/\s+/', ' ', strip_tags($this->rendered_content)));
+    }
+
+    /**
+     * Resolve the featured image to a usable URL.
+     *
+     * Absolute URLs are returned untouched; relative paths are served from the
+     * public storage disk.
+     */
+    public function getFeaturedImageUrlAttribute(): ?string
+    {
+        $image = $this->featured_image;
+
+        if (!$image) {
+            return null;
+        }
+
+        if (preg_match('#^(https?:)?//#i', $image)) {
+            return $image;
+        }
+
+        return asset('storage/' . ltrim($image, '/'));
+    }
+
+    /**
+     * Get the primary category for the post.
+     */
+    public function getPrimaryCategoryAttribute()
+    {
+        return $this->categories->first();
+    }
+
+    /**
+     * Get the public URL for the post.
+     */
+    public function getPublicUrlAttribute(): string
+    {
+        return $this->post_type === 'page'
+            ? route('page.show', $this->slug)
+            : route('post.show', $this->slug);
     }
 
     /**

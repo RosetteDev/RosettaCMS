@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\MediaController;
@@ -12,9 +13,14 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\CommentController;
+use App\Http\Controllers\Admin\UserController;
 use App\Models\Site;
 use App\Models\Category;
 use App\Models\Tag;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Controllers\Admin\ThemeController;
+use App\Http\Controllers\Admin\MenuController;
+use Illuminate\Support\Facades\View;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,68 +34,25 @@ use App\Models\Tag;
 */
 
 // Public routes
-Route::get('/', function () {
-    // Try to get the default site
-    $site = Site::first();
-    
-    if ($site) {
-        // Check if the site has a homepage set
-        if ($site->home_post_id) {
-            $post = $site->posts()->find($site->home_post_id);
-            if ($post) {
-                return view('themes.rosetta.single', compact('post'));
-            }
-        }
-        
-        // If no homepage set, show a welcome page with site data
-        return view('themes.rosetta.home', [
-            'site' => $site,
-            'title' => $site->name ?? 'Rosetta CMS',
-            'description' => $site->description ?? 'A modern, flexible content management system',
-        ]);
-    }
-    
-    // Fallback to basic welcome page if no site exists
-    return view('themes.rosetta.home');
-});
-
-// About page
-Route::get('/about', function () {
-    // Check if there's a CMS page for about (slug: about or about-our-cms)
-    $page = App\Models\Post::where('post_type', 'page')
-        ->where('status', 'published')
-        ->where(function($query) {
-            $query->where('slug', 'about')->orWhere('slug', 'about-our-cms');
-        })
-        ->first();
-    
-    if ($page) {
-        return view('themes.rosetta.page', compact('page'));
-    }
-    
-    return view('themes.rosetta.about', [
-        'title' => 'About Us',
-        'description' => 'Learn more about Rosetta CMS',
-    ]);
-});
-
-// Contact page
-Route::get('/contact', function () {
-    // Check if there's a CMS page for contact
-    $page = App\Models\Post::where('slug', 'contact')->where('post_type', 'page')->first();
-    
-    if ($page) {
-        return view('themes.rosetta.page', compact('page'));
-    }
-    
-    return view('themes.rosetta.contact', [
-        'title' => 'Contact Us',
-        'description' => 'Get in touch with Rosetta CMS',
-    ]);
-});
+Route::get('/', [FrontendController::class, 'home'])->name('home');
+Route::get('/about', [FrontendController::class, 'about'])->name('about');
+Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
+Route::get('/blog', [FrontendController::class, 'blog'])->name('blog');
+Route::get('/posts/{slug}', [FrontendController::class, 'post'])->name('post.show');
+Route::post('/posts/{slug}/comments', [FrontendController::class, 'storeComment'])
+    ->middleware('throttle:5,1')
+    ->name('comments.store');
+Route::get('/pages/{slug}', [FrontendController::class, 'page'])->name('page.show');
+Route::get('/categories/{slug}', [FrontendController::class, 'category'])->name('category.show');
+Route::get('/tags/{slug}', [FrontendController::class, 'tag'])->name('tag.show');
+Route::get('/search', [FrontendController::class, 'search'])->name('search');
+Route::get('/sitemap.xml', [FrontendController::class, 'sitemap'])->name('sitemap');
+Route::get('/feed', [FrontendController::class, 'feed'])->name('feed');
 
 // Dashboard
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware('auth')
+    ->name('dashboard');
 
 // Authentication routes
 Route::middleware('guest')->group(function () {
@@ -103,7 +66,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Admin routes
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'role:admin|editor'])->group(function () {
     // Admin dashboard
     Route::get('/admin', function () {
         return redirect()->route('dashboard');
@@ -139,8 +102,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{media}/metadata', [MediaController::class, 'updateMetadata'])->name('updateMetadata');
     });
 
-    // Sites management
-    Route::prefix('admin/sites')->name('admin.sites.')->group(function () {
+    // Sites management - Admin only
+    Route::prefix('admin/sites')->middleware('role:admin')->name('admin.sites.')->group(function () {
         Route::get('/', [SiteController::class, 'index'])->name('index');
         Route::get('/create', [SiteController::class, 'create'])->name('create');
         Route::post('/', [SiteController::class, 'store'])->name('store');
@@ -200,37 +163,62 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/bulk/destroy', [CommentController::class, 'bulkDestroy'])->name('bulk.destroy');
     });
 
+    // Users management - Admin only
+    Route::prefix('admin/users')->middleware('role:admin')->name('admin.users.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{user}', [UserController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+        
+        // Additional actions
+        Route::get('/pending', [UserController::class, 'pending'])->name('pending');
+        Route::post('/{user}/verify', [UserController::class, 'verify'])->name('verify');
+        Route::post('/{user}/deactivate', [UserController::class, 'deactivate'])->name('deactivate');
+        
+        // Bulk actions
+        Route::post('/bulk', [UserController::class, 'bulk'])->name('bulk');
+    });
+
     // Settings
     Route::prefix('admin/settings')->name('admin.settings.')->group(function () {
         Route::get('/', [SettingsController::class, 'index'])->name('index');
         Route::post('/', [SettingsController::class, 'update'])->name('update');
     });
+    
+    // Theme management
+    Route::prefix('admin/themes')->name('admin.themes.')->group(function () {
+        Route::get('/', [ThemeController::class, 'index'])->name('index');
+        Route::get('/{slug}', [ThemeController::class, 'edit'])->name('edit');
+        Route::post('/{slug}', [ThemeController::class, 'update'])->name('update');
+        Route::delete('/{slug}', [ThemeController::class, 'destroy'])->name('destroy');
+    });
+
+    // Menu management
+    Route::prefix('admin/menus')->name('admin.menus.')->group(function () {
+        Route::get('/', [MenuController::class, 'index'])->name('index');
+        Route::post('/', [MenuController::class, 'store'])->name('store');
+        Route::get('/{menu}/edit', [MenuController::class, 'edit'])->name('edit');
+        Route::put('/{menu}', [MenuController::class, 'update'])->name('update');
+        Route::delete('/{menu}', [MenuController::class, 'destroy'])->name('destroy');
+
+        Route::post('/{menu}/items', [MenuController::class, 'storeItem'])->name('items.store');
+        Route::put('/{menu}/items/{item}', [MenuController::class, 'updateItem'])->name('items.update');
+        Route::delete('/{menu}/items/{item}', [MenuController::class, 'destroyItem'])->name('items.destroy');
+    });
 });
 
-// Post routes
-Route::get('/posts/{slug}', function ($slug) {
-    $post = App\Models\Post::where('slug', $slug)->firstOrFail();
-    return view('themes.rosetta.single', compact('post'));
-})->name('post.show');
-
-// Page routes
-Route::get('/pages/{slug}', function ($slug) {
-    $page = App\Models\Post::where('slug', $slug)->where('post_type', 'page')->firstOrFail();
-    return view('themes.rosetta.page', compact('page'));
-})->name('page.show');
-
-// Category routes
-Route::get('/categories/{slug}', function ($slug) {
-    $category = Category::where('slug', $slug)->firstOrFail();
-    $posts = $category->posts()->where('post_type', 'post')->where('status', 'published')->paginate(10);
+// View composers for theme partials
+View::composer('themes.*.partials.sidebar', function ($view) {
+    $categories = Category::withCount('posts')->get();
+    $recentPosts = App\Models\Post::where('post_type', 'post')
+        ->where('status', 'published')
+        ->orderBy('created_at', 'desc')
+        ->take(5)
+        ->get();
+    $tags = Tag::take(10)->get();
     
-    return view('themes.rosetta.category', compact('category', 'posts'));
-})->name('category.show');
-
-// Tag routes
-Route::get('/tags/{slug}', function ($slug) {
-    $tag = Tag::where('slug', $slug)->firstOrFail();
-    $posts = $tag->posts()->where('post_type', 'post')->where('status', 'published')->paginate(10);
-    
-    return view('themes.rosetta.tag', compact('tag', 'posts'));
-})->name('tag.show');
+    $view->with(compact('categories', 'recentPosts', 'tags'));
+});

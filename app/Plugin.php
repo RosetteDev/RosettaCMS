@@ -3,6 +3,7 @@
 namespace RosettaCMS;
 
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Str;
 
 abstract class Plugin
 {
@@ -61,7 +62,6 @@ abstract class Plugin
     public function __construct()
     {
         $this->app = app();
-        $this->bootstrap();
     }
 
     /**
@@ -79,6 +79,20 @@ abstract class Plugin
     public function getName(): string
     {
         return $this->name ?? class_basename(static::class);
+    }
+
+    /**
+     * Get the configuration key for the plugin.
+     *
+     * Maps class names such as "WordPressCompatibilityPlugin" to the
+     * "WordPress" key used in config/plugins.php.
+     */
+    public function getKey(): string
+    {
+        return Str::of(class_basename(static::class))
+            ->beforeLast('Plugin')
+            ->beforeLast('Compatibility')
+            ->toString();
     }
 
     /**
@@ -138,11 +152,14 @@ abstract class Plugin
      */
     public function activate(): bool
     {
-        if (!$this->isActive) {
-            $this->isActive = true;
-            return $this->boot();
+        if ($this->isActive) {
+            return true;
         }
-        return true;
+
+        $this->bootstrap();
+        $this->isActive = true;
+
+        return $this->boot();
     }
 
     /**

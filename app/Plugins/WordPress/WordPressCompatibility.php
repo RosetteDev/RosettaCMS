@@ -19,6 +19,41 @@ class WordPressCompatibility
     protected $filters = [];
 
     /**
+     * Enqueued scripts.
+     *
+     * @var array
+     */
+    protected $scripts = [];
+
+    /**
+     * Enqueued styles.
+     *
+     * @var array
+     */
+    protected $styles = [];
+
+    /**
+     * The post currently being rendered.
+     *
+     * @var mixed
+     */
+    protected $currentPost;
+
+    /**
+     * Runtime options set through update_option().
+     *
+     * @var array
+     */
+    protected $options = [];
+
+    /**
+     * Registered shortcodes.
+     *
+     * @var array
+     */
+    protected $shortcodes = [];
+
+    /**
      * Register an action.
      *
      * @param string $tag
@@ -253,6 +288,97 @@ class WordPressCompatibility
     }
 
     /**
+     * Enqueue a script.
+     */
+    public function enqueueScript(string $handle, string $src = '', array $deps = [], $ver = false, bool $inFooter = false): void
+    {
+        $this->scripts[$handle] = compact('handle', 'src', 'deps', 'ver', 'inFooter');
+    }
+
+    /**
+     * Enqueue a style.
+     */
+    public function enqueueStyle(string $handle, string $src = '', array $deps = [], $ver = false, string $media = 'all'): void
+    {
+        $this->styles[$handle] = compact('handle', 'src', 'deps', 'ver', 'media');
+    }
+
+    /**
+     * Get enqueued scripts.
+     */
+    public function getScripts(?bool $footer = null): array
+    {
+        if ($footer === null) {
+            return $this->scripts;
+        }
+
+        return array_filter($this->scripts, fn ($script) => (bool) $script['inFooter'] === $footer);
+    }
+
+    /**
+     * Get enqueued styles.
+     */
+    public function getStyles(): array
+    {
+        return $this->styles;
+    }
+
+    /**
+     * Set the post currently being rendered.
+     */
+    public function setCurrentPost($post): void
+    {
+        $this->currentPost = $post;
+    }
+
+    /**
+     * Get the post currently being rendered.
+     */
+    public function getCurrentPost()
+    {
+        return $this->currentPost;
+    }
+
+    /**
+     * Register a shortcode.
+     */
+    public function addShortcode(string $tag, callable $callback): void
+    {
+        $this->shortcodes[$tag] = $callback;
+    }
+
+    /**
+     * Replace registered shortcodes in a string.
+     */
+    public function doShortcode(string $content): string
+    {
+        if (empty($this->shortcodes)) {
+            return $content;
+        }
+
+        return preg_replace_callback('/\[([a-zA-Z0-9_-]+)([^\]]*)\]/', function ($matches) {
+            $tag = $matches[1];
+
+            if (!isset($this->shortcodes[$tag])) {
+                return $matches[0];
+            }
+
+            $attributes = [];
+            $body = trim($matches[2]);
+
+            if ($body !== '') {
+                preg_match_all('/([a-zA-Z0-9_-]+)="([^"]*)"/', $body, $pairs, PREG_SET_ORDER);
+
+                foreach ($pairs as $pair) {
+                    $attributes[$pair[1]] = $pair[2];
+                }
+            }
+
+            return (string) call_user_func($this->shortcodes[$tag], $attributes, '', $tag);
+        }, $content);
+    }
+
+    /**
      * Get option value.
      *
      * @param string $option
@@ -261,7 +387,42 @@ class WordPressCompatibility
      */
     public function getOption(string $option, $default = false)
     {
+        if (array_key_exists($option, $this->options)) {
+            return $this->options[$option];
+        }
+
+        try {
+            $settings = \App\Models\SiteSetting::forSite();
+
+            $map = [
+                'blogname' => 'site_title',
+                'blogdescription' => 'site_description',
+                'admin_email' => 'contact_email',
+                'posts_per_page' => 'post_per_page',
+            ];
+
+            if (isset($map[$option]) && !empty($settings->{$map[$option]})) {
+                return $settings->{$map[$option]};
+            }
+        } catch (\Throwable $e) {
+            // Database not available yet.
+        }
+
+        if ($option === 'siteurl' || $option === 'home') {
+            return url('/');
+        }
+
         return config('options.' . $option, $default);
+    }
+
+    /**
+     * Update an option value for the current request.
+     */
+    public function updateOption(string $option, $value): bool
+    {
+        $this->options[$option] = $value;
+
+        return true;
     }
 
     /**
@@ -271,7 +432,8 @@ class WordPressCompatibility
      */
     public function isAdmin(): bool
     {
-        return request()->is('admin/*') || request()->is('wp-admin/*');
+        return request()->is('admin') || request()->is('admin/*')
+            || request()->is('wp-admin') || request()->is('wp-admin/*');
     }
 
     /**
@@ -292,7 +454,7 @@ class WordPressCompatibility
      */
     public function isSingle($query = ''): bool
     {
-        return is_single($query);
+        return request()->routeIs('post.show');
     }
 
     /**
@@ -302,7 +464,7 @@ class WordPressCompatibility
      */
     public function isHome(): bool
     {
-        return is_home();
+        return request()->routeIs('home') || request()->routeIs('blog');
     }
 
     /**
@@ -312,7 +474,7 @@ class WordPressCompatibility
      */
     public function isFrontPage(): bool
     {
-        return is_front_page();
+        return request()->routeIs('home');
     }
 
     /**
@@ -323,7 +485,7 @@ class WordPressCompatibility
      */
     public function isCategory($query = ''): bool
     {
-        return is_category($query);
+        return request()->routeIs('category.show');
     }
 
     /**
@@ -334,7 +496,7 @@ class WordPressCompatibility
      */
     public function isTag($query = ''): bool
     {
-        return is_tag($query);
+        return request()->routeIs('tag.show');
     }
 
     /**
@@ -344,7 +506,7 @@ class WordPressCompatibility
      */
     public function isArchive(): bool
     {
-        return is_archive();
+        return $this->isCategory() || $this->isTag();
     }
 
     /**
@@ -354,7 +516,7 @@ class WordPressCompatibility
      */
     public function isSearch(): bool
     {
-        return is_search();
+        return request()->routeIs('search');
     }
 
     /**
@@ -364,6 +526,6 @@ class WordPressCompatibility
      */
     public function is404(): bool
     {
-        return is_404();
+        return false;
     }
 }

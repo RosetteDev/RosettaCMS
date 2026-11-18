@@ -72,6 +72,10 @@ class PluginManager
      */
     public function scan(): array
     {
+        if (!empty($this->plugins)) {
+            return $this->plugins;
+        }
+
         $plugins = [];
 
         foreach ($this->paths as $path) {
@@ -81,16 +85,22 @@ class PluginManager
 
             $dir = new RecursiveDirectoryIterator($path);
             $iterator = new RecursiveIteratorIterator($dir);
-            $files = new RegexIterator($iterator, '/^.+\.php$/i', RecursiveRegexIterator::GET_MATCH);
+            $files = new RegexIterator($iterator, '/^.+\.php$/i', RegexIterator::GET_MATCH);
 
             foreach ($files as $file) {
                 $filePath = $file[0];
+
+                // Plugin entry points follow the *Plugin.php naming convention.
+                if (!str_ends_with(strtolower($filePath), 'plugin.php')) {
+                    continue;
+                }
+
                 $className = $this->getClassNameFromFile($filePath);
 
                 if ($className && class_exists($className)) {
                     $reflection = new \ReflectionClass($className);
-                    
-                    if ($reflection->isSubclassOf(Plugin::class)) {
+
+                    if (!$reflection->isAbstract() && $reflection->isSubclassOf(Plugin::class)) {
                         $instance = $reflection->newInstance();
                         $plugins[$instance->getName()] = $instance;
                     }
@@ -98,33 +108,37 @@ class PluginManager
             }
         }
 
-        return $plugins;
+        return $this->plugins = $plugins;
     }
 
     /**
-     * Get class name from file path.
-     *
-     * @param string $filePath
-     * @return string|null
+     * Resolve a fully qualified class name from a PHP file.
      */
     protected function getClassNameFromFile(string $filePath): ?string
     {
-        $relativePath = str_replace([$this->app->basePath(), '.php'], ['', ''], $filePath);
-        $namespace = str_replace(['/', '\\'], ['\\', '\\'], $relativePath);
-        
-        // Try to autoload
-        $className = 'App' . $namespace;
-        if (class_exists($className)) {
-            return $className;
+        $contents = @file_get_contents($filePath);
+
+        if ($contents === false) {
+            return null;
         }
 
-        // Try without App namespace
-        $className = str_replace('App\\', '', $namespace);
-        if (class_exists($className)) {
-            return $className;
+        if (!preg_match('/namespace\s+([^;]+);/', $contents, $namespace)) {
+            return null;
         }
 
-        return null;
+        if (!preg_match('/(?:final\s+|abstract\s+)?class\s+([A-Za-z_][A-Za-z0-9_]*)/', $contents, $class)) {
+            return null;
+        }
+
+        return trim($namespace[1]) . '\\' . $class[1];
+    }
+
+    /**
+     * Get the plugins discovered in the registered paths, keyed by name.
+     */
+    public function discover(): array
+    {
+        return $this->scan();
     }
 
     /**
@@ -135,6 +149,10 @@ class PluginManager
      */
     public function activate(string $name): bool
     {
+        if (isset($this->activePlugins[$name])) {
+            return true;
+        }
+
         $plugins = $this->scan();
 
         if (!isset($plugins[$name])) {
@@ -142,7 +160,7 @@ class PluginManager
         }
 
         $plugin = $plugins[$name];
-        
+
         if (!$plugin->canActivate()) {
             return false;
         }

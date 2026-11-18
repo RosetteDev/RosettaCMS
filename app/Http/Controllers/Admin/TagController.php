@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tag;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -12,7 +13,10 @@ class TagController extends Controller
     public function index()
     {
         $tags = Tag::withCount('posts')->orderBy('order')->orderBy('name')->get();
-        return view('admin.tags.index', compact('tags'));
+        
+        $settings = SiteSetting::forSite();
+        
+        return view('admin.tags.index', compact('tags', 'settings'));
     }
 
     public function create()

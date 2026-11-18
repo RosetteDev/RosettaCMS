@@ -1,128 +1,115 @@
 @extends('admin.layouts.app')
 
 @section('content')
-    <!-- Admin Header -->
-    <div class="hero">
-        <div class="container">
-            <h1>Dashboard</h1>
-            <p>Welcome back! Here's what's happening with your content.</p>
+    {{-- Page heading --}}
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Dashboard</h1>
+            <p class="text-muted mb-0">Welcome back! Here's what's happening with your content.</p>
+        </div>
+        <div class="mt-3 mt-sm-0">
+            <a href="{{ url('/admin/posts/create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>New Post
+            </a>
         </div>
     </div>
 
-    <!-- Dashboard Stats -->
-    <section style="padding: 2rem 0;">
-        <div class="container">
-            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-                <div class="card" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
-                    <h3 style="color: var(--primary-color);">{{ $stats['total_posts'] ?? 0 }}</h3>
-                    <p>Total Posts</p>
-                </div>
-                
-                <div class="card" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📄</div>
-                    <h3 style="color: var(--primary-color);">{{ $stats['total_pages'] ?? 0 }}</h3>
-                    <p>Total Pages</p>
-                </div>
-                
-                <div class="card" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🖼️</div>
-                    <h3 style="color: var(--primary-color);">{{ $stats['total_media'] ?? 0 }}</h3>
-                    <p>Media Files</p>
-                </div>
-                
-                <div class="card" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🌐</div>
-                    <h3 style="color: var(--primary-color);">{{ $stats['total_sites'] ?? 0 }}</h3>
-                    <p>Sites</p>
-                </div>
-                
-                <div class="card" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👥</div>
-                    <h3 style="color: var(--primary-color);">{{ $stats['total_users'] ?? 0 }}</h3>
-                    <p>Users</p>
-                </div>
-                
-                <div class="card" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">💬</div>
-                    <h3 style="color: var(--primary-color);">{{ $stats['total_comments'] ?? 0 }}</h3>
-                    <p>Total Comments</p>
-                </div>
-                
-                <div class="card" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⏳</div>
-                    <h3 style="color: #f59e0b;">{{ $stats['pending_comments'] ?? 0 }}</h3>
-                    <p>Pending</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    {{-- Stat cards --}}
+    @php
+        $statCards = [
+            ['key' => 'total_posts',      'label' => 'Total Posts',         'icon' => '📝', 'color' => 'var(--primary-color)'],
+            ['key' => 'total_pages',      'label' => 'Total Pages',         'icon' => '📄', 'color' => 'var(--primary-color)'],
+            ['key' => 'total_media',      'label' => 'Media Files',         'icon' => '🖼️', 'color' => 'var(--primary-color)'],
+            ['key' => 'total_sites',      'label' => 'Sites',               'icon' => '🌐', 'color' => 'var(--primary-color)'],
+            ['key' => 'total_users',      'label' => 'Users',               'icon' => '👥', 'color' => 'var(--primary-color)'],
+            ['key' => 'active_users',     'label' => 'Active Users',        'icon' => '✅', 'color' => '#10b981'],
+            ['key' => 'pending_users',    'label' => 'Pending Verification','icon' => '⏳', 'color' => '#f59e0b'],
+            ['key' => 'total_comments',   'label' => 'Total Comments',      'icon' => '💬', 'color' => 'var(--primary-color)'],
+            ['key' => 'pending_comments', 'label' => 'Pending Comments',    'icon' => '🕓', 'color' => '#f59e0b'],
+        ];
+    @endphp
 
-    <!-- Recent Posts -->
-    <section style="padding: 2rem 0;">
-        <div class="container">
-            <div class="section-title">
-                <h2>Recent Posts</h2>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4 mb-5">
+        @foreach($statCards as $card)
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm text-center">
+                    <div class="card-body py-4">
+                        <div class="mb-2" style="font-size: 2.25rem; line-height: 1;">{{ $card['icon'] }}</div>
+                        <h3 class="mb-1 fw-bold" style="color: {{ $card['color'] }};">
+                            {{ $stats[$card['key']] ?? 0 }}
+                        </h3>
+                        <p class="text-muted mb-0 small">{{ $card['label'] }}</p>
+                    </div>
+                </div>
             </div>
-            
-            @if(count($recent_posts) > 0)
-                <div style="background-color: var(--light-color); border-radius: 8px; overflow: hidden;">
-                    @foreach($recent_posts as $post)
-                        <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <a href="{{ url('/admin/posts/' . $post->id . '/edit') }}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
-                                    {{ $post->title }}
-                                </a>
-                                <p style="font-size: 0.9rem; color: var(--text-color); margin-top: 0.25rem;">
-                                    {{ ucfirst($post->status) }} • {{ $post->user->name ?? 'Author' }} • {{ $post->updated_at->diffForHumans() }}
-                                </p>
-                            </div>
-                            
-                            <div>
-                                <a href="{{ url('/admin/posts/' . $post->id . '/edit') }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">Edit</a>
-                            </div>
+        @endforeach
+    </div>
+
+    <div class="row g-4">
+        {{-- Recent posts --}}
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Recent Posts</h2>
+                    <a href="{{ url('/admin/posts') }}" class="btn btn-sm btn-outline-primary">View all</a>
+                </div>
+                <div class="card-body p-0">
+                    @if(count($recent_posts) > 0)
+                        <div class="list-group list-group-flush">
+                            @foreach($recent_posts as $post)
+                                <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                                    <div class="text-truncate">
+                                        <a href="{{ url('/admin/posts/' . $post->id . '/edit') }}"
+                                           class="fw-semibold text-decoration-none d-block text-truncate"
+                                           style="color: var(--primary-color);">
+                                            {{ $post->title }}
+                                        </a>
+                                        <small class="text-muted">
+                                            {{ ucfirst($post->status) }}
+                                            &middot; {{ $post->user->name ?? 'Author' }}
+                                            &middot; {{ $post->updated_at->diffForHumans() }}
+                                        </small>
+                                    </div>
+                                    <a href="{{ url('/admin/posts/' . $post->id . '/edit') }}" class="btn btn-sm btn-primary flex-shrink-0">Edit</a>
+                                </div>
+                            @endforeach
                         </div>
-                    @endforeach
+                    @else
+                        <p class="text-muted text-center py-4 mb-0">
+                            No posts yet.
+                            <a href="{{ url('/admin/posts/create') }}" style="color: var(--primary-color);">Create one</a>!
+                        </p>
+                    @endif
                 </div>
-            @else
-                <p style="text-align: center; color: var(--text-color);">No posts yet. <a href="{{ url('/admin/posts/create') }}" style="color: var(--primary-color);">Create one</a>!</p>
-            @endif
+            </div>
         </div>
-    </section>
 
-    <!-- Quick Actions -->
-    <section style="padding: 2rem 0;">
-        <div class="container">
-            <div class="section-title">
-                <h2>Quick Actions</h2>
-            </div>
-            
-            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-                <a href="{{ url('/admin/posts/create') }}" class="card" style="text-decoration: none; transition: all 0.2s;">
-                    <h3 style="margin-bottom: 1rem;">📝 New Post</h3>
-                    <p>Create a new blog post or article</p>
-                </a>
-                
-                <a href="{{ url('/admin/pages/create') }}" class="card" style="text-decoration: none; transition: all 0.2s;">
-                    <h3 style="margin-bottom: 1rem;">📄 New Page</h3>
-                    <p>Create a new static page</p>
-                </a>
-                
-                <a href="{{ url('/admin/media/create') }}" class="card" style="text-decoration: none; transition: all 0.2s;">
-                    <h3 style="margin-bottom: 1rem;">🖼️ Upload Media</h3>
-                    <p>Upload images, videos, and other files</p>
-                </a>
-                
-                <a href="{{ url('/admin/sites') }}" class="card" style="text-decoration: none; transition: all 0.2s;">
-                    <h3 style="margin-bottom: 1rem;">🌐 Manage Sites</h3>
-                    <p>Add or configure multiple sites</p>
-                </a>
-                
-                <a href="{{ url('/admin/settings') }}" class="card" style="text-decoration: none; transition: all 0.2s;">
-                    <h3 style="margin-bottom: 1rem;">⚙️ Settings</h3>
-                    <p>Configure your CMS preferences</p>
-                </a>
+        {{-- Quick actions --}}
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h2 class="h5 mb-0">Quick Actions</h2>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url('/admin/posts/create') }}" class="btn btn-outline-primary text-start">
+                            <span class="me-1">📝</span> New Post
+                        </a>
+                        <a href="{{ url('/admin/pages/create') }}" class="btn btn-outline-primary text-start">
+                            <span class="me-1">📄</span> New Page
+                        </a>
+                        <a href="{{ url('/admin/media') }}" class="btn btn-outline-primary text-start">
+                            <span class="me-1">🖼️</span> Upload Media
+                        </a>
+                        <a href="{{ url('/admin/themes') }}" class="btn btn-outline-primary text-start">
+                            <span class="me-1">🎨</span> Manage Themes
+                        </a>
+                        <a href="{{ url('/admin/settings') }}" class="btn btn-outline-secondary text-start">
+                            <span class="me-1">⚙️</span> Settings
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-    </section>
+    </div>
 @endsection

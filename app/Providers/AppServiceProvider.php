@@ -11,7 +11,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register HTMLPurifier service provider
+        $this->app->register(\Mews\Purifier\PurifierServiceProvider::class);
     }
 
     /**

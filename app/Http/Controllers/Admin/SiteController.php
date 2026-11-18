@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Site;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 
 class SiteController extends Controller
@@ -14,7 +15,10 @@ class SiteController extends Controller
     public function index()
     {
         $sites = Site::withCount('posts', 'media')->paginate(20);
-        return view('admin.sites.index', compact('sites'));
+        
+        $settings = SiteSetting::forSite();
+        
+        return view('admin.sites.index', compact('sites', 'settings'));
     }
 
     /**

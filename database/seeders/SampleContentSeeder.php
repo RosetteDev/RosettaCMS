@@ -9,7 +9,7 @@ use App\Models\Taxonomy;
 use App\Models\Term;
 use App\Models\User;
 use App\Models\Site;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 class SampleContentSeeder extends Seeder
 {
@@ -19,14 +19,63 @@ class SampleContentSeeder extends Seeder
     public function run(): void
     {
         $site = Site::first();
-        $user = User::first();
+        $adminUser = User::first();
+
+        if (!$site || !$adminUser) {
+            $this->command?->warn('Skipping sample content: run DatabaseSeeder first.');
+            return;
+        }
+
+        // Create (or reuse) additional test users
+        $editorUser = User::firstOrCreate(
+            ['email' => 'editor@rosettacms.com'],
+            [
+                'name' => 'Editor User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $authorUser = User::firstOrCreate(
+            ['email' => 'author@rosettacms.com'],
+            [
+                'name' => 'Author User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $subscriberUser = User::firstOrCreate(
+            ['email' => 'subscriber@example.com'],
+            [
+                'name' => 'Subscriber User',
+                'password' => Hash::make('password'),
+            ]
+        );
+
+        // Assign roles to additional users without duplicating pivots
+        $editorRole = \App\Models\Role::where('slug', 'editor')->first();
+        $authorRole = \App\Models\Role::where('slug', 'author')->first();
+        $subscriberRole = \App\Models\Role::where('slug', 'subscriber')->first();
+
+        if ($editorRole) {
+            $editorUser->roles()->syncWithoutDetaching([$editorRole->id]);
+        }
+
+        if ($authorRole) {
+            $authorUser->roles()->syncWithoutDetaching([$authorRole->id]);
+        }
+
+        if ($subscriberRole) {
+            $subscriberUser->roles()->syncWithoutDetaching([$subscriberRole->id]);
+        }
 
         // Create taxonomies (with site_id)
         $categoryTaxonomy = Taxonomy::firstOrCreate(
             ['slug' => 'category', 'site_id' => $site->id, 'type' => 'category'],
             ['name' => 'Category', 'description' => 'Category taxonomy']
         );
-        
+
         $tagTaxonomy = Taxonomy::firstOrCreate(
             ['slug' => 'post_tag', 'site_id' => $site->id, 'type' => 'post_tag'],
             ['name' => 'Tags', 'description' => 'Tag taxonomy']
@@ -37,7 +86,7 @@ class SampleContentSeeder extends Seeder
             ['slug' => 'technology', 'taxonomy_id' => $categoryTaxonomy->id],
             ['name' => 'Technology', 'description' => 'Tech news and reviews']
         );
-        
+
         $businessCategory = Term::firstOrCreate(
             ['slug' => 'business', 'taxonomy_id' => $categoryTaxonomy->id],
             ['name' => 'Business', 'description' => 'Business news and analysis']
@@ -48,7 +97,7 @@ class SampleContentSeeder extends Seeder
             ['slug' => 'laravel', 'taxonomy_id' => $tagTaxonomy->id],
             ['name' => 'Laravel', 'description' => 'Laravel PHP framework']
         );
-        
+
         $cmsTag = Term::firstOrCreate(
             ['slug' => 'cms', 'taxonomy_id' => $tagTaxonomy->id],
             ['name' => 'CMS', 'description' => 'Content Management System']
@@ -114,19 +163,20 @@ To empower businesses and individuals to create and manage digital content with 
         ];
 
         foreach ($posts as $postData) {
-            $post = Post::create([
-                'site_id' => $site->id,
-                'user_id' => $user->id,
-                'title' => $postData['title'],
-                'slug' => $postData['slug'],
-                'content' => $postData['content'],
-                'status' => $postData['status'],
-                'post_type' => $postData['post_type'],
-            ]);
+            $post = Post::firstOrCreate(
+                ['slug' => $postData['slug'], 'site_id' => $site->id],
+                [
+                    'user_id' => $adminUser->id,
+                    'title' => $postData['title'],
+                    'content' => $postData['content'],
+                    'status' => $postData['status'],
+                    'post_type' => $postData['post_type'],
+                ]
+            );
 
-            // Attach categories and tags
+            // Attach categories and tags without duplicating pivots
             if ($postData['post_type'] === 'post') {
-                $post->terms()->attach([$techCategory->id, $laravelTag->id]);
+                $post->terms()->syncWithoutDetaching([$techCategory->id, $laravelTag->id]);
             }
         }
 
@@ -149,11 +199,13 @@ To empower businesses and individuals to create and manage digital content with 
         ];
 
         foreach ($media as $mediaData) {
-            Media::create([
-                'site_id' => $site->id,
-                'user_id' => $user->id,
-                ...$mediaData,
-            ]);
+            Media::firstOrCreate(
+                ['file_path' => $mediaData['file_path'], 'site_id' => $site->id],
+                [
+                    'user_id' => $adminUser->id,
+                    ...$mediaData,
+                ]
+            );
         }
     }
 }

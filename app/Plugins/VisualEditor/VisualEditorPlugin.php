@@ -3,7 +3,6 @@
 namespace RosettaCMS\Plugins\VisualEditor;
 
 use RosettaCMS\Plugin;
-use Illuminate\Support\ServiceProvider;
 
 class VisualEditorPlugin extends Plugin
 {
@@ -24,22 +23,5 @@ class VisualEditorPlugin extends Plugin
     {
         // Register service provider
         $this->app->register(VisualEditorServiceProvider::class);
-        
-        // Publish assets
-        $this->publishAssets();
-    }
-
-    /**
-     * Publish plugin assets.
-     */
-    protected function publishAssets(): void
-    {
-        $this->publishes([
-            __DIR__.'/../Resources/assets' => public_path('plugins/visual-editor'),
-        ], 'visual-editor-assets');
-        
-        $this->publishes([
-            __DIR__.'/../Resources/views' => resource_path('views/vendor/visual-editor'),
-        ], 'visual-editor-views');
     }
 }

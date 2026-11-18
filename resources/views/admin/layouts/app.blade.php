@@ -1,3 +1,8 @@
+@php
+    // Ensure the layout always has settings available, even for views whose
+    // controller does not explicitly pass them.
+    $settings = $settings ?? \App\Models\SiteSetting::forSite();
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,23 +16,32 @@
         {{ $seo }}
     @endif
     
+    <!-- Favicon -->
+    @if($settings->favicon_url ?? null)
+        <link rel="icon" href="{{ $settings->favicon_url }}">
+        <link rel="apple-touch-icon" href="{{ $settings->favicon_url }}">
+    @endif
+    
     <!-- Styles -->
     @stack('styles')
     
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <style>
         :root {
-            --primary-color: #3b82f6;
-            --secondary-color: #6b7280;
-            --success-color: #10b981;
+            --primary-color: {{ $settings->primary_color ?? '#3b82f6' }};
+            --secondary-color: {{ $settings->secondary_color ?? '#6b7280' }};
+            --success-color: {{ $settings->accent_color ?? '#10b981' }};
             --danger-color: #ef4444;
             --warning-color: #f59e0b;
             --info-color: #06b6d4;
-            --dark-color: #1f2937;
-            --light-color: #f3f4f6;
+            --dark-color: {{ $settings->text_color ?? '#1f2937' }};
+            --light-color: {{ $settings->bg_color ?? '#ffffff' }};
             
-            --bg-color: #ffffff;
-            --text-color: #1f2937;
-            --border-color: #e5e7eb;
+            --bg-color: {{ $settings->bg_color ?? '#ffffff' }};
+            --text-color: {{ $settings->text_color ?? '#1f2937' }};
+            --border-color: {{ $settings->border_color ?? '#e5e7eb' }};
         }
         
         * {
@@ -44,7 +58,8 @@
             overflow-x: hidden;
         }
         
-        .container {
+        /* Admin Layout Container - avoid Bootstrap .container conflict */
+        .admin-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
@@ -52,12 +67,12 @@
             gap: 2rem;
         }
         
-        .container > .sidebar {
+        .admin-container > .sidebar {
             flex: 0 0 250px;
             order: 1;
         }
         
-        .container > .main-content {
+        .admin-container > .main-content {
             flex: 1;
             order: 2;
         }
@@ -269,6 +284,31 @@
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
+        
+        /* Theme Preview Styles */
+        .theme-preview-container {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+            background: #f3f4f6;
+        }
+        
+        .theme-preview {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+            transition: transform 0.3s ease;
+        }
+        
+        .theme-card:hover .theme-preview {
+            transform: scale(1.05);
+        }
+        
+        .bg-gradient {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+        }
     </style>
     
     @yield('styles')
@@ -277,21 +317,32 @@
     <header>
         <div class="container header-content">
             <div class="logo">
-                <a href="{{ url('/') }}">Rosetta CMS</a>
+                @if($settings->logo_url ?? null)
+                    <a href="{{ url('/') }}">
+                        <img src="{{ $settings->logo_url }}" alt="{{ $settings->logo_text ?? $settings->site_name ?? 'Rosetta CMS' }}" style="max-height: 32px; height: 32px; object-fit: contain;">
+                    </a>
+                @else
+                    <a href="{{ url('/') }}">{{ $settings->logo_text ?? $settings->site_name ?? 'Rosetta CMS' }}</a>
+                @endif
             </div>
             <nav>
                 <ul>
                     <li><a href="{{ url('/') }}">Public Site</a></li>
                     <li><a href="{{ url('/dashboard') }}">Dashboard</a></li>
-                    <li><a href="{{ url('/admin/logout') }}">Logout</a></li>
+                    <li>
+                        <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+                            @csrf
+                            <button type="submit" style="background: none; border: none; color: white; cursor: pointer; font-family: inherit;">Logout</button>
+                        </form>
+                    </li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <div class="container">
+    <div class="admin-container">
         <div class="sidebar">
-            <a href="{{ url('/admin') }}" class="{{ request()->is('admin') ? 'active' : '' }}">Dashboard</a>
+            <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') || request()->is('admin') ? 'active' : '' }}">Dashboard</a>
             
             <div class="sidebar-group">
                 <a href="{{ url('/admin/posts') }}" class="{{ request()->is('admin/posts*') ? 'active' : '' }}">Posts</a>
@@ -303,9 +354,12 @@
                 </div>
             </div>
             
+            <a href="{{ url('/admin/users') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}">Users</a>
             <a href="{{ url('/admin/pages') }}" class="{{ request()->is('admin/pages*') ? 'active' : '' }}">Pages</a>
             <a href="{{ url('/admin/media') }}" class="{{ request()->is('admin/media*') ? 'active' : '' }}">Media</a>
+            <a href="{{ url('/admin/menus') }}" class="{{ request()->is('admin/menus*') ? 'active' : '' }}">Menus</a>
             <a href="{{ url('/admin/sites') }}" class="{{ request()->is('admin/sites*') ? 'active' : '' }}">Sites</a>
+            <a href="{{ url('/admin/themes') }}" class="{{ request()->is('admin/themes*') ? 'active' : '' }}">Themes</a>
             <a href="{{ url('/admin/settings') }}" class="{{ request()->is('admin/settings*') ? 'active' : '' }}">Settings</a>
         </div>
         
@@ -316,6 +370,9 @@
     
     <div class="clearfix"></div>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     @stack('scripts')
 </body>
 </html>

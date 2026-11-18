@@ -83,6 +83,14 @@ class Comment extends Model
     }
 
     /**
+     * Scope a query to only include rejected comments.
+     */
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'rejected');
+    }
+
+    /**
      * Check if the comment is from a guest (no user).
      */
     public function isFromGuest(): bool

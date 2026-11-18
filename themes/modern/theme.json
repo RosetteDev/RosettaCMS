@@ -1,0 +1,34 @@
+{
+    "name": "Modern Minimal",
+    "slug": "modern",
+    "version": "1.0.0",
+    "description": "Clean, modern design with minimal distractions",
+    "author": "Rosetta CMS Team",
+    "author_url": "https://rosetta-cms.com",
+    "screenshot": "screenshot.png",
+    "preview_url": null,
+    "supports": {
+        "features": ["menu", "widgets", "customizer", "thumbnails"],
+        "layouts": ["one-column", "sidebar-left", "sidebar-right"],
+        "post_types": ["post", "page"]
+    },
+    "settings": {
+        "primary_color": "#1a1a1a",
+        "secondary_color": "#666666",
+        "accent_color": "#f59e0b",
+        "background_color": "#fcfcfc",
+        "text_color": "#333333",
+        "font_family": "Inter, system-ui, sans-serif",
+        "container_width": "900px"
+    },
+    "assets": {
+        "css": ["css/style.css"],
+        "js": ["js/main.js"]
+    },
+    "views": {
+        "layouts": ["layouts/app"],
+        "pages": ["pages/home", "pages/about", "pages/contact", "pages/single"],
+        "posts": ["posts/single", "posts/archive", "posts/category", "posts/tag"],
+        "partials": ["partials/header", "partials/footer", "partials/navigation"]
+    }
+}

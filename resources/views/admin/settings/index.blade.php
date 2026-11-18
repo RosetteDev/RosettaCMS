@@ -3,212 +3,622 @@
 @section('title', 'Settings')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Settings</h1>
+    <!-- Admin Header -->
+    <div class="hero">
+        <div class="container">
+            <h1>Settings</h1>
+            <p>Configure your site's global settings</p>
+        </div>
     </div>
 
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        <div class="alert alert-success">
             {{ session('success') }}
         </div>
     @endif
 
-    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
-        <form action="{{ route('admin.settings.update') }}" method="POST">
-            @csrf
-            @method('PUT')
-            
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Site Information</h2>
-            
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="site_name">
-                    Site Name *
-                </label>
-                <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('site_name') border-red-500 @enderror" 
-                       id="site_name" 
-                       type="text" 
-                       name="site_name" 
-                       value="{{ old('site_name', $settings->site_name ?? '') }}" 
-                       required 
-                       placeholder="Rosetta CMS">
-                
-                @error('site_name')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
+    <div class="container" style="max-width: 1200px; padding: 2rem;">
+        <div style="display: flex; gap: 2rem;">
+            <!-- Sidebar Navigation -->
+            <div style="width: 250px; flex-shrink: 0;">
+                <div style="background-color: var(--light-color); border-radius: 8px; padding: 1rem;">
+                    <h3 style="font-size: 0.85rem; font-weight: bold; color: var(--text-color); text-transform: uppercase; margin-bottom: 1rem;">Settings Navigation</h3>
+                    <nav style="display: flex; flex-direction: column; gap: 0.25rem;">
+                        <a href="#site-info" class="settings-nav-item settings-nav-active" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: white; background-color: var(--primary-color);">Site Information</a>
+                        <a href="#layout" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Layout Options</a>
+                        <a href="#home-page" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Home Page</a>
+                        <a href="#comments" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Comments</a>
+                        <a href="#spam" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Spam Protection</a>
+                        <a href="#display" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Display</a>
+                        <a href="#general" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">General</a>
+                        <a href="#permalink" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Permalinks</a>
+                        <a href="#seo" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">SEO</a>
+                        <a href="#security" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Security</a>
+                    </nav>
+                </div>
             </div>
-            
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="site_description">
-                    Site Description
-                </label>
-                <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('site_description') border-red-500 @enderror" 
-                          id="site_description" 
-                          name="site_description" 
-                          rows="3" 
-                          placeholder="A modern, flexible content management system...">{{ old('site_description', $settings->site_description ?? '') }}</textarea>
-                
-                @error('site_description')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
+
+            <!-- Settings Form -->
+            <div style="flex: 1;">
+                <div style="background-color: var(--light-color); border-radius: 8px; padding: 2rem;">
+                    <form action="{{ route('admin.settings.update') }}" method="POST">
+                        @csrf
+                        @method('PUT')
+
+                        <div id="site-info">
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 1.5rem;">Site Information</h2>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="site_name">
+                                    Site Name *
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="site_name" 
+                                       type="text" 
+                                       name="site_name" 
+                                       value="{{ old('site_name', $settings->site_name ?? '') }}" 
+                                       required 
+                                       placeholder="Rosetta CMS">
+
+                                @error('site_name')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="site_description">
+                                    Site Description
+                                </label>
+                                <textarea style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; min-height: 100px;" 
+                                          id="site_description" 
+                                          name="site_description"
+                                          placeholder="A modern, flexible content management system...">{{ old('site_description', $settings->site_description ?? '') }}</textarea>
+
+                                @error('site_description')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="admin_email">
+                                    Admin Email *
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="admin_email" 
+                                       type="email" 
+                                       name="admin_email" 
+                                       value="{{ old('admin_email', $settings->admin_email ?? '') }}" 
+                                       required 
+                                       placeholder="admin@rosettacms.com">
+
+                                @error('admin_email')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div id="comments" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 1.5rem;">Comments Settings</h2>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="disable_comments" value="0">
+                                    <input type="checkbox" name="disable_comments" value="1" {{ old('disable_comments', $settings->disable_comments ?? 0) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <span style="color: var(--text-color);">Disable comments on all posts</span>
+                                </label>
+                            </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="enable_comment_approval" value="0">
+                                    <input type="checkbox" name="enable_comment_approval" value="1" {{ old('enable_comment_approval', $settings->enable_comment_approval ?? 1) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <div>
+                                        <span style="color: var(--text-color);">Require manual approval for guest comments</span>
+                                        <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.25rem;">Comments from registered users will auto-publish.</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="spam" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 1.5rem;">Spam Protection</h2>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="enable_akismet" value="0">
+                                    <input type="checkbox" name="enable_akismet" value="1" {{ old('enable_akismet', $settings->enable_akismet ?? 0) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <span style="color: var(--text-color);">Enable Akismet spam filtering</span>
+                                </label>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="akismet_api_key">
+                                    Akismet API Key
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="akismet_api_key" 
+                                       type="text" 
+                                       name="akismet_api_key" 
+                                       value="{{ old('akismet_api_key', $settings->akismet_api_key ?? '') }}" 
+                                       placeholder="Enter your Akismet API key">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Get your API key from <a href="https://akismet.com" target="_blank" style="color: var(--primary-color); text-decoration: none;">akismet.com</a></p>
+
+                                @error('akismet_api_key')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="spam_keywords">
+                                    Blocked Keywords (comma-separated)
+                                </label>
+                                <textarea style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; min-height: 100px;" 
+                                          id="spam_keywords" 
+                                          name="spam_keywords"
+                                          placeholder="viagra, cialis, lotto">{{ old('spam_keywords', $settings->spam_keywords ?? '') }}</textarea>
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Comments containing these keywords will be marked as spam.</p>
+
+                                @error('spam_keywords')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="rate_limit_enabled" value="0">
+                                    <input type="checkbox" name="rate_limit_enabled" value="1" {{ old('rate_limit_enabled', $settings->rate_limit_enabled ?? 1) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <span style="color: var(--text-color);">Enable comment rate limiting</span>
+                                </label>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="rate_limit_per_minute">
+                                    Comments per minute limit
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="rate_limit_per_minute" 
+                                       type="number" 
+                                       name="rate_limit_per_minute" 
+                                       value="{{ old('rate_limit_per_minute', $settings->rate_limit_per_minute ?? 3) }}" 
+                                       min="1" 
+                                       max="100">
+
+                                @error('rate_limit_per_minute')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="captcha_enabled" value="0">
+                                    <input type="checkbox" name="captcha_enabled" value="1" {{ old('captcha_enabled', $settings->captcha_enabled ?? 0) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <span style="color: var(--text-color);">Enable CAPTCHA for guest comments</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="display" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 1.5rem;">Display Settings</h2>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="posts_per_page">
+                                    Posts Per Page
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="posts_per_page" 
+                                       type="number" 
+                                       name="posts_per_page" 
+                                       value="{{ old('posts_per_page', $settings->posts_per_page ?? 10) }}" 
+                                       min="1" 
+                                       max="100">
+
+                                @error('posts_per_page')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="theme">
+                                    Theme
+                                </label>
+                                <select style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                        id="theme" 
+                                        name="theme">
+                                    <option value="rosetta" {{ (old('theme', $settings->theme ?? 'rosetta') === 'rosetta') ? 'selected' : '' }}>Rosetta (Default)</option>
+                                    <option value="modern" {{ (old('theme', $settings->theme ?? 'rosetta') === 'modern') ? 'selected' : '' }}>Modern</option>
+                                    <option value="elegant" {{ (old('theme', $settings->theme ?? 'rosetta') === 'elegant') ? 'selected' : '' }}>Elegant</option>
+                                </select>
+
+                                @error('theme')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Choose your site's theme. You can customize colors and fonts in the Layout Options section below.</p>
+                            </div>
+                        </div>
+
+                        <div id="theme-options" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 1.5rem;">Theme Customization</h2>
+                            
+                            <!-- Font Family -->
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="font_family">
+                                    Font Family
+                                </label>
+                                <select style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                        id="font_family" 
+                                        name="font_family">
+                                    <option value="system-ui, sans-serif" {{ (old('font_family', $settings->font_family ?? 'system-ui, sans-serif') === 'system-ui, sans-serif') ? 'selected' : '' }}>System Sans Serif (Default)</option>
+                                    <option value="Georgia, 'Times New Roman', serif" {{ (old('font_family', $settings->font_family ?? 'system-ui, sans-serif') === 'Georgia, \'Times New Roman\', serif') ? 'selected' : '' }}>Georgia / Times New Roman</option>
+                                    <option value="Inter, system-ui, sans-serif" {{ (old('font_family', $settings->font_family ?? 'system-ui, sans-serif') === 'Inter, system-ui, sans-serif') ? 'selected' : '' }}>Inter (Modern)</option>
+                                    <option value="Arial, Helvetica, sans-serif" {{ (old('font_family', $settings->font_family ?? 'system-ui, sans-serif') === 'Arial, Helvetica, sans-serif') ? 'selected' : '' }}>Arial (Clean)</option>
+                                    <option value="'Courier New', Courier, monospace" {{ (old('font_family', $settings->font_family ?? 'system-ui, sans-serif') === '\'Courier New\', Courier, monospace') ? 'selected' : '' }}>Courier New (Monospace)</option>
+                                </select>
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Select the font family for your site's text.</p>
+                            </div>
+                            
+                            <!-- Container Width -->
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="container_width">
+                                    Container Width
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="container_width" 
+                                       type="text" 
+                                       name="container_width" 
+                                       value="{{ old('container_width', $settings->container_width ?? '1200px') }}" 
+                                       placeholder="1200px">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Maximum width for your site's content container.</p>
+                            </div>
+                        </div>
+
+                        <div id="layout" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 1.5rem;">Layout Options</h2>
+                            
+                            <!-- Logo Settings -->
+                            <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-color); margin-bottom: 1rem;">Logo</h3>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="logo_url">
+                                        Logo Image URL
+                                    </label>
+                                    <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                           id="logo_url" 
+                                           type="text" 
+                                           name="logo_url" 
+                                           value="{{ old('logo_url', $settings->logo_url ?? '') }}" 
+                                           placeholder="https://example.com/logo.png">
+                                    <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Enter the URL to your logo image. Leave empty to use text logo.</p>
+                                </div>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="logo_text">
+                                        Logo Text
+                                    </label>
+                                    <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                           id="logo_text" 
+                                           type="text" 
+                                           name="logo_text" 
+                                           value="{{ old('logo_text', $settings->logo_text ?? '') }}" 
+                                           placeholder="My Website">
+                                    <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Text to display as logo if no image is provided.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Favicon/App Icon -->
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="favicon_url">
+                                    Favicon / App Icon URL
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="favicon_url" 
+                                       type="text" 
+                                       name="favicon_url" 
+                                       value="{{ old('favicon_url', $settings->favicon_url ?? '') }}" 
+                                       placeholder="https://example.com/favicon.ico">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Enter the URL to your favicon (16x16 or 32x32 PNG, ICO, or SVG).</p>
+                            </div>
+                            
+                            <!-- Color Palette -->
+                            <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-color); margin-bottom: 1rem;">Color Palette</h3>
+                                
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="primary_color">
+                                            Primary Color
+                                        </label>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                            <input type="color" name="primary_color" value="{{ old('primary_color', $settings->primary_color ?? '#3b82f6') }}" style="width: 50px; height: 40px; border: none; cursor: pointer;">
+                                            <input style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                                   type="text" 
+                                                   name="primary_color" 
+                                                   value="{{ old('primary_color', $settings->primary_color ?? '#3b82f6') }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="secondary_color">
+                                            Secondary Color
+                                        </label>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                            <input type="color" name="secondary_color" value="{{ old('secondary_color', $settings->secondary_color ?? '#6b7280') }}" style="width: 50px; height: 40px; border: none; cursor: pointer;">
+                                            <input style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                                   type="text" 
+                                                   name="secondary_color" 
+                                                   value="{{ old('secondary_color', $settings->secondary_color ?? '#6b7280') }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="accent_color">
+                                            Accent Color
+                                        </label>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                            <input type="color" name="accent_color" value="{{ old('accent_color', $settings->accent_color ?? '#10b981') }}" style="width: 50px; height: 40px; border: none; cursor: pointer;">
+                                            <input style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                                   type="text" 
+                                                   name="accent_color" 
+                                                   value="{{ old('accent_color', $settings->accent_color ?? '#10b981') }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="text_color">
+                                            Text Color
+                                        </label>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                            <input type="color" name="text_color" value="{{ old('text_color', $settings->text_color ?? '#1f2937') }}" style="width: 50px; height: 40px; border: none; cursor: pointer;">
+                                            <input style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                                   type="text" 
+                                                   name="text_color" 
+                                                   value="{{ old('text_color', $settings->text_color ?? '#1f2937') }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="bg_color">
+                                            Background Color
+                                        </label>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                            <input type="color" name="bg_color" value="{{ old('bg_color', $settings->bg_color ?? '#ffffff') }}" style="width: 50px; height: 40px; border: none; cursor: pointer;">
+                                            <input style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                                   type="text" 
+                                                   name="bg_color" 
+                                                   value="{{ old('bg_color', $settings->bg_color ?? '#ffffff') }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="border_color">
+                                            Border Color
+                                        </label>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                            <input type="color" name="border_color" value="{{ old('border_color', $settings->border_color ?? '#e5e7eb') }}" style="width: 50px; height: 40px; border: none; cursor: pointer;">
+                                            <input style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                                   type="text" 
+                                                   name="border_color" 
+                                                   value="{{ old('border_color', $settings->border_color ?? '#e5e7eb') }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 1rem;">
+                                    These colors will be used throughout the site to customize the look and feel.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div id="home-page" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 1.5rem;">Home Page</h2>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="home_post_id">
+                                    Select Homepage
+                                </label>
+                                <select style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                        id="home_post_id" 
+                                        name="home_post_id">
+                                    <option value="">-- Select a page to display as homepage --</option>
+                                    @foreach($pages as $page)
+                                        <option value="{{ $page->id }}" {{ old('home_post_id', $settings->home_post_id ?? '') == $page->id ? 'selected' : '' }}>
+                                            {{ $page->title }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">
+                                    Choose a published page to display as your site's homepage. If no page is selected, the default welcome page will be displayed.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div id="general" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 1.5rem;">General Settings</h2>
+                        </div>
+
+                        <div id="permalink" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-color); margin-bottom: 1.5rem;">Permalink Options</h3>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.75rem; font-weight: 500; color: var(--text-color);">Permalink Structure</label>
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <label style="padding: 1rem; border: 2px solid {{ old('permalink_structure', $settings->permalink_structure ?? 'post_name') == 'post_name' ? 'var(--primary-color)' : 'var(--border-color)' }}; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 1rem;">
+                                        <input type="radio" name="permalink_structure" value="post_name" {{ old('permalink_structure', $settings->permalink_structure ?? 'post_name') == 'post_name' ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                        <div>
+                                            <span style="font-weight: 600; color: var(--text-color); display: block;">Post name</span>
+                                            <span style="font-size: 0.875rem; color: var(--text-color);">https://example.com/sample-post/</span>
+                                        </div>
+                                    </label>
+
+                                    <label style="padding: 1rem; border: 2px solid {{ old('permalink_structure', $settings->permalink_structure ?? 'post_name') == 'date_and_name' ? 'var(--primary-color)' : 'var(--border-color)' }}; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 1rem;">
+                                        <input type="radio" name="permalink_structure" value="date_and_name" {{ old('permalink_structure', $settings->permalink_structure ?? 'post_name') == 'date_and_name' ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                        <div>
+                                            <span style="font-weight: 600; color: var(--text-color); display: block;">Date and name</span>
+                                            <span style="font-size: 0.875rem; color: var(--text-color);">https://example.com/2024/01/01/sample-post/</span>
+                                        </div>
+                                    </label>
+
+                                    <label style="padding: 1rem; border: 2px solid {{ old('permalink_structure', $settings->permalink_structure ?? 'post_name') == 'numeric' ? 'var(--primary-color)' : 'var(--border-color)' }}; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 1rem;">
+                                        <input type="radio" name="permalink_structure" value="numeric" {{ old('permalink_structure', $settings->permalink_structure ?? 'post_name') == 'numeric' ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                        <div>
+                                            <span style="font-weight: 600; color: var(--text-color); display: block;">Numeric</span>
+                                            <span style="font-size: 0.875rem; color: var(--text-color);">https://example.com/123/</span>
+                                        </div>
+                                    </label>
+
+                                    <label style="padding: 1rem; border: 2px solid {{ old('permalink_structure', $settings->permalink_structure ?? 'post_name') == 'custom' ? 'var(--primary-color)' : 'var(--border-color)' }}; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 1rem;">
+                                        <input type="radio" name="permalink_structure" value="custom" {{ old('permalink_structure', $settings->permalink_structure ?? 'post_name') == 'custom' ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                        <div style="flex: 1;">
+                                            <span style="font-weight: 600; color: var(--text-color); display: block;">Custom structure</span>
+                                            <input type="text" name="custom_permalink" value="{{ old('custom_permalink', $settings->custom_permalink ?? '/%postname%/') }}" style="margin-top: 0.5rem; width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.875rem;">
+                                            <span style="font-size: 0.875rem; color: var(--text-color); display: block; margin-top: 0.25rem;">
+                                                Tags: <code>%postname%</code>, <code>%year%</code>, <code>%monthnum%</code>, <code>%day%</code>, <code>%category%</code>, <code>%author%</code>
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="seo" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-color); margin-bottom: 1.5rem;">SEO Settings</h3>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="seo_title_suffix">
+                                    SEO Title Suffix
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="seo_title_suffix" 
+                                       type="text" 
+                                       name="seo_title_suffix" 
+                                       value="{{ old('seo_title_suffix', $settings->seo_title_suffix ?? ' | Rosetta CMS') }}" 
+                                       placeholder="| Site Name">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">This will be appended to all page titles. Use %s as a placeholder for the page title.</p>
+
+                                @error('seo_title_suffix')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="seo_default_keywords">
+                                    Default SEO Keywords
+                                </label>
+                                <textarea style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; min-height: 100px;" 
+                                          id="seo_default_keywords" 
+                                          name="seo_default_keywords"
+                                          placeholder="keyword1, keyword2, keyword3">{{ old('seo_default_keywords', $settings->seo_default_keywords ?? '') }}</textarea>
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Comma-separated list of default keywords for your site.</p>
+
+                                @error('seo_default_keywords')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="enable_xml_sitemap" value="0">
+                                    <input type="checkbox" name="enable_xml_sitemap" value="1" {{ old('enable_xml_sitemap', $settings->enable_xml_sitemap ?? 1) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <div>
+                                        <span style="color: var(--text-color);">Enable XML Sitemap</span>
+                                        <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.25rem;">Automatically generate and serve an XML sitemap at <code>/sitemap.xml</code>.</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="security" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-color); margin-bottom: 1.5rem;">Security Settings</h3>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(220, 38, 38, 0.1); border-left: 4px solid var(--error-color); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="enable_debug_mode" value="0">
+                                    <input type="checkbox" name="enable_debug_mode" value="1" {{ old('enable_debug_mode', $settings->enable_debug_mode ?? 0) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px; accent-color: var(--error-color);">
+                                    <div>
+                                        <span style="color: var(--text-color); font-weight: 500;">Enable Debug Mode</span>
+                                        <p style="font-size: 0.875rem; color: var(--error-color); margin-top: 0.25rem;">⚠️ Only enable on development environments. Displays detailed error messages.</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="disable_file_editor" value="0">
+                                    <input type="checkbox" name="disable_file_editor" value="1" {{ old('disable_file_editor', $settings->disable_file_editor ?? 0) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <div>
+                                        <span style="color: var(--text-color);">Disable File Editor</span>
+                                        <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.25rem;">Disable the built-in theme and plugin file editor for security.</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="max_upload_size">
+                                    Maximum Upload Size (MB)
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="max_upload_size" 
+                                       type="number" 
+                                       name="max_upload_size" 
+                                       value="{{ old('max_upload_size', $settings->max_upload_size ?? 10) }}" 
+                                       min="1" 
+                                       max="1000">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Maximum file size for uploads in megabytes.</p>
+
+                                @error('max_upload_size')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="enable_user_registration" value="0">
+                                    <input type="checkbox" name="enable_user_registration" value="1" {{ old('enable_user_registration', $settings->enable_user_registration ?? 1) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <div>
+                                        <span style="color: var(--text-color);">Enable User Registration</span>
+                                        <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.25rem;">Allow new users to register through the registration form.</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                            <a href="{{ route('dashboard') }}" style="color: var(--text-color); text-decoration: none;">Cancel</a>
+                            <button type="submit" style="background-color: var(--primary-color); color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-size: 1rem; font-weight: 500; cursor: pointer;">
+                                Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="admin_email">
-                    Admin Email *
-                </label>
-                <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('admin_email') border-red-500 @enderror" 
-                       id="admin_email" 
-                       type="email" 
-                       name="admin_email" 
-                       value="{{ old('admin_email', $settings->admin_email ?? '') }}" 
-                       required 
-                       placeholder="admin@rosettacms.com">
-                
-                @error('admin_email')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <h2 class="text-xl font-bold text-gray-800 mb-4 mt-6">Comments Settings</h2>
-            
-            <div class="mb-4">
-                <label class="flex items-center">
-                    <input type="hidden" name="disable_comments" value="0">
-                    <input type="checkbox" name="disable_comments" value="1" {{ old('disable_comments', $settings->disable_comments ?? 0) ? 'checked' : '' }} class="mr-2">
-                    <span class="text-gray-700">Disable comments on all posts</span>
-                </label>
-            </div>
-            
-            <div class="mb-4">
-                <label class="flex items-center">
-                    <input type="hidden" name="enable_comment_approval" value="0">
-                    <input type="checkbox" name="enable_comment_approval" value="1" {{ old('enable_comment_approval', $settings->enable_comment_approval ?? 1) ? 'checked' : '' }} class="mr-2">
-                    <span class="text-gray-700">Require manual approval for guest comments</span>
-                </label>
-                <p class="text-sm text-gray-600 mt-1">Comments from registered users will auto-publish.</p>
-            </div>
-            
-            <h2 class="text-xl font-bold text-gray-800 mb-4 mt-6">Spam Protection</h2>
-            
-            <div class="mb-4">
-                <label class="flex items-center">
-                    <input type="hidden" name="enable_akismet" value="0">
-                    <input type="checkbox" name="enable_akismet" value="1" {{ old('enable_akismet', $settings->enable_akismet ?? 0) ? 'checked' : '' }} class="mr-2">
-                    <span class="text-gray-700">Enable Akismet spam filtering</span>
-                </label>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="akismet_api_key">
-                    Akismet API Key
-                </label>
-                <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('akismet_api_key') border-red-500 @enderror" 
-                       id="akismet_api_key" 
-                       type="text" 
-                       name="akismet_api_key" 
-                       value="{{ old('akismet_api_key', $settings->akismet_api_key ?? '') }}" 
-                       placeholder="Enter your Akismet API key">
-                <p class="text-sm text-gray-600 mt-1">Get your API key from <a href="https://akismet.com" target="_blank" class="text-blue-600 hover:underline">akismet.com</a></p>
-                
-                @error('akismet_api_key')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="spam_keywords">
-                    Blocked Keywords (comma-separated)
-                </label>
-                <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('spam_keywords') border-red-500 @enderror" 
-                          id="spam_keywords" 
-                          name="spam_keywords" 
-                          rows="3" 
-                          placeholder="viagra, cialis, lotto">{{ old('spam_keywords', $settings->spam_keywords ?? '') }}</textarea>
-                <p class="text-sm text-gray-600 mt-1">Comments containing these keywords will be marked as spam.</p>
-                
-                @error('spam_keywords')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div class="mb-4">
-                <label class="flex items-center">
-                    <input type="hidden" name="rate_limit_enabled" value="0">
-                    <input type="checkbox" name="rate_limit_enabled" value="1" {{ old('rate_limit_enabled', $settings->rate_limit_enabled ?? 1) ? 'checked' : '' }} class="mr-2">
-                    <span class="text-gray-700">Enable comment rate limiting</span>
-                </label>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="rate_limit_per_minute">
-                    Comments per minute limit
-                </label>
-                <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('rate_limit_per_minute') border-red-500 @enderror" 
-                       id="rate_limit_per_minute" 
-                       type="number" 
-                       name="rate_limit_per_minute" 
-                       value="{{ old('rate_limit_per_minute', $settings->rate_limit_per_minute ?? 3) }}" 
-                       min="1" 
-                       max="100">
-                <p class="text-sm text-gray-600 mt-1">Maximum comments a user can post per minute.</p>
-                
-                @error('rate_limit_per_minute')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div class="mb-4">
-                <label class="flex items-center">
-                    <input type="hidden" name="captcha_enabled" value="0">
-                    <input type="checkbox" name="captcha_enabled" value="1" {{ old('captcha_enabled', $settings->captcha_enabled ?? 0) ? 'checked' : '' }} class="mr-2">
-                    <span class="text-gray-700">Enable CAPTCHA for guest comments</span>
-                </label>
-            </div>
-            
-            <h2 class="text-xl font-bold text-gray-800 mb-4 mt-6">Display Settings</h2>
-            
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="posts_per_page">
-                    Posts Per Page
-                </label>
-                <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('posts_per_page') border-red-500 @enderror" 
-                       id="posts_per_page" 
-                       type="number" 
-                       name="posts_per_page" 
-                       value="{{ old('posts_per_page', $settings->posts_per_page ?? 10) }}" 
-                       min="1" 
-                       max="100">
-                
-                @error('posts_per_page')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div class="mb-6">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="theme">
-                    Theme
-                </label>
-                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('theme') border-red-500 @enderror" 
-                        id="theme" 
-                        name="theme">
-                    <option value="rosetta" {{ (old('theme', $settings->theme ?? 'rosetta') === 'rosetta') ? 'selected' : '' }}>Rosetta (Default)</option>
-                </select>
-                
-                @error('theme')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div class="flex items-center justify-between">
-                <a href="{{ route('dashboard') }}" class="text-gray-600 hover:text-gray-800">
-                    Cancel
-                </a>
-                <button class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition" type="submit">
-                    Save Settings
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
+
+    @push('scripts')
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('.settings-nav-item').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Update active nav item
+                    document.querySelectorAll('.settings-nav-item').forEach(item => {
+                        item.style.backgroundColor = 'transparent';
+                        item.style.color = 'var(--text-color)';
+                    });
+                    
+                    this.style.backgroundColor = 'var(--primary-color)';
+                    this.style.color = 'white';
+                }
+            });
+        });
+    </script>
+    @endpush
 @endsection

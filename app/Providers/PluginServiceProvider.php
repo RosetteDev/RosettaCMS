@@ -3,6 +3,7 @@
 namespace RosettaCMS\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use RosettaCMS\Plugin;
 use RosettaCMS\PluginManager;
 
 class PluginServiceProvider extends ServiceProvider
@@ -12,12 +13,15 @@ class PluginServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton('plugin.manager', function ($app) {
-            return new PluginManager($app);
-        });
+        if (!$this->app->bound('plugin.manager')) {
+            $this->app->singleton('plugin.manager', function ($app) {
+                return new PluginManager($app);
+            });
+        }
 
-        // Boot all registered plugins
-        $this->bootPlugins();
+        if (!$this->app->bound('rosetta.plugins')) {
+            $this->app->alias('plugin.manager', 'rosetta.plugins');
+        }
     }
 
     /**
@@ -25,23 +29,25 @@ class PluginServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->bootPlugins();
+
         // Publish plugin assets
-        $this->publishes([
-            __DIR__.'/../../plugins' => public_path('plugins'),
-        ], 'plugin-assets');
+        if (is_dir(base_path('plugins'))) {
+            $this->publishes([
+                base_path('plugins') => public_path('plugins'),
+            ], 'plugin-assets');
+        }
     }
 
     /**
-     * Boot all registered plugins.
+     * Boot all plugins enabled in config/plugins.php.
      */
     protected function bootPlugins(): void
     {
         $manager = $this->app->make('plugin.manager');
-        $plugins = $manager->scan();
 
-        foreach ($plugins as $name => $plugin) {
-            // Check if plugin should be activated
-            if ($this->shouldActivatePlugin($name)) {
+        foreach ($manager->scan() as $name => $plugin) {
+            if ($this->shouldActivatePlugin($plugin)) {
                 $manager->activate($name);
             }
         }
@@ -49,14 +55,18 @@ class PluginServiceProvider extends ServiceProvider
 
     /**
      * Determine if a plugin should be activated.
-     *
-     * @param string $name
-     * @return bool
      */
-    protected function shouldActivatePlugin(string $name): bool
+    protected function shouldActivatePlugin(Plugin $plugin): bool
     {
-        // Check if plugin is stored as active
-        $activePlugins = config('plugins.active', []);
-        return in_array($name, $activePlugins);
+        $key = $plugin->getKey();
+        $active = config('plugins.active', []);
+
+        if (is_array($active)) {
+            if (in_array($key, $active, true) || in_array($plugin->getName(), $active, true)) {
+                return true;
+            }
+        }
+
+        return (bool) config("plugins.load.{$key}.enabled", false);
     }
 }

@@ -2,6 +2,6 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-    App\Providers\RosettaCMSProvider::class,
-    App\Providers\PluginServiceProvider::class,
+    RosettaCMS\Providers\RosettaCMSProvider::class,
+    RosettaCMS\Providers\PluginServiceProvider::class,
 ];

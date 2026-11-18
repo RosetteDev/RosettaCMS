@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -12,6 +13,9 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        // Get site settings
+        $settings = SiteSetting::forSite();
+        
         // Calculate dashboard stats
         $stats = [
             'total_posts' => \App\Models\Post::count(),
@@ -19,6 +23,8 @@ class DashboardController extends Controller
             'total_media' => \App\Models\Media::count(),
             'total_sites' => \App\Models\Site::count(),
             'total_users' => \App\Models\User::count(),
+            'active_users' => \App\Models\User::whereNotNull('email_verified_at')->count(),
+            'pending_users' => \App\Models\User::whereNull('email_verified_at')->count(),
             'total_comments' => \App\Models\Comment::count(),
             'pending_comments' => \App\Models\Comment::where('status', 'pending')->count(),
             'approved_comments' => \App\Models\Comment::where('status', 'approved')->count(),
@@ -28,6 +34,6 @@ class DashboardController extends Controller
         // Get recent posts
         $recent_posts = \App\Models\Post::orderBy('updated_at', 'desc')->limit(5)->get();
 
-        return view('admin.dashboard', compact('stats', 'recent_posts'));
+        return view('admin.dashboard', compact('stats', 'recent_posts', 'settings'));
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -41,7 +42,9 @@ class CommentController extends Controller
         
         $statistics = $this->getStatistics();
         
-        return view('admin.comments.index', compact('comments', 'status', 'search', 'statistics'));
+        $settings = SiteSetting::forSite();
+        
+        return view('admin.comments.index', compact('comments', 'status', 'search', 'statistics', 'settings'));
     }
     
     /**

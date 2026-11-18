@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -12,7 +13,10 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::withCount('posts')->orderBy('order')->orderBy('name')->get();
-        return view('admin.categories.index', compact('categories'));
+        
+        $settings = SiteSetting::forSite();
+        
+        return view('admin.categories.index', compact('categories', 'settings'));
     }
 
     public function create()

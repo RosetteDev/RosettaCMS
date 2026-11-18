@@ -16,8 +16,8 @@
                 <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
                     @foreach($posts as $post)
                         <div class="card" style="background-color: var(--light-color); border-radius: 8px; overflow: hidden; transition: all 0.3s;">
-                            @if($post->featured_image)
-                                <img src="{{ asset('storage/' . $post->featured_image) }}" alt="{{ $post->title }}" style="width: 100%; height: 200px; object-fit: cover;">
+                            @if($post->featured_image_url)
+                                <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" style="width: 100%; height: 200px; object-fit: cover;">
                             @endif
                             <div style="padding: 1.5rem;">
                                 <div style="margin-bottom: 0.5rem;">
@@ -38,7 +38,7 @@
                                     </a>
                                 </h2>
                                 <p style="color: var(--text-color); margin-bottom: 1rem;">
-                                    {{ Str::limit($post->content, 200) }}
+                                    {{ Str::limit($post->plain_excerpt, 200) }}
                                 </p>
                                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: var(--text-color);">
                                     <span>By {{ $post->author->name ?? 'Author' }}</span>

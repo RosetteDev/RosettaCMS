@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
+use App\Models\Theme;
+
 class Site extends Model
 {
     use HasFactory;
@@ -19,6 +21,9 @@ class Site extends Model
         'locale',
         'currency',
         'is_active',
+        'home_post_id',
+        'theme',
+        'theme_options',
     ];
 
     protected $casts = [
@@ -77,5 +82,46 @@ class Site extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'site_user')->withTimestamps();
+    }
+
+    /**
+     * Get the homepage post for the site.
+     */
+    public function homepage()
+    {
+        return $this->belongsTo(Post::class, 'home_post_id');
+    }
+
+    /**
+     * Get the theme options for the site.
+     */
+    public function getThemeOptionsAttribute()
+    {
+        return json_decode($this->attributes['theme_options'] ?? '[]', true);
+    }
+
+    /**
+     * Get the active theme for the site.
+     */
+    public function getActiveThemeAttribute()
+    {
+        $slug = $this->theme ?? 'rosetta';
+        $themeJsonPath = base_path("themes/{$slug}/theme.json");
+        
+        if (file_exists($themeJsonPath)) {
+            $themeData = json_decode(file_get_contents($themeJsonPath), true);
+            return array_merge($themeData, [
+                'slug' => $slug,
+                'options' => $this->theme_options ?? [],
+            ]);
+        }
+        
+        return [
+            'name' => 'Rosetta',
+            'slug' => 'rosetta',
+            'version' => '1.0.0',
+            'author' => 'Rosetta Dev Team',
+            'options' => $this->theme_options ?? [],
+        ];
     }
 }
