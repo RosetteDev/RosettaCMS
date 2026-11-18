@@ -111,10 +111,13 @@ rosetta-cms/
 │   └── seeders/           # Database seeders
 ├── resources/
 │   └── views/
-│       └── themes/rosetta/ # Default theme
-├── routes/                  # Application routes
-├── storage/                 # Generated files (logs, cache, etc.)
-└── tests/                   # Automated tests
+│       ├── themes/_shared/   # Shared SEO, nav, footer, sitemap, feed
+│       └── themes/rosetta/   # Default public theme views
+├── themes/                   # Packaged themes (theme.json, CSS, screenshots)
+├── wp-content/plugins/       # Drop-in WordPress plugins
+├── routes/                   # Application routes
+├── storage/                  # Generated files (logs, cache, etc.)
+└── tests/                    # Automated tests
 ```
 
 ## Plugins
@@ -134,6 +137,46 @@ Rosetta CMS uses a modular plugin system. Each plugin is located in `app/Plugins
 2. Create a class that extends `RosettaCMS\Plugin`
 3. Register your plugin in `config/plugins.php`
 4. Implement your plugin's functionality
+
+### WordPress Plugins
+
+Rosetta can also run traditional WordPress plugins without modification. Drop a
+plugin folder (or a single PHP file) into `wp-content/plugins` or `plugins/`
+using the standard plugin header:
+
+```php
+<?php
+/**
+ * Plugin Name: My Plugin
+ * Description: Example plugin
+ * Version: 1.0.0
+ */
+add_action('wp_head', function () {
+    echo '<meta name="my-plugin" content="active">';
+});
+```
+
+Then open **Admin → Plugins** and activate it. Activation state is stored in
+`storage/app/wordpress-plugins.json`. The compatibility layer provides actions
+and filters, `wp_head`/`wp_footer`, script and style enqueueing, options,
+escaping helpers, post helpers, template conditionals and shortcodes.
+
+See `wp-content/plugins/rosetta-demo/rosetta-demo.php` for a working example.
+
+## Themes
+
+Themes live in `themes/{slug}` with a `theme.json` manifest, CSS, screenshot and
+optional reference views. Public pages render from
+`resources/views/themes/{slug}` with a fallback to the bundled Rosetta views, so
+a theme can replace only the templates it needs. The active theme is chosen per
+site in **Admin → Themes**, and its palette can be overridden in **Settings**.
+
+## Menus
+
+Menus are managed in **Admin → Menus**. Each menu has a location (`header` or
+`footer`) and contains links to CMS pages or custom URLs. The public theme
+renders the header and footer menus automatically, including one level of
+submenu items.
 
 ## Roadmap
 

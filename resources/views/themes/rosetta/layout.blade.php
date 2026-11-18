@@ -18,9 +18,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @include('themes._shared.seo')
-    @if(function_exists('wp_head'))
-        @php wp_head(); @endphp
-    @endif
     
     <!-- Styles -->
     <link rel="stylesheet" href="{{ asset('themes/' . $theme_slug . '/css/style.css') }}">
@@ -368,6 +365,9 @@
         .pagination { display: flex; gap: .5rem; justify-content: center; margin: 2rem 0; }
         .pagination a, .pagination span { padding: .5rem .85rem; border: 1px solid var(--border-color); border-radius: 6px; text-decoration: none; }
     </style>
+    @if(function_exists('wp_head'))
+        @php wp_head(); @endphp
+    @endif
 </head>
 <body>
     <!-- Navigation -->
