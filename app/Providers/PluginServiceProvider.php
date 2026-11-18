@@ -5,6 +5,7 @@ namespace RosettaCMS\Providers;
 use Illuminate\Support\ServiceProvider;
 use RosettaCMS\Plugin;
 use RosettaCMS\PluginManager;
+use RosettaCMS\Plugins\WordPress\WordPressPluginLoader;
 
 class PluginServiceProvider extends ServiceProvider
 {
@@ -30,6 +31,14 @@ class PluginServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->bootPlugins();
+
+        // Traditional WordPress plugins are loaded after the compatibility
+        // layer (and its global functions) has been registered.
+        try {
+            $this->app->make(WordPressPluginLoader::class)->loadActive();
+        } catch (\Throwable $e) {
+            logger()->error('Unable to load WordPress plugins: ' . $e->getMessage());
+        }
 
         // Publish plugin assets
         if (is_dir(base_path('plugins'))) {

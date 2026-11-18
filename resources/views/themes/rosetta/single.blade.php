@@ -23,6 +23,10 @@
                     @php
                         $content = $post->rendered_content;
 
+                        if (function_exists('apply_filters')) {
+                            $content = apply_filters('the_content', $content);
+                        }
+
                         // Convert YouTube URLs to embedded iframes (handles watch, shorts, and embed URLs)
                         echo preg_replace_callback(
                             '/https?:\/\/(?:www\.)?youtube\.com\/(?:watch\?v=|shorts\/|embed\/)([a-zA-Z0-9_-]{11})/',

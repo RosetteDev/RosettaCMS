@@ -20,6 +20,7 @@ use App\Models\Tag;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\MenuController;
+use App\Http\Controllers\Admin\PluginController;
 use Illuminate\Support\Facades\View;
 
 /*
@@ -194,6 +195,13 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::get('/{slug}', [ThemeController::class, 'edit'])->name('edit');
         Route::post('/{slug}', [ThemeController::class, 'update'])->name('update');
         Route::delete('/{slug}', [ThemeController::class, 'destroy'])->name('destroy');
+    });
+
+    // Plugin management
+    Route::prefix('admin/plugins')->middleware('role:admin')->name('admin.plugins.')->group(function () {
+        Route::get('/', [PluginController::class, 'index'])->name('index');
+        Route::post('/{id}/activate', [PluginController::class, 'activate'])->name('activate');
+        Route::post('/{id}/deactivate', [PluginController::class, 'deactivate'])->name('deactivate');
     });
 
     // Menu management

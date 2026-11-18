@@ -360,6 +360,7 @@
             <a href="{{ url('/admin/menus') }}" class="{{ request()->is('admin/menus*') ? 'active' : '' }}">Menus</a>
             <a href="{{ url('/admin/sites') }}" class="{{ request()->is('admin/sites*') ? 'active' : '' }}">Sites</a>
             <a href="{{ url('/admin/themes') }}" class="{{ request()->is('admin/themes*') ? 'active' : '' }}">Themes</a>
+            <a href="{{ url('/admin/plugins') }}" class="{{ request()->is('admin/plugins*') ? 'active' : '' }}">Plugins</a>
             <a href="{{ url('/admin/settings') }}" class="{{ request()->is('admin/settings*') ? 'active' : '' }}">Settings</a>
         </div>
         
