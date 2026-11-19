@@ -50,6 +50,34 @@ class CoreFeaturesTest extends TestCase
         $this->get('/admin/media/picker')->assertRedirect('/login');
     }
 
+    public function test_a_user_can_reset_their_password_with_a_valid_token(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'reset@example.com',
+            'password' => 'oldpassword',
+        ]);
+
+        $token = \Illuminate\Support\Facades\Password::createToken($user);
+
+        $this->post('/reset-password', [
+            'token' => $token,
+            'email' => $user->email,
+            'password' => 'newpassword123',
+            'password_confirmation' => 'newpassword123',
+        ])->assertRedirect('/login');
+
+        $this->assertTrue(
+            \Illuminate\Support\Facades\Hash::check('newpassword123', $user->fresh()->password)
+        );
+    }
+
+    public function test_the_forgot_password_page_renders(): void
+    {
+        $this->get('/forgot-password')
+            ->assertOk()
+            ->assertSee('Send Reset Link');
+    }
+
     public function test_wordpress_shortcodes_are_expanded_by_the_content_filter(): void
     {
         $compat = app('wordpress.compat');

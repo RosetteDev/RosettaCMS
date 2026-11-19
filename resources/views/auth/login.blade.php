@@ -9,7 +9,13 @@
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <h2 class="text-2xl font-bold text-center mb-6">Admin Login</h2>
-        
+
+        @if(session('status'))
+            <div class="mb-4 p-3 rounded bg-green-100 text-green-800 text-sm">
+                {{ session('status') }}
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('login') }}">
             @csrf
             
@@ -47,11 +53,12 @@
                 @enderror
             </div>
             
-            <div class="mb-6 flex items-center">
-                <input class="mr-2" type="checkbox" name="remember" id="remember">
-                <label class="text-gray-700 text-sm" for="remember">
+            <div class="mb-6 flex items-center justify-between">
+                <label class="text-gray-700 text-sm flex items-center">
+                    <input class="mr-2" type="checkbox" name="remember" id="remember">
                     Remember me
                 </label>
+                <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:underline">Forgot password?</a>
             </div>
             
             <button class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" type="submit">
