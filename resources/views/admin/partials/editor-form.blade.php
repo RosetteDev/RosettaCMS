@@ -217,9 +217,15 @@
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-transparent"><h2 class="h5 mb-0">Featured image</h2></div>
                 <div class="card-body">
-                    <input type="text" name="featured_image" id="featured_image" class="form-control"
-                           value="{{ old('featured_image', $post->featured_image) }}" placeholder="Image URL or path">
-                    <div class="form-text">Paste a media URL or a path such as <code>media/photo.jpg</code>.</div>
+                    <label for="featured_image" class="form-label small fw-semibold">Image URL or media path</label>
+                    <div class="input-group">
+                        <input type="text" name="featured_image" id="featured_image" class="form-control"
+                               value="{{ old('featured_image', $post->featured_image) }}" placeholder="Image URL or path">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#mediaPickerModal">
+                            Choose
+                        </button>
+                    </div>
+                    <div class="form-text">Pick an image from the library, or paste a URL / path such as <code>media/photo.jpg</code>.</div>
                     <img id="featured-preview" src="{{ old('featured_image', $post->featured_image) }}" alt=""
                          class="img-fluid rounded mt-3 {{ old('featured_image', $post->featured_image) ? '' : 'd-none' }}">
                 </div>
@@ -227,6 +233,28 @@
         </div>
     </div>
 </form>
+
+<div class="modal fade" id="mediaPickerModal" tabindex="-1" aria-labelledby="mediaPickerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mediaPickerModalLabel">Choose an image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="search" id="media-picker-search" class="form-control mb-3"
+                       placeholder="Search images by name or alt text">
+                <div id="media-picker-grid" class="row g-3">
+                    <div class="col-12 text-muted small">Loading images…</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="{{ url('/admin/media') }}" class="btn btn-link me-auto">Manage media</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css">
@@ -323,13 +351,98 @@ document.addEventListener('DOMContentLoaded', function () {
     // Featured image preview.
     const featured = document.getElementById('featured_image');
     const preview = document.getElementById('featured-preview');
+
+    const resolveImage = (value) => {
+        if (!value) return '';
+        if (/^(https?:)?\/\//i.test(value) || value.startsWith('/')) return value;
+        return '/storage/' + value.replace(/^\/+/, '');
+    };
+
+    const syncPreview = () => {
+        if (!featured || !preview) return;
+
+        const src = resolveImage(featured.value.trim());
+        if (src) {
+            preview.src = src;
+            preview.classList.remove('d-none');
+        } else {
+            preview.classList.add('d-none');
+        }
+    };
+
     if (featured && preview) {
-        featured.addEventListener('input', () => {
-            if (featured.value.trim()) {
-                preview.src = featured.value;
-                preview.classList.remove('d-none');
-            } else {
-                preview.classList.add('d-none');
+        featured.addEventListener('input', syncPreview);
+        syncPreview();
+    }
+
+    // Media picker modal.
+    const pickerModal = document.getElementById('mediaPickerModal');
+    const pickerGrid = document.getElementById('media-picker-grid');
+    const pickerSearch = document.getElementById('media-picker-search');
+    let pickerLoaded = false;
+    let pickerTimer = null;
+
+    const renderPicker = (items) => {
+        if (!pickerGrid) return;
+
+        if (!items.length) {
+            pickerGrid.innerHTML = '<div class="col-12 text-muted small">No images found. <a href="{{ url('/admin/media') }}">Upload one</a>.</div>';
+            return;
+        }
+
+        pickerGrid.innerHTML = items.map((item) => `
+            <div class="col-6 col-md-4">
+                <button type="button" class="btn p-0 border rounded w-100 media-pick"
+                        data-path="${item.path.replace(/"/g, '&quot;')}"
+                        data-url="${item.url.replace(/"/g, '&quot;')}">
+                    <img src="${item.url}" alt="${(item.alt || item.name).replace(/"/g, '&quot;')}"
+                         class="img-fluid rounded-top" style="height:110px;width:100%;object-fit:cover;">
+                    <span class="d-block small text-truncate px-2 py-1">${item.name}</span>
+                </button>
+            </div>
+        `).join('');
+    };
+
+    const loadPicker = (search = '') => {
+        if (!pickerGrid) return;
+
+        pickerGrid.innerHTML = '<div class="col-12 text-muted small">Loading images…</div>';
+
+        fetch(`{{ route('admin.media.picker') }}?search=${encodeURIComponent(search)}`, {
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        })
+            .then((response) => response.ok ? response.json() : [])
+            .then(renderPicker)
+            .catch(() => renderPicker([]));
+    };
+
+    if (pickerModal) {
+        pickerModal.addEventListener('show.bs.modal', () => {
+            if (!pickerLoaded) {
+                pickerLoaded = true;
+                loadPicker();
+            }
+        });
+    }
+
+    if (pickerSearch) {
+        pickerSearch.addEventListener('input', () => {
+            clearTimeout(pickerTimer);
+            pickerTimer = setTimeout(() => loadPicker(pickerSearch.value.trim()), 250);
+        });
+    }
+
+    if (pickerGrid) {
+        pickerGrid.addEventListener('click', (event) => {
+            const button = event.target.closest('.media-pick');
+            if (!button || !featured) return;
+
+            featured.value = button.dataset.path;
+            syncPreview();
+
+            if (window.bootstrap && pickerModal) {
+                bootstrap.Modal.getOrCreateInstance(pickerModal).hide();
             }
         });
     }

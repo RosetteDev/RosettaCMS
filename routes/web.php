@@ -89,19 +89,19 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
     Route::prefix('admin/media')->name('admin.media.')->group(function () {
         Route::get('/', [MediaController::class, 'index'])->name('index');
         Route::post('/', [MediaController::class, 'store'])->name('store');
-        Route::get('/{media}', [MediaController::class, 'show'])->name('show');
-        Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
-        
-        // Bulk operations
+
+        // Static routes must come before /{media}.
+        Route::get('/picker', [MediaController::class, 'picker'])->name('picker');
         Route::post('/bulk', [MediaController::class, 'bulk'])->name('bulk');
-        
-        // Folder management
         Route::get('/folders', [MediaController::class, 'folders'])->name('folders');
         Route::post('/folders', [MediaController::class, 'createFolder'])->name('createFolder');
         Route::delete('/folders', [MediaController::class, 'deleteFolder'])->name('deleteFolder');
-        
+
         // Metadata update
         Route::put('/{media}/metadata', [MediaController::class, 'updateMetadata'])->name('updateMetadata');
+
+        Route::get('/{media}', [MediaController::class, 'show'])->whereNumber('media')->name('show');
+        Route::delete('/{media}', [MediaController::class, 'destroy'])->whereNumber('media')->name('destroy');
     });
 
     // Sites management - Admin only

@@ -68,6 +68,31 @@ class MediaController extends Controller
     }
 
     /**
+     * JSON list of images for the editor's media picker.
+     */
+    public function picker(Request $request)
+    {
+        $query = Media::query()->where('mime_type', 'like', 'image/%');
+
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('file_name', 'like', "%{$search}%")
+                    ->orWhere('alt_text', 'like', "%{$search}%");
+            });
+        }
+
+        $media = $query->orderByDesc('created_at')->limit(120)->get();
+
+        return response()->json($media->map(fn (Media $item) => [
+            'id' => $item->id,
+            'name' => $item->file_name,
+            'path' => $item->file_path,
+            'url' => $item->url,
+            'alt' => $item->alt_text,
+        ])->values());
+    }
+
+    /**
      * Show the form for creating a new media.
      */
     public function create()
