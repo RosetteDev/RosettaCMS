@@ -512,6 +512,12 @@ class FrontendController extends Controller
     {
         $meta = $post->meta ?? [];
 
+        $image = $meta['og_image'] ?? null;
+        if ($image && !preg_match('#^(https?:)?//#i', $image)) {
+            $image = asset('storage/' . ltrim($image, '/'));
+        }
+        $image = $image ?: $post->featured_image_url;
+
         return $this->seo([
             'title' => $meta['seo_title'] ?? $post->title,
             'description' => $meta['seo_description'] ?? \Illuminate\Support\Str::limit($post->plain_excerpt, 160),
@@ -520,7 +526,7 @@ class FrontendController extends Controller
                 ($post->post_type === 'page' ? '/pages/' : '/posts/') . $post->slug
             ),
             'robots' => $meta['robots'] ?? 'index',
-            'image' => $meta['og_image'] ?? $post->featured_image_url,
+            'image' => $image,
             'type' => $post->post_type === 'post' ? 'article' : 'website',
             'published_time' => $post->published_at?->toIso8601String(),
             'modified_time' => $post->updated_at?->toIso8601String(),
