@@ -179,6 +179,11 @@ class WordPressCompatibility
             return $content;
         });
 
+        // WordPress expands shortcodes as part of the_content (priority 11).
+        $this->addFilter('the_content', function ($content) {
+            return $this->doShortcode($content);
+        }, 11);
+
         $this->addFilter('the_title', function ($title) {
             return $title;
         });
