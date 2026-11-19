@@ -28,6 +28,40 @@ class Media extends Model
     ];
 
     /**
+     * Get the public URL for the file.
+     */
+    public function getUrlAttribute(): string
+    {
+        return asset('storage/' . ltrim((string) $this->file_path, '/'));
+    }
+
+    /**
+     * Determine if the file is an image.
+     */
+    public function getIsImageAttribute(): bool
+    {
+        return str_starts_with((string) $this->mime_type, 'image/');
+    }
+
+    /**
+     * Human readable file size.
+     */
+    public function getHumanSizeAttribute(): string
+    {
+        $bytes = (int) $this->file_size;
+
+        foreach (['B', 'KB', 'MB', 'GB'] as $unit) {
+            if ($bytes < 1024) {
+                return round($bytes, $unit === 'B' ? 0 : 1) . ' ' . $unit;
+            }
+
+            $bytes /= 1024;
+        }
+
+        return round($bytes, 1) . ' TB';
+    }
+
+    /**
      * Get the site that owns the media.
      */
     public function site()

@@ -13,7 +13,7 @@
             <a href="{{ route('admin.media.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
                 Back to Library
             </a>
-            <a href="{{ Storage::url($media->file_path) }}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+            <a href="{{ $media->url }}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                 View File
             </a>
             <button onclick="deleteMedia()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
@@ -41,11 +41,11 @@
                     
                     @if($isImage)
                         <div class="bg-gray-100 rounded-lg overflow-hidden">
-                            <img src="{{ Storage::url($media->file_path) }}" alt="{{ $media->alt_text ?: 'Media' }}" class="w-full h-auto max-h-[500px] object-contain">
+                            <img src="{{ $media->url }}" alt="{{ $media->alt_text ?: 'Media' }}" class="w-full h-auto max-h-[500px] object-contain">
                         </div>
                     @elseif($isVideo)
                         <div class="bg-gray-100 rounded-lg overflow-hidden">
-                            <video src="{{ Storage::url($media->file_path) }}" controls class="w-full h-auto max-h-[500px]">
+                            <video src="{{ $media->url }}" controls class="w-full h-auto max-h-[500px]">
                                 Your browser does not support the video tag.
                             </video>
                         </div>

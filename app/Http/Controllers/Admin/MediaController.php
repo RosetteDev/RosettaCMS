@@ -80,9 +80,16 @@ class MediaController extends Controller
      */
     public function store(Request $request)
     {
+        $settings = SiteSetting::forSite();
+        $maxUploadMb = (int) ($settings->max_upload_size ?? 10) ?: 10;
+
         $validated = $request->validate([
-            'file' => 'required|file|mimes:jpeg,jpg,png,gif,svg,pdf,mp4,mov,webm,webp,mp3,wav,ogg',
-            'max_size:10240', // Max 10MB
+            'file' => [
+                'required',
+                'file',
+                'max:' . ($maxUploadMb * 1024),
+                'mimes:jpeg,jpg,png,gif,pdf,mp4,mov,webm,webp,mp3,wav,ogg',
+            ],
             'alt_text' => 'nullable|string|max:255',
             'caption' => 'nullable|string',
             'folder' => 'nullable|string|max:255',
@@ -97,7 +104,6 @@ class MediaController extends Controller
                 'image/jpeg',
                 'image/png',
                 'image/gif',
-                'image/svg+xml',
                 'image/webp',
                 'application/pdf',
                 'video/mp4',
@@ -115,7 +121,7 @@ class MediaController extends Controller
             }
             
             // Validate file extension
-            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'pdf', 'mp4', 'mov', 'webm', 'webp', 'mp3', 'wav', 'ogg'];
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'mp4', 'mov', 'webm', 'webp', 'mp3', 'wav', 'ogg'];
             $extension = strtolower($file->getClientOriginalExtension());
             
             if (!in_array($extension, $allowedExtensions)) {
@@ -123,7 +129,9 @@ class MediaController extends Controller
             }
             
             // Generate unique filename
-            $filename = time() . '_' . preg_replace('/[^A-Za-z0-9_\-]/', '', $file->getClientOriginalName()) . '.' . $extension;
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $originalName = preg_replace('/[^A-Za-z0-9_\-]/', '-', $originalName) ?: 'file';
+            $filename = time() . '_' . Str::lower(Str::random(6)) . '_' . $originalName . '.' . $extension;
             
             // Build folder path
             $folder = trim($validated['folder'] ?? '', '/');
@@ -145,8 +153,8 @@ class MediaController extends Controller
                 'folder' => $folder ?: null,
                 'mime_type' => $detectedMimeType,
                 'file_size' => $file->getSize(),
-                'alt_text' => $validated['alt_text'],
-                'caption' => $validated['caption'],
+                'alt_text' => $validated['alt_text'] ?? null,
+                'caption' => $validated['caption'] ?? null,
             ]);
 
             return redirect()->route('admin.media.index')

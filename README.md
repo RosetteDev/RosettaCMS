@@ -73,14 +73,19 @@ A modern, open-source content management system built on Laravel with a robust v
    php artisan db:seed
    ```
 
-8. **Start the development server:**
+8. **Link public storage (for media uploads):**
+   ```bash
+   php artisan storage:link
+   ```
+
+9. **Start the development server:**
    ```bash
    php artisan serve
    ```
 
-9. **Access the application:**
-   - Frontend: http://localhost:8000
-   - Admin: http://localhost:8000/admin
+10. **Access the application:**
+    - Frontend: http://localhost:8000
+    - Admin: http://localhost:8000/admin
 
 ## Default Credentials
 
