@@ -196,7 +196,8 @@ Rosetta ships with three roles:
 Assign roles when creating or editing a user in **Admin → Users**. Registration
 can be enabled or disabled in **Settings**, and new sign-ups receive the
 subscriber role. Signed-in users can change their name, email and password from
-their profile.
+their profile, and anyone can request a single-use password reset link from the
+login screen.
 
 ## Menus
 

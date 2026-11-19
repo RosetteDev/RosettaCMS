@@ -270,7 +270,7 @@ class FrontendController extends Controller
             'seo' => $this->seo([
                 'title' => 'Category: ' . $category->name,
                 'description' => $category->description ?: $this->settings->site_description,
-                'canonical' => url('/categories/' . $category->slug),
+                'canonical' => $this->pagedUrl('/categories/' . $category->slug, $posts),
             ]),
         ]);
     }
@@ -294,7 +294,7 @@ class FrontendController extends Controller
             'seo' => $this->seo([
                 'title' => 'Tag: ' . $tag->name,
                 'description' => $tag->description ?: $this->settings->site_description,
-                'canonical' => url('/tags/' . $tag->slug),
+                'canonical' => $this->pagedUrl('/tags/' . $tag->slug, $posts),
             ]),
         ]);
     }
@@ -316,7 +316,7 @@ class FrontendController extends Controller
             'seo' => $this->seo([
                 'title' => 'Blog',
                 'description' => $this->settings->site_description,
-                'canonical' => url('/blog'),
+                'canonical' => $this->pagedUrl('/blog', $posts),
             ]),
         ]);
     }
@@ -508,6 +508,16 @@ class FrontendController extends Controller
     /**
      * Build the SEO payload for a post or page.
      */
+    /**
+     * Canonical URL for a paginated listing.
+     */
+    protected function pagedUrl(string $path, $paginator): string
+    {
+        $page = (int) ($paginator->currentPage() ?? 1);
+
+        return $page > 1 ? url($path) . '?page=' . $page : url($path);
+    }
+
     protected function seoForPost(Post $post): array
     {
         $meta = $post->meta ?? [];
