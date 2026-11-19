@@ -8,11 +8,16 @@ A modern, open-source content management system built on Laravel with a robust v
 
 ## Features
 
-- 🎨 **Visual Editor**: Hybrid block-based and inline visual editor for easy content creation
+- ✍️ **Visual Editor**: Rich text editor with media insertion, featured images, excerpts and a live SEO preview
+- 📄 **Posts & Pages**: Shared publishing workflow with drafts, scheduling, categories and tags
+- 🔍 **SEO Tools**: Per-post titles/descriptions/canonical URLs, Open Graph/Twitter cards, XML sitemap, RSS feed and `robots.txt`
+- 🧭 **Menu Editor**: Header/footer menus built from pages, posts or custom URLs
+- 🎨 **Replaceable Themes**: Install themes under `themes/`, switch the active theme, preview it without activating
+- 👥 **Users & Roles**: Administrators, editors and subscribers with role-aware navigation and self-service profiles
+- 🔌 **Plugin System**: Built-in modules plus drop-in WordPress-style plugins (hooks, filters, shortcodes, options)
+- 🖼️ **Media Library**: Folders, search, alt text/captions and a reusable editor picker
 - 🌍 **Multi-Site**: Manage multiple websites from a single installation
-- 🔍 **SEO Tools**: Built-in SEO optimization features for better search rankings
-- 🔌 **Plugin System**: Extensible plugin architecture with WordPress compatibility
-- 🔒 **Secure**: Enterprise-grade security with role-based access control
+- 🔒 **Secure**: Role-based access control, CSRF protection, output escaping, content sanitization and rate limiting
 - ⚡ **Fast Performance**: Optimized for speed with caching and efficient database queries
 
 ## Requirements
@@ -176,6 +181,23 @@ optional reference views. Public pages render from
 a theme can replace only the templates it needs. The active theme is chosen per
 site in **Admin → Themes**, and its palette can be overridden in **Settings**.
 
+Administrators can preview any installed theme without activating it: the eye
+button opens `/?theme={slug}` in a new tab. Visitors keep seeing the active
+theme, and a banner makes the preview state obvious.
+
+## Users and roles
+
+Rosetta ships with three roles:
+
+- **Administrator** – full access, including users, sites, themes, plugins and settings.
+- **Editor** – posts, pages, media, categories, tags, comments and menus.
+- **Subscriber** – public site access plus a self-service profile at `/profile`.
+
+Assign roles when creating or editing a user in **Admin → Users**. Registration
+can be enabled or disabled in **Settings**, and new sign-ups receive the
+subscriber role. Signed-in users can change their name, email and password from
+their profile.
+
 ## Menus
 
 Menus are managed in **Admin → Menus**. Each menu has a location (`header` or
@@ -185,14 +207,11 @@ submenu items.
 
 ## Roadmap
 
-- [ ] Advanced user management
 - [ ] Custom post types
-- [ ] Advanced taxonomies
 - [ ] REST API
 - [ ] GraphQL support
 - [ ] Advanced caching
-- [ ] Performance optimization
-- [ ] Testing suite
+- [ ] Expanded automated test coverage
 - [ ] Documentation website
 
 ## Contributing
