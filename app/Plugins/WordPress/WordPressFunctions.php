@@ -122,7 +122,7 @@ if (!function_exists('get_template')) {
     {
         $site = app()->bound('current.site') ? app('current.site') : null;
 
-        return $site->theme ?? config('theme.name', 'rosetta');
+        return $site?->theme ?? config('theme.name', 'rosetta');
     }
 }
 

@@ -397,7 +397,11 @@
             
             <div>
                 @auth
-                    <a href="{{ route('dashboard') }}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Admin</a>
+                    @if(auth()->user()->isStaff())
+                        <a href="{{ route('dashboard') }}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Admin</a>
+                    @else
+                        <a href="{{ route('profile') }}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Account</a>
+                    @endif
                 @endauth
             </div>
         </div>
