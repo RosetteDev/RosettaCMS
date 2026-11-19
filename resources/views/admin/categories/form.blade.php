@@ -11,7 +11,7 @@
 
     <div class="container">
         <div style="max-width: 600px; margin: 0 auto;">
-            <form method="POST" action="{{ $action === 'Edit' ? url('/admin/categories/' . $category->id) : url('/admin/categories') }}">
+            <form method="POST" action="{{ $action === 'Edit' ? url('/admin/categories/' . $category->slug) : url('/admin/categories') }}">
                 @csrf
                 @if($action === 'Edit')
                     @method('PUT')

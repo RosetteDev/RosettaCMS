@@ -21,7 +21,7 @@ class CategoryController extends Controller
 
     public function create()
     {
-        return view('admin.categories.form');
+        return view('admin.categories.form', ['action' => 'Create']);
     }
 
     public function store(Request $request)
@@ -46,7 +46,7 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
-        return view('admin.categories.form', compact('category'));
+        return view('admin.categories.form', ['action' => 'Edit', 'category' => $category]);
     }
 
     public function update(Request $request, Category $category)

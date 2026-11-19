@@ -11,7 +11,7 @@
 
     <div class="container">
         <div style="max-width: 600px; margin: 0 auto;">
-            <form method="POST" action="{{ $action === 'Edit' ? url('/admin/tags/' . $tag->id) : url('/admin/tags') }}">
+            <form method="POST" action="{{ $action === 'Edit' ? url('/admin/tags/' . $tag->slug) : url('/admin/tags') }}">
                 @csrf
                 @if($action === 'Edit')
                     @method('PUT')

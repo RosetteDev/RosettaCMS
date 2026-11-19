@@ -21,7 +21,7 @@ class TagController extends Controller
 
     public function create()
     {
-        return view('admin.tags.form');
+        return view('admin.tags.form', ['action' => 'Create']);
     }
 
     public function store(Request $request)
@@ -46,7 +46,7 @@ class TagController extends Controller
 
     public function edit(Tag $tag)
     {
-        return view('admin.tags.form', compact('tag'));
+        return view('admin.tags.form', ['action' => 'Edit', 'tag' => $tag]);
     }
 
     public function update(Request $request, Tag $tag)

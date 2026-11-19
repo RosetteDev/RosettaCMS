@@ -34,7 +34,7 @@
                     @foreach($categories as $category)
                         <tr style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 1rem;">
-                                <a href="{{ url('/admin/categories/' . $category->id . '/edit') }}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                                <a href="{{ url('/admin/categories/' . $category->slug . '/edit') }}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
                                     {{ $category->name }}
                                 </a>
                             </td>
@@ -56,7 +56,7 @@
                                 {{ $category->posts_count }}
                             </td>
                             <td style="padding: 1rem; text-align: right;">
-                                <a href="{{ url('/admin/categories/' . $category->id . '/edit') }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">Edit</a>
+                                <a href="{{ url('/admin/categories/' . $category->slug . '/edit') }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">Edit</a>
                             </td>
                         </tr>
                     @endforeach

@@ -34,7 +34,7 @@
                     @foreach($tags as $tag)
                         <tr style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 1rem;">
-                                <a href="{{ url('/admin/tags/' . $tag->id . '/edit') }}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                                <a href="{{ url('/admin/tags/' . $tag->slug . '/edit') }}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
                                     {{ $tag->name }}
                                 </a>
                             </td>
@@ -56,7 +56,7 @@
                                 {{ $tag->posts_count }}
                             </td>
                             <td style="padding: 1rem; text-align: right;">
-                                <a href="{{ url('/admin/tags/' . $tag->id . '/edit') }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">Edit</a>
+                                <a href="{{ url('/admin/tags/' . $tag->slug . '/edit') }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">Edit</a>
                             </td>
                         </tr>
                     @endforeach
