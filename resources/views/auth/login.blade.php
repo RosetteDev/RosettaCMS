@@ -60,7 +60,10 @@
         </form>
         
         <div class="mt-6 text-center text-sm text-gray-600">
-            <p>Default credentials: admin@rosettacms.com / password</p>
+            @if($registrationEnabled ?? false)
+                <p>No account? <a href="{{ route('register') }}" class="text-blue-600 hover:underline">Create one</a></p>
+            @endif
+            <p class="mt-2"><a href="{{ url('/') }}" class="text-blue-600 hover:underline">&larr; Back to site</a></p>
         </div>
     </div>
 </body>

@@ -11,8 +11,13 @@ class DashboardController extends Controller
     /**
      * Show the application dashboard.
      */
-    public function index()
+    public function index(Request $request)
     {
+        // Subscribers have no access to the administration area.
+        if (!$request->user()->isStaff()) {
+            return redirect()->route('profile');
+        }
+
         // Get site settings
         $settings = SiteSetting::forSite();
         

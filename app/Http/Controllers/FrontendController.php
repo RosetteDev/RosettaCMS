@@ -17,12 +17,25 @@ class FrontendController extends Controller
     protected ?Site $site;
     protected ?SiteSetting $settings;
     protected string $themeSlug;
+    protected bool $themePreview = false;
 
-    public function __construct()
+    public function __construct(Request $request)
     {
         $this->site = Site::first();
         $this->settings = SiteSetting::forSite($this->site);
         $this->themeSlug = $this->site->theme ?? 'rosetta';
+
+        // Staff can preview any installed theme without activating it.
+        $preview = (string) $request->query('theme', '');
+
+        if ($preview !== ''
+            && preg_match('/^[A-Za-z0-9_-]+$/', $preview)
+            && auth()->check()
+            && auth()->user()->hasRole('admin')
+            && file_exists(public_path('themes/' . $preview . '/css/style.css'))) {
+            $this->themeSlug = $preview;
+            $this->themePreview = true;
+        }
     }
 
     /**
@@ -454,6 +467,7 @@ class FrontendController extends Controller
             'site' => $this->site,
             'settings' => $this->settings,
             'theme_slug' => $this->themeSlug,
+            'theme_preview' => $this->themePreview,
             'theme_options' => $this->themeOptions(),
             'headerMenu' => Menu::forLocation('header', $this->site),
             'footerMenu' => Menu::forLocation('footer', $this->site),

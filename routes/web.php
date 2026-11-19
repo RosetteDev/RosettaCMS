@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FrontendController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\MediaController;
@@ -55,6 +56,12 @@ Route::get('/robots.txt', [FrontendController::class, 'robots'])->name('robots')
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware('auth')
     ->name('dashboard');
+
+// Account profile (available to every signed-in user, including subscribers)
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+});
 
 // Authentication routes
 Route::middleware('guest')->group(function () {
@@ -184,14 +191,14 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::post('/bulk', [UserController::class, 'bulk'])->name('bulk');
     });
 
-    // Settings
-    Route::prefix('admin/settings')->name('admin.settings.')->group(function () {
+    // Settings - Admin only
+    Route::prefix('admin/settings')->middleware('role:admin')->name('admin.settings.')->group(function () {
         Route::get('/', [SettingsController::class, 'index'])->name('index');
         Route::post('/', [SettingsController::class, 'update'])->name('update');
     });
     
-    // Theme management
-    Route::prefix('admin/themes')->name('admin.themes.')->group(function () {
+    // Theme management - Admin only
+    Route::prefix('admin/themes')->middleware('role:admin')->name('admin.themes.')->group(function () {
         Route::get('/', [ThemeController::class, 'index'])->name('index');
         Route::get('/{slug}', [ThemeController::class, 'edit'])->name('edit');
         Route::post('/{slug}', [ThemeController::class, 'update'])->name('update');

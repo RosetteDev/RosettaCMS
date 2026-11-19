@@ -106,6 +106,10 @@
                                 <a href="{{ route('admin.themes.edit', $theme['slug']) }}" class="btn btn-outline-secondary flex-shrink-0">
                                     <i class="fas fa-circle-info"></i>
                                 </a>
+                                <a href="{{ url('/?theme=' . $theme['slug']) }}" target="_blank" rel="noopener"
+                                   class="btn btn-outline-primary flex-shrink-0" title="Preview theme without activating it">
+                                    <i class="fas fa-eye"></i>
+                                </a>
                                 <form action="{{ route('admin.themes.update', $theme['slug']) }}" method="POST" class="flex-grow-1">
                                     @csrf
                                     <input type="hidden" name="site_id" value="{{ $currentSite->id ?? '' }}">

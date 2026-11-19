@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -15,7 +16,15 @@ class LoginController extends Controller
      */
     public function showLoginForm()
     {
-        return view('auth.login');
+        $registrationEnabled = false;
+
+        try {
+            $registrationEnabled = (bool) (SiteSetting::forSite()->enable_user_registration ?? true);
+        } catch (\Throwable $e) {
+            // Fall back to hiding the link if settings are unavailable.
+        }
+
+        return view('auth.login', compact('registrationEnabled'));
     }
 
     /**

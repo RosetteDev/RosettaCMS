@@ -221,7 +221,8 @@
                     <div class="input-group">
                         <input type="text" name="featured_image" id="featured_image" class="form-control"
                                value="{{ old('featured_image', $post->featured_image) }}" placeholder="Image URL or path">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#mediaPickerModal">
+                        <button type="button" class="btn btn-outline-secondary" id="featured-media-choose"
+                                data-bs-toggle="modal" data-bs-target="#mediaPickerModal">
                             Choose
                         </button>
                     </div>
@@ -250,6 +251,7 @@
             </div>
             <div class="modal-footer">
                 <a href="{{ url('/admin/media') }}" class="btn btn-link me-auto">Manage media</a>
+                <button type="button" class="btn btn-outline-secondary" id="media-picker-external">Use external URL</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
         </div>
@@ -280,6 +282,11 @@
 document.addEventListener('DOMContentLoaded', function () {
     const hidden = document.getElementById('content');
 
+    // The media picker serves two targets: the featured image field and the
+    // editor body. Track which one opened it.
+    let pickerTarget = 'featured';
+    let pickerIndex = 0;
+
     const quill = new Quill('#quill-editor', {
         theme: 'snow',
         modules: {
@@ -295,11 +302,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 ],
                 handlers: {
                     image: function () {
-                        const url = prompt('Enter an image URL');
-                        if (url) {
-                            const range = quill.getSelection(true);
-                            quill.insertEmbed(range.index, 'image', url, 'user');
-                            quill.setSelection(range.index + 1);
+                        const range = quill.getSelection(true);
+                        pickerIndex = range ? range.index : quill.getLength();
+                        pickerTarget = 'content';
+
+                        const modalEl = document.getElementById('mediaPickerModal');
+                        if (modalEl && window.bootstrap) {
+                            bootstrap.Modal.getOrCreateInstance(modalEl).show();
                         }
                     }
                 }
@@ -394,7 +403,8 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="col-6 col-md-4">
                 <button type="button" class="btn p-0 border rounded w-100 media-pick"
                         data-path="${item.path.replace(/"/g, '&quot;')}"
-                        data-url="${item.url.replace(/"/g, '&quot;')}">
+                        data-url="${item.url.replace(/"/g, '&quot;')}"
+                        data-alt="${(item.alt || '').replace(/"/g, '&quot;')}">
                     <img src="${item.url}" alt="${(item.alt || item.name).replace(/"/g, '&quot;')}"
                          class="img-fluid rounded-top" style="height:110px;width:100%;object-fit:cover;">
                     <span class="d-block small text-truncate px-2 py-1">${item.name}</span>
@@ -436,10 +446,55 @@ document.addEventListener('DOMContentLoaded', function () {
     if (pickerGrid) {
         pickerGrid.addEventListener('click', (event) => {
             const button = event.target.closest('.media-pick');
-            if (!button || !featured) return;
+            if (!button) return;
 
-            featured.value = button.dataset.path;
+            if (pickerTarget === 'content') {
+                const src = resolveImage(button.dataset.path || button.dataset.url || '');
+                const alt = (button.dataset.alt || '').replace(/"/g, '&quot;');
+
+                if (src) {
+                    quill.clipboard.dangerouslyPasteHTML(
+                        pickerIndex,
+                        `<img src="${src}" alt="${alt}">`,
+                        'user'
+                    );
+                    quill.setSelection(pickerIndex + 1);
+                }
+            } else if (featured) {
+                featured.value = button.dataset.path;
+                syncPreview();
+            }
+
+            if (window.bootstrap && pickerModal) {
+                bootstrap.Modal.getOrCreateInstance(pickerModal).hide();
+            }
+        });
+    }
+
+    const featuredChoose = document.getElementById('featured-media-choose');
+    if (featuredChoose) {
+        featuredChoose.addEventListener('click', () => { pickerTarget = 'featured'; });
+    }
+
+    const insertExternal = (url) => {
+        if (!url) return;
+
+        if (pickerTarget === 'content') {
+            quill.insertEmbed(pickerIndex, 'image', url, 'user');
+            quill.setSelection(pickerIndex + 1);
+        } else if (featured) {
+            featured.value = url;
             syncPreview();
+        }
+    };
+
+    const externalButton = document.getElementById('media-picker-external');
+    if (externalButton) {
+        externalButton.addEventListener('click', () => {
+            const url = prompt('Enter an image URL');
+            if (!url) return;
+
+            insertExternal(url);
 
             if (window.bootstrap && pickerModal) {
                 bootstrap.Modal.getOrCreateInstance(pickerModal).hide();

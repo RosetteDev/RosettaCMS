@@ -57,6 +57,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Determine whether the user has any of the given role slugs.
+     */
+    public function hasRole(string ...$slugs): bool
+    {
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->whereIn('slug', $slugs)->isNotEmpty();
+        }
+
+        return $this->roles()->whereIn('slug', $slugs)->exists();
+    }
+
+    /**
+     * Determine whether the user can reach the administration area.
+     */
+    public function isStaff(): bool
+    {
+        return $this->hasRole('admin', 'editor');
+    }
+
+    /**
      * Get the comments authored by this user.
      */
     public function comments(): HasMany

@@ -101,12 +101,14 @@
                         <a href="{{ url('/admin/media') }}" class="btn btn-outline-primary text-start">
                             <span class="me-1">🖼️</span> Upload Media
                         </a>
+                        @if(auth()->user()?->hasRole('admin'))
                         <a href="{{ url('/admin/themes') }}" class="btn btn-outline-primary text-start">
                             <span class="me-1">🎨</span> Manage Themes
                         </a>
                         <a href="{{ url('/admin/settings') }}" class="btn btn-outline-secondary text-start">
                             <span class="me-1">⚙️</span> Settings
                         </a>
+                        @endif
                     </div>
                 </div>
             </div>

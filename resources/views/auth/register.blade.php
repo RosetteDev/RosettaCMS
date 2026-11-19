@@ -87,6 +87,7 @@
         
         <div class="mt-6 text-center text-sm text-gray-600">
             <p>Already have an account? <a href="{{ route('login') }}" class="text-blue-600 hover:underline">Login here</a></p>
+            <p class="mt-2"><a href="{{ url('/') }}" class="text-blue-600 hover:underline">&larr; Back to site</a></p>
         </div>
     </div>
 </body>

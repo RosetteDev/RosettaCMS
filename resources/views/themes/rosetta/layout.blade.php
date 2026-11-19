@@ -376,6 +376,12 @@
     @endif
 </head>
 <body>
+    @if($theme_preview ?? false)
+        <div style="background:#111827;color:#f9fafb;padding:0.6rem 1rem;text-align:center;font-size:0.875rem;">
+            Previewing the <strong>{{ $theme_slug }}</strong> theme. Visitors still see the active theme.
+            <a href="{{ url('/') }}" style="color:#93c5fd;margin-left:0.75rem;text-decoration:underline;">Exit preview</a>
+        </div>
+    @endif
     <!-- Navigation -->
     <nav class="nav">
         <div class="container nav-container">

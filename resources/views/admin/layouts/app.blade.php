@@ -342,8 +342,11 @@
 
     <div class="admin-container">
         <div class="sidebar">
+            @php($currentUser = auth()->user())
             <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') || request()->is('admin') ? 'active' : '' }}">Dashboard</a>
-            
+            <a href="{{ url('/profile') }}" class="{{ request()->is('profile') ? 'active' : '' }}">Profile</a>
+
+            @if($currentUser?->isStaff())
             <div class="sidebar-group">
                 <a href="{{ url('/admin/posts') }}" class="{{ request()->is('admin/posts*') ? 'active' : '' }}">Posts</a>
                 <div class="sidebar-submenu">
@@ -353,15 +356,19 @@
                     <a href="{{ url('/admin/comments/pending') }}" class="{{ request()->is('admin/comments/pending') ? 'active' : '' }}">Pending</a>
                 </div>
             </div>
-            
-            <a href="{{ url('/admin/users') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}">Users</a>
+
             <a href="{{ url('/admin/pages') }}" class="{{ request()->is('admin/pages*') ? 'active' : '' }}">Pages</a>
             <a href="{{ url('/admin/media') }}" class="{{ request()->is('admin/media*') ? 'active' : '' }}">Media</a>
             <a href="{{ url('/admin/menus') }}" class="{{ request()->is('admin/menus*') ? 'active' : '' }}">Menus</a>
+
+            @if($currentUser?->hasRole('admin'))
+            <a href="{{ url('/admin/users') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}">Users</a>
             <a href="{{ url('/admin/sites') }}" class="{{ request()->is('admin/sites*') ? 'active' : '' }}">Sites</a>
             <a href="{{ url('/admin/themes') }}" class="{{ request()->is('admin/themes*') ? 'active' : '' }}">Themes</a>
             <a href="{{ url('/admin/plugins') }}" class="{{ request()->is('admin/plugins*') ? 'active' : '' }}">Plugins</a>
             <a href="{{ url('/admin/settings') }}" class="{{ request()->is('admin/settings*') ? 'active' : '' }}">Settings</a>
+            @endif
+            @endif
         </div>
         
         <div class="main-content">
