@@ -319,10 +319,10 @@
             <div class="logo">
                 @if($settings->logo_url ?? null)
                     <a href="{{ url('/') }}">
-                        <img src="{{ $settings->logo_url }}" alt="{{ $settings->logo_text ?? $settings->site_name ?? 'Rosetta CMS' }}" style="max-height: 32px; height: 32px; object-fit: contain;">
+                        <img src="{{ $settings->logo_url }}" alt="{{ $settings->logo_text ?? $settings->site_title ?? ($site->name ?? 'Rosetta CMS') }}" style="max-height: 32px; height: 32px; object-fit: contain;">
                     </a>
                 @else
-                    <a href="{{ url('/') }}">{{ $settings->logo_text ?? $settings->site_name ?? 'Rosetta CMS' }}</a>
+                    <a href="{{ url('/') }}">{{ $settings->logo_text ?? $settings->site_title ?? ($site->name ?? 'Rosetta CMS') }}</a>
                 @endif
             </div>
             <nav>

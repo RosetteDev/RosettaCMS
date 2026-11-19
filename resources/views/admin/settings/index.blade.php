@@ -57,7 +57,7 @@
                                        id="site_name" 
                                        type="text" 
                                        name="site_name" 
-                                       value="{{ old('site_name', $settings->site_name ?? '') }}" 
+                                       value="{{ old('site_name', $settings->site_title ?? ($site->name ?? '')) }}" 
                                        required 
                                        placeholder="Rosetta CMS">
 
@@ -209,7 +209,7 @@
                                        id="posts_per_page" 
                                        type="number" 
                                        name="posts_per_page" 
-                                       value="{{ old('posts_per_page', $settings->posts_per_page ?? 10) }}" 
+                                       value="{{ old('posts_per_page', $settings->post_per_page ?? 10) }}" 
                                        min="1" 
                                        max="100">
 
@@ -225,9 +225,9 @@
                                 <select style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
                                         id="theme" 
                                         name="theme">
-                                    <option value="rosetta" {{ (old('theme', $settings->theme ?? 'rosetta') === 'rosetta') ? 'selected' : '' }}>Rosetta (Default)</option>
-                                    <option value="modern" {{ (old('theme', $settings->theme ?? 'rosetta') === 'modern') ? 'selected' : '' }}>Modern</option>
-                                    <option value="elegant" {{ (old('theme', $settings->theme ?? 'rosetta') === 'elegant') ? 'selected' : '' }}>Elegant</option>
+                                    <option value="rosetta" {{ (old('theme', $site->theme ?? 'rosetta') === 'rosetta') ? 'selected' : '' }}>Rosetta (Default)</option>
+                                    <option value="modern" {{ (old('theme', $site->theme ?? 'rosetta') === 'modern') ? 'selected' : '' }}>Modern</option>
+                                    <option value="elegant" {{ (old('theme', $site->theme ?? 'rosetta') === 'elegant') ? 'selected' : '' }}>Elegant</option>
                                 </select>
 
                                 @error('theme')
@@ -421,7 +421,7 @@
                                         name="home_post_id">
                                     <option value="">-- Select a page to display as homepage --</option>
                                     @foreach($pages as $page)
-                                        <option value="{{ $page->id }}" {{ old('home_post_id', $settings->home_post_id ?? '') == $page->id ? 'selected' : '' }}>
+                                        <option value="{{ $page->id }}" {{ old('home_post_id', $site->home_post_id ?? '') == $page->id ? 'selected' : '' }}>
                                             {{ $page->title }}
                                         </option>
                                     @endforeach
