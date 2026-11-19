@@ -177,18 +177,19 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
         Route::post('/', [UserController::class, 'store'])->name('store');
-        Route::get('/{user}', [UserController::class, 'show'])->name('show');
-        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
-        Route::put('/{user}', [UserController::class, 'update'])->name('update');
-        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
-        
-        // Additional actions
+
+        // Static routes must come before /{user}.
         Route::get('/pending', [UserController::class, 'pending'])->name('pending');
-        Route::post('/{user}/verify', [UserController::class, 'verify'])->name('verify');
-        Route::post('/{user}/deactivate', [UserController::class, 'deactivate'])->name('deactivate');
-        
-        // Bulk actions
         Route::post('/bulk', [UserController::class, 'bulk'])->name('bulk');
+
+        Route::get('/{user}', [UserController::class, 'show'])->whereNumber('user')->name('show');
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->whereNumber('user')->name('edit');
+        Route::put('/{user}', [UserController::class, 'update'])->whereNumber('user')->name('update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->whereNumber('user')->name('destroy');
+
+        // Additional actions
+        Route::post('/{user}/verify', [UserController::class, 'verify'])->whereNumber('user')->name('verify');
+        Route::post('/{user}/deactivate', [UserController::class, 'deactivate'])->whereNumber('user')->name('deactivate');
     });
 
     // Settings - Admin only
