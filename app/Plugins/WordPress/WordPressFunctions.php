@@ -671,3 +671,154 @@ if (!function_exists('do_shortcode')) {
         return compat()->doShortcode($content);
     }
 }
+
+if (!function_exists('shortcode_atts')) {
+    /**
+     * Merge shortcode attributes with their defaults, like WordPress.
+     */
+    function shortcode_atts(array $pairs, array $atts, string $shortcode = ''): array
+    {
+        $atts = (array) $atts;
+
+        if ($pairs === []) {
+            return $atts;
+        }
+
+        return array_merge($pairs, array_intersect_key($atts, $pairs));
+    }
+}
+
+if (!function_exists('current_user_can')) {
+    /**
+     * Map common WordPress capabilities onto Rosetta roles.
+     */
+    function current_user_can(string $capability, ...$args): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        if (!$user->hasRole('editor')) {
+            return $capability === 'read';
+        }
+
+        return in_array($capability, [
+            'read',
+            'edit_posts',
+            'edit_published_posts',
+            'publish_posts',
+            'delete_posts',
+            'edit_pages',
+            'publish_pages',
+            'delete_pages',
+            'upload_files',
+            'edit_files',
+            'moderate_comments',
+            'manage_categories',
+        ], true);
+    }
+}
+
+if (!function_exists('wp_create_nonce')) {
+    /**
+     * Rosetta uses Laravel's session CSRF token for nonces.
+     */
+    function wp_create_nonce($action = -1)
+    {
+        $token = csrf_token();
+
+        if (!$token) {
+            $token = substr(hash_hmac('sha256', (string) $action, (string) config('app.key')), 0, 32);
+        }
+
+        return $token;
+    }
+}
+
+if (!function_exists('wp_verify_nonce')) {
+    function wp_verify_nonce($nonce, $action = -1)
+    {
+        return is_string($nonce) && hash_equals(wp_create_nonce($action), $nonce) ? 1 : false;
+    }
+}
+
+if (!function_exists('check_admin_referer')) {
+    function check_admin_referer($action = -1, $query_arg = '_wpnonce')
+    {
+        if (!wp_verify_nonce(request()->input($query_arg), $action)) {
+            abort(403, 'The link you followed has expired.');
+        }
+
+        return true;
+    }
+}
+
+if (!function_exists('add_option')) {
+    function add_option(string $option, $value = '', $deprecated = '', $autoload = 'yes'): bool
+    {
+        if (get_option($option, null) === null) {
+            update_option($option, $value);
+        }
+
+        return true;
+    }
+}
+
+if (!function_exists('get_transient')) {
+    function get_transient(string $transient)
+    {
+        return \Illuminate\Support\Facades\Cache::get('wp_transient_' . $transient);
+    }
+}
+
+if (!function_exists('set_transient')) {
+    function set_transient(string $transient, $value, int $expiration = 0): bool
+    {
+        return $expiration > 0
+            ? \Illuminate\Support\Facades\Cache::put('wp_transient_' . $transient, $value, $expiration)
+            : \Illuminate\Support\Facades\Cache::forever('wp_transient_' . $transient, $value);
+    }
+}
+
+if (!function_exists('delete_transient')) {
+    function delete_transient(string $transient): bool
+    {
+        return \Illuminate\Support\Facades\Cache::forget('wp_transient_' . $transient);
+    }
+}
+
+if (!function_exists('wp_redirect')) {
+    function wp_redirect(string $location, int $status = 302)
+    {
+        return redirect()->to($location, $status);
+    }
+}
+
+if (!function_exists('wp_safe_redirect')) {
+    function wp_safe_redirect(string $location, int $status = 302)
+    {
+        return wp_redirect($location, $status);
+    }
+}
+
+if (!function_exists('wp_die')) {
+    function wp_die(string $message = '', string $title = '', array $args = [])
+    {
+        abort(500, $message !== '' ? $message : 'WordPress execution stopped.');
+    }
+}
+
+if (!function_exists('wp_get_attachment_url')) {
+    function wp_get_attachment_url($attachmentId)
+    {
+        $media = \App\Models\Media::find($attachmentId);
+
+        return $media ? $media->url : false;
+    }
+}

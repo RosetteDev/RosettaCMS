@@ -402,7 +402,7 @@ class WordPressCompatibility
             $map = [
                 'blogname' => 'site_title',
                 'blogdescription' => 'site_description',
-                'admin_email' => 'contact_email',
+                'admin_email' => 'admin_email',
                 'posts_per_page' => 'post_per_page',
             ];
 
