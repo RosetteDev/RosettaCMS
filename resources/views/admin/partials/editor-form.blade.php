@@ -172,9 +172,17 @@
                     </button>
 
                     @if($isEdit)
-                        <a href="{{ $postType === 'page' ? url('/pages/' . $post->slug) : url('/posts/' . $post->slug) }}"
+                        @php
+                            $live = $post->status === 'published'
+                                && (!$post->published_at || $post->published_at->isPast());
+                            $publicUrl = $postType === 'page'
+                                ? url('/pages/' . $post->slug)
+                                : url('/posts/' . $post->slug);
+                        @endphp
+                        <a href="{{ $live ? $publicUrl : $publicUrl . '?preview=1' }}"
                            target="_blank" rel="noopener" class="btn btn-link w-100 mt-1">
-                            View {{ strtolower($label) }} <i class="fas fa-external-link-alt ms-1"></i>
+                            {{ $live ? 'View' : 'Preview' }} {{ strtolower($label) }}
+                            <i class="fas fa-external-link-alt ms-1"></i>
                         </a>
                     @endif
                 </div>

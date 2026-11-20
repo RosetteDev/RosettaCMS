@@ -80,11 +80,17 @@ class FrontendController extends Controller
      */
     public function post(string $slug)
     {
-        $post = Post::query()
-            ->published()
+        $preview = $this->wantsPreview();
+
+        $query = Post::query()
             ->where('post_type', 'post')
-            ->where('slug', $slug)
-            ->firstOrFail();
+            ->where('slug', $slug);
+
+        if (!$preview) {
+            $query->published();
+        }
+
+        $post = $query->firstOrFail();
 
         $commentsEnabled = !$this->settings->disable_comments;
 
@@ -93,7 +99,8 @@ class FrontendController extends Controller
             'relatedPosts' => $this->relatedPosts($post),
             'commentsEnabled' => $commentsEnabled,
             'comments' => $commentsEnabled ? $this->approvedComments($post) : collect(),
-            'seo' => $this->seoForPost($post),
+            'preview' => $preview,
+            'seo' => $this->seoForPost($post, $preview),
         ]);
     }
 
@@ -197,17 +204,24 @@ class FrontendController extends Controller
      */
     public function page(string $slug)
     {
-        $page = Post::query()
-            ->published()
+        $preview = $this->wantsPreview();
+
+        $query = Post::query()
             ->where('post_type', 'page')
-            ->where('slug', $slug)
-            ->firstOrFail();
+            ->where('slug', $slug);
+
+        if (!$preview) {
+            $query->published();
+        }
+
+        $page = $query->firstOrFail();
 
         return $this->render('page', [
             'page' => $page,
             'post' => $page,
             'relatedPosts' => collect(),
-            'seo' => $this->seoForPost($page),
+            'preview' => $preview,
+            'seo' => $this->seoForPost($page, $preview),
         ]);
     }
 
@@ -518,7 +532,17 @@ class FrontendController extends Controller
         return $page > 1 ? url($path) . '?page=' . $page : url($path);
     }
 
-    protected function seoForPost(Post $post): array
+    /**
+     * Determine whether the current request is an authorized staff preview.
+     */
+    protected function wantsPreview(): bool
+    {
+        return request()->boolean('preview')
+            && auth()->check()
+            && auth()->user()->isStaff();
+    }
+
+    protected function seoForPost(Post $post, bool $preview = false): array
     {
         $meta = $post->meta ?? [];
 
@@ -535,7 +559,7 @@ class FrontendController extends Controller
             'canonical' => $meta['canonical_url'] ?? url(
                 ($post->post_type === 'page' ? '/pages/' : '/posts/') . $post->slug
             ),
-            'robots' => $meta['robots'] ?? 'index',
+            'robots' => $preview ? 'noindex, nofollow' : ($meta['robots'] ?? 'index'),
             'image' => $image,
             'type' => $post->post_type === 'post' ? 'article' : 'website',
             'published_time' => $post->published_at?->toIso8601String(),

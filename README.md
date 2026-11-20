@@ -9,7 +9,7 @@ A modern, open-source content management system built on Laravel with a robust v
 ## Features
 
 - ✍️ **Visual Editor**: Rich text editor with media insertion, featured images, excerpts and a live SEO preview
-- 📄 **Posts & Pages**: Shared publishing workflow with drafts, scheduling, categories and tags
+- 📄 **Posts & Pages**: Shared publishing workflow with drafts, scheduling, staff-only previews, categories and tags
 - 🔍 **SEO Tools**: Per-post titles/descriptions/canonical URLs, Open Graph/Twitter cards, XML sitemap, RSS feed and `robots.txt`
 - 🧭 **Menu Editor**: Header/footer menus built from pages, posts or custom URLs
 - 🎨 **Replaceable Themes**: Install themes under `themes/`, switch the active theme, preview it without activating

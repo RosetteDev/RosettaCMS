@@ -382,6 +382,27 @@
             <a href="{{ url('/') }}" style="color:#93c5fd;margin-left:0.75rem;text-decoration:underline;">Exit preview</a>
         </div>
     @endif
+    @if($preview ?? false)
+        @php
+            $previewPost = $post ?? $page ?? null;
+            $previewKind = ($previewPost?->post_type ?? 'page') === 'post' ? 'post' : 'page';
+            $previewEditUrl = $previewPost
+                ? url('/admin/' . ($previewKind === 'post' ? 'posts' : 'pages') . '/' . $previewPost->id . '/edit')
+                : null;
+            $previewPublicUrl = $previewPost
+                ? url(($previewKind === 'post' ? '/posts/' : '/pages/') . $previewPost->slug)
+                : url('/');
+        @endphp
+        <div style="background:#b45309;color:#fff;padding:0.6rem 1rem;text-align:center;font-size:0.875rem;">
+            <strong>Preview</strong> — this {{ $previewKind }} is
+            <strong>{{ ucfirst($previewPost->status ?? 'draft') }}</strong>
+            and is not visible to visitors.
+            @if($previewEditUrl)
+                <a href="{{ $previewEditUrl }}" style="color:#fde68a;margin-left:0.75rem;text-decoration:underline;">Edit</a>
+            @endif
+            <a href="{{ $previewPublicUrl }}" style="color:#fde68a;margin-left:0.75rem;text-decoration:underline;">Exit preview</a>
+        </div>
+    @endif
     <!-- Navigation -->
     <nav class="nav">
         <div class="container nav-container">

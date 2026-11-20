@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Role;
 use App\Models\Site;
 use App\Models\User;
+use App\Models\Post;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -88,5 +89,41 @@ class CoreFeaturesTest extends TestCase
         $output = $compat->applyFilters('the_content', '<p>[qa_hello name="QA"]</p>');
 
         $this->assertStringContainsString('Hello QA', $output);
+    }
+
+    public function test_staff_can_preview_an_unpublished_post_but_guests_cannot(): void
+    {
+        $site = Site::create([
+            'name' => 'Preview Site',
+            'slug' => 'preview-site',
+        ]);
+
+        $admin = User::factory()->create();
+        $role = Role::create([
+            'name' => 'Administrator',
+            'slug' => 'admin',
+            'description' => 'Full access',
+            'permissions' => [],
+        ]);
+        $admin->roles()->attach($role);
+
+        $post = Post::create([
+            'site_id' => $site->id,
+            'user_id' => $admin->id,
+            'title' => 'Unpublished Draft',
+            'slug' => 'unpublished-draft',
+            'content' => '<p>Work in progress.</p>',
+            'post_type' => 'post',
+            'status' => 'draft',
+        ]);
+
+        $this->get('/posts/' . $post->slug)->assertNotFound();
+
+        $this->actingAs($admin)
+            ->get('/posts/' . $post->slug . '?preview=1')
+            ->assertOk()
+            ->assertSee('Unpublished Draft')
+            ->assertSee('not visible to visitors', false)
+            ->assertSee('noindex, nofollow', false);
     }
 }
