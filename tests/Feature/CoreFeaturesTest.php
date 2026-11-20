@@ -144,6 +144,46 @@ class CoreFeaturesTest extends TestCase
             ->assertDontSee('Alpha Post');
     }
 
+    public function test_pages_cannot_be_edited_through_the_posts_admin_routes(): void
+    {
+        $site = Site::create([
+            'name' => 'Guard Site',
+            'slug' => 'guard-site',
+        ]);
+
+        $admin = User::factory()->create();
+        $role = Role::create([
+            'name' => 'Administrator',
+            'slug' => 'admin',
+            'description' => 'Full access',
+            'permissions' => [],
+        ]);
+        $admin->roles()->attach($role);
+
+        $page = Post::create([
+            'site_id' => $site->id,
+            'user_id' => $admin->id,
+            'title' => 'Original Page',
+            'slug' => 'original-page',
+            'post_type' => 'page',
+            'status' => 'draft',
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/posts/' . $page->id . '/edit')
+            ->assertRedirect('/admin/posts');
+
+        $this->actingAs($admin)
+            ->put('/admin/posts/' . $page->id, [
+                'title' => 'Hijacked Page',
+                'status' => 'published',
+            ])
+            ->assertRedirect('/admin/posts');
+
+        $this->assertSame('page', $page->fresh()->post_type);
+        $this->assertSame('Original Page', $page->fresh()->title);
+    }
+
     public function test_staff_can_preview_an_unpublished_post_but_guests_cannot(): void
     {
         $site = Site::create([

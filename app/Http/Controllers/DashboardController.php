@@ -23,7 +23,7 @@ class DashboardController extends Controller
         
         // Calculate dashboard stats
         $stats = [
-            'total_posts' => \App\Models\Post::count(),
+            'total_posts' => \App\Models\Post::where('post_type', 'post')->count(),
             'total_pages' => \App\Models\Post::where('post_type', 'page')->count(),
             'total_media' => \App\Models\Media::count(),
             'total_sites' => \App\Models\Site::count(),

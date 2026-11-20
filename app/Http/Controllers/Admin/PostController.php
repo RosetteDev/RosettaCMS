@@ -74,6 +74,11 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
+        if ($post->post_type !== 'post') {
+            return redirect()->route('admin.posts.index')
+                ->with('error', 'This is not a post.');
+        }
+
         return view('admin.posts.show', compact('post'));
     }
 
@@ -82,6 +87,11 @@ class PostController extends Controller
      */
     public function edit(Post $post)
     {
+        if ($post->post_type !== 'post') {
+            return redirect()->route('admin.posts.index')
+                ->with('error', 'This is not a post.');
+        }
+
         return view('admin.posts.form', [
             'action' => 'Edit',
             'post' => $post,
@@ -96,6 +106,11 @@ class PostController extends Controller
      */
     public function update(Request $request, Post $post)
     {
+        if ($post->post_type !== 'post') {
+            return redirect()->route('admin.posts.index')
+                ->with('error', 'This is not a post.');
+        }
+
         $this->savePost($request, $post, 'post');
 
         return redirect()->route('admin.posts.edit', $post->id)
@@ -107,6 +122,11 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
+        if ($post->post_type !== 'post') {
+            return redirect()->route('admin.posts.index')
+                ->with('error', 'This is not a post.');
+        }
+
         $post->delete();
 
         return redirect()->route('admin.posts.index')

@@ -50,34 +50,38 @@
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                    <h2 class="h5 mb-0">Recent Posts</h2>
+                    <h2 class="h5 mb-0">Recent Content</h2>
                     <a href="{{ url('/admin/posts') }}" class="btn btn-sm btn-outline-primary">View all</a>
                 </div>
                 <div class="card-body p-0">
                     @if(count($recent_posts) > 0)
                         <div class="list-group list-group-flush">
                             @foreach($recent_posts as $post)
+                                @php
+                                    $editUrl = url('/admin/' . ($post->post_type === 'page' ? 'pages' : 'posts') . '/' . $post->id . '/edit');
+                                @endphp
                                 <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
                                     <div class="text-truncate">
-                                        <a href="{{ url('/admin/posts/' . $post->id . '/edit') }}"
+                                        <a href="{{ $editUrl }}"
                                            class="fw-semibold text-decoration-none d-block text-truncate"
                                            style="color: var(--primary-color);">
                                             {{ $post->title }}
                                         </a>
                                         <small class="text-muted">
-                                            {{ ucfirst($post->status) }}
+                                            {{ ucfirst($post->post_type) }}
+                                            &middot; {{ ucfirst($post->status) }}
                                             &middot; {{ $post->user->name ?? 'Author' }}
                                             &middot; {{ $post->updated_at->diffForHumans() }}
                                         </small>
                                     </div>
-                                    <a href="{{ url('/admin/posts/' . $post->id . '/edit') }}" class="btn btn-sm btn-primary flex-shrink-0">Edit</a>
+                                    <a href="{{ $editUrl }}" class="btn btn-sm btn-primary flex-shrink-0">Edit</a>
                                 </div>
                             @endforeach
                         </div>
                     @else
                         <p class="text-muted text-center py-4 mb-0">
-                            No posts yet.
-                            <a href="{{ url('/admin/posts/create') }}" style="color: var(--primary-color);">Create one</a>!
+                            No content yet.
+                            <a href="{{ url('/admin/posts/create') }}" style="color: var(--primary-color);">Create a post</a>!
                         </p>
                     @endif
                 </div>
