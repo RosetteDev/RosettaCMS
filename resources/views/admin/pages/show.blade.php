@@ -36,7 +36,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
                 <h3>Content</h3>
                 <div style="margin-top: 1rem;">
-                    {!! $page->content !!}
+                    {!! $page->rendered_content !!}
                 </div>
             </div>
 
