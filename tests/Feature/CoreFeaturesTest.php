@@ -91,6 +91,33 @@ class CoreFeaturesTest extends TestCase
         $this->assertStringContainsString('Hello QA', $output);
     }
 
+    public function test_a_scheduled_homepage_is_not_shown_before_its_publish_time(): void
+    {
+        $site = Site::create([
+            'name' => 'Homepage Site',
+            'slug' => 'homepage-site',
+        ]);
+
+        $user = User::factory()->create();
+
+        $page = Post::create([
+            'site_id' => $site->id,
+            'user_id' => $user->id,
+            'title' => 'Scheduled Home Page',
+            'slug' => 'scheduled-home',
+            'content' => '<p>Coming later.</p>',
+            'post_type' => 'page',
+            'status' => 'published',
+            'published_at' => now()->addDay(),
+        ]);
+
+        $site->update(['home_post_id' => $page->id]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertDontSee('Scheduled Home Page');
+    }
+
     public function test_missing_pages_render_the_themed_not_found_page(): void
     {
         Site::create([

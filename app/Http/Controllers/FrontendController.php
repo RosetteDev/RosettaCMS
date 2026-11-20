@@ -47,7 +47,9 @@ class FrontendController extends Controller
         if ($this->site && $this->site->home_post_id) {
             $homepage = $this->site->homepage;
 
-            if ($homepage && $homepage->status === 'published') {
+            if ($homepage
+                && $homepage->status === 'published'
+                && (!$homepage->published_at || $homepage->published_at->isPast())) {
                 return $this->render($homepage->post_type === 'page' ? 'page' : 'single', [
                     'post' => $homepage,
                     'page' => $homepage,
