@@ -91,6 +91,19 @@ class CoreFeaturesTest extends TestCase
         $this->assertStringContainsString('Hello QA', $output);
     }
 
+    public function test_missing_pages_render_the_themed_not_found_page(): void
+    {
+        Site::create([
+            'name' => 'Rosetta Test Site',
+            'slug' => 'rosetta-test-site',
+        ]);
+
+        $this->get('/a-page-that-does-not-exist')
+            ->assertNotFound()
+            ->assertSee('Page not found')
+            ->assertSee('noindex, follow', false);
+    }
+
     public function test_admin_post_and_page_search_filters_results(): void
     {
         $site = Site::create([
