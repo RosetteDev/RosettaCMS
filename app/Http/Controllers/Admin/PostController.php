@@ -19,12 +19,22 @@ class PostController extends Controller
     /**
      * Display a listing of posts.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->input('search'));
+
         $posts = Post::where('post_type', 'post')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('title', 'like', '%' . $search . '%')
+                        ->orWhere('slug', 'like', '%' . $search . '%')
+                        ->orWhere('content', 'like', '%' . $search . '%');
+                });
+            })
             ->with('user', 'site')
             ->latest()
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         $settings = SiteSetting::forSite();
 

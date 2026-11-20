@@ -91,6 +91,46 @@ class CoreFeaturesTest extends TestCase
         $this->assertStringContainsString('Hello QA', $output);
     }
 
+    public function test_admin_post_and_page_search_filters_results(): void
+    {
+        $site = Site::create([
+            'name' => 'Search Site',
+            'slug' => 'search-site',
+        ]);
+
+        $admin = User::factory()->create();
+        $role = Role::create([
+            'name' => 'Administrator',
+            'slug' => 'admin',
+            'description' => 'Full access',
+            'permissions' => [],
+        ]);
+        $admin->roles()->attach($role);
+
+        $base = [
+            'site_id' => $site->id,
+            'user_id' => $admin->id,
+            'post_type' => 'post',
+            'status' => 'draft',
+        ];
+
+        Post::create(array_merge($base, ['title' => 'Alpha Post', 'slug' => 'alpha-post']));
+        Post::create(array_merge($base, ['title' => 'Beta Post', 'slug' => 'beta-post']));
+        Post::create(array_merge($base, ['title' => 'Alpha Page', 'slug' => 'alpha-page', 'post_type' => 'page']));
+
+        $this->actingAs($admin)
+            ->get('/admin/posts?search=Alpha')
+            ->assertOk()
+            ->assertSee('Alpha Post')
+            ->assertDontSee('Beta Post');
+
+        $this->actingAs($admin)
+            ->get('/admin/pages?search=Alpha')
+            ->assertOk()
+            ->assertSee('Alpha Page')
+            ->assertDontSee('Alpha Post');
+    }
+
     public function test_staff_can_preview_an_unpublished_post_but_guests_cannot(): void
     {
         $site = Site::create([

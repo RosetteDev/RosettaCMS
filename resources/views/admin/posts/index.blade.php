@@ -16,7 +16,7 @@
         </div>
         <div>
             <form style="display: flex; gap: 0.5rem;">
-                <input type="text" name="search" placeholder="Search posts..." style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; width: 200px;">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search posts..." style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; width: 200px;">
                 <button type="submit" class="btn btn-primary">Search</button>
             </form>
         </div>

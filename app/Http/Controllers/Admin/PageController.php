@@ -11,12 +11,22 @@ class PageController extends PostController
     /**
      * Display a listing of pages.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->input('search'));
+
         $pages = Post::where('post_type', 'page')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('title', 'like', '%' . $search . '%')
+                        ->orWhere('slug', 'like', '%' . $search . '%')
+                        ->orWhere('content', 'like', '%' . $search . '%');
+                });
+            })
             ->with('user', 'site')
             ->latest()
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         $settings = SiteSetting::forSite();
 
