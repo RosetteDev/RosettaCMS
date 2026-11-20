@@ -15,6 +15,7 @@ A modern, open-source content management system built on Laravel with a robust v
 - 🎨 **Replaceable Themes**: Install themes under `themes/`, switch the active theme, preview it without activating
 - 👥 **Users & Roles**: Administrators, editors and subscribers with role-aware navigation and self-service profiles
 - 🔌 **Plugin System**: Built-in modules plus drop-in WordPress-style plugins (hooks, filters, shortcodes, options)
+- 🧩 **REST API**: Read-only JSON API plus WordPress-compatible `/wp-json/wp/v2` endpoints for headless apps and theme compatibility
 - 🖼️ **Media Library**: Folders, search, alt text/captions and a reusable editor picker
 - 🌍 **Multi-Site**: Manage multiple websites from a single installation
 - 🔒 **Secure**: Role-based access control, CSRF protection, output escaping, content sanitization and rate limiting
@@ -206,10 +207,28 @@ Menus are managed in **Admin → Menus**. Each menu has a location (`header` or
 renders the header and footer menus automatically, including one level of
 submenu items.
 
+## REST API
+
+Published content is available as JSON without authentication:
+
+- `GET /api` – discovery document
+- `GET /api/posts` and `GET /api/posts/{slug}`
+- `GET /api/pages` and `GET /api/pages/{slug}`
+- `GET /api/categories`, `GET /api/tags` and `GET /api/search?q=term`
+
+Listings support `page`, `per_page` (up to 100), `category`, `tag` and
+`search` parameters. Drafts and scheduled content never appear in API
+responses.
+
+WordPress-style read-only endpoints are available for themes and plugins that
+expect them: `/wp-json`, `/wp-json/wp/v2/posts`, `/wp-json/wp/v2/pages`,
+`/wp-json/wp/v2/categories` and `/wp-json/wp/v2/tags`. Collection responses
+include `X-WP-Total` and `X-WP-TotalPages` headers.
+
 ## Roadmap
 
 - [ ] Custom post types
-- [ ] REST API
+- [x] REST API
 - [ ] GraphQL support
 - [ ] Advanced caching
 - [ ] Expanded automated test coverage

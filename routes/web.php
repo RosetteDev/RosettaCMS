@@ -24,6 +24,7 @@ use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PluginController;
+use App\Http\Controllers\Api\ContentController;
 use Illuminate\Support\Facades\View;
 
 /*
@@ -53,6 +54,22 @@ Route::get('/search', [FrontendController::class, 'search'])->name('search');
 Route::get('/sitemap.xml', [FrontendController::class, 'sitemap'])->name('sitemap');
 Route::get('/feed', [FrontendController::class, 'feed'])->name('feed');
 Route::get('/robots.txt', [FrontendController::class, 'robots'])->name('robots');
+
+// WordPress-compatible read-only REST API.
+Route::prefix('wp-json/wp/v2')->name('wp.')
+    ->middleware('throttle:120,1')
+    ->group(function () {
+        Route::get('/posts', [ContentController::class, 'wordpressPosts'])->name('posts');
+        Route::get('/posts/{slug}', [ContentController::class, 'wordpressPost'])->name('posts.show');
+        Route::get('/pages', [ContentController::class, 'wordpressPages'])->name('pages');
+        Route::get('/pages/{slug}', [ContentController::class, 'wordpressPage'])->name('pages.show');
+        Route::get('/categories', [ContentController::class, 'wordpressCategories'])->name('categories');
+        Route::get('/tags', [ContentController::class, 'wordpressTags'])->name('tags');
+    });
+
+Route::get('/wp-json', [ContentController::class, 'wordpressIndex'])
+    ->middleware('throttle:120,1')
+    ->name('wp.index');
 
 // Dashboard
 Route::get('/dashboard', [DashboardController::class, 'index'])
