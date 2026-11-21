@@ -170,7 +170,9 @@ add_action('wp_head', function () {
 Then open **Admin → Plugins** and activate it. Activation state is stored in
 `storage/app/wordpress-plugins.json`. The compatibility layer provides actions
 and filters, `wp_head`/`wp_footer`, script and style enqueueing, options,
-escaping helpers, post helpers, template conditionals and shortcodes.
+escaping helpers, post helpers, template conditionals and shortcodes. Post
+metadata (`get_post_meta`/`update_post_meta`), `wp_mail`, nonces, transients,
+attachment URLs and common template tags are also available.
 
 See `wp-content/plugins/rosetta-demo/rosetta-demo.php` for a working example.
 

@@ -463,6 +463,27 @@ class WordPressCompatibility
     }
 
     /**
+     * Check if is a single page.
+     *
+     * @param mixed $query
+     * @return bool
+     */
+    public function isPage($query = ''): bool
+    {
+        return request()->routeIs('page.show');
+    }
+
+    /**
+     * Check if is any singular content.
+     *
+     * @return bool
+     */
+    public function isSingular(): bool
+    {
+        return $this->isSingle() || $this->isPage();
+    }
+
+    /**
      * Check if is home.
      *
      * @return bool
@@ -531,6 +552,52 @@ class WordPressCompatibility
      */
     public function is404(): bool
     {
+        return request()->route() === null;
+    }
+
+    /**
+     * Check whether an action has been registered.
+     *
+     * @param string $tag
+     * @param callable|false $function
+     * @return bool
+     */
+    public function hasAction(string $tag, $function = false): bool
+    {
+        return $this->hookExists($this->actions, $tag, $function);
+    }
+
+    /**
+     * Check whether a filter has been registered.
+     *
+     * @param string $tag
+     * @param callable|false $function
+     * @return bool
+     */
+    public function hasFilter(string $tag, $function = false): bool
+    {
+        return $this->hookExists($this->filters, $tag, $function);
+    }
+
+    /**
+     * Inspect a hook registry for a tag and optional callback.
+     */
+    protected function hookExists(array $hooks, string $tag, $function = false): bool
+    {
+        if (!isset($hooks[$tag]) || $hooks[$tag] === []) {
+            return false;
+        }
+
+        if ($function === false) {
+            return true;
+        }
+
+        foreach ($hooks[$tag] as $hook) {
+            if ($hook['function'] === $function) {
+                return true;
+            }
+        }
+
         return false;
     }
 }

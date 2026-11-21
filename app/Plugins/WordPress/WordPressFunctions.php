@@ -250,14 +250,14 @@ if (!function_exists('add_filter')) {
 if (!function_exists('has_action')) {
     function has_action(string $tag, $function = false)
     {
-        return false;
+        return compat()->hasAction($tag, $function);
     }
 }
 
 if (!function_exists('has_filter')) {
     function has_filter(string $tag, $function = false)
     {
-        return false;
+        return compat()->hasFilter($tag, $function);
     }
 }
 
@@ -269,7 +269,7 @@ if (!function_exists('get_post')) {
         }
 
         if (is_numeric($post)) {
-            return app(\RosettaCMS\Models\Post::class)->find($post);
+            return \App\Models\Post::find($post);
         }
 
         return $post;
@@ -319,7 +319,7 @@ if (!function_exists('get_post_type')) {
     {
         $post = $post ? get_post($post) : compat()->getCurrentPost();
 
-        return $post->type ?? 'post';
+        return $post->post_type ?? 'post';
     }
 }
 
@@ -365,6 +365,20 @@ if (!function_exists('is_single')) {
     function is_single($query = '')
     {
         return compat()->isSingle($query);
+    }
+}
+
+if (!function_exists('is_page')) {
+    function is_page($query = '')
+    {
+        return compat()->isPage($query);
+    }
+}
+
+if (!function_exists('is_singular')) {
+    function is_singular($query = '')
+    {
+        return compat()->isSingular();
     }
 }
 
@@ -439,7 +453,8 @@ if (!function_exists('wp_get_current_user')) {
         $object->user_email = $user->email;
         $object->display_name = $user->name;
         $object->user_nicename = \Illuminate\Support\Str::slug($user->name);
-        $object->roles = [$user->role ?? 'subscriber'];
+        $object->roles = $user->roles()->pluck('slug')->all() ?: ['subscriber'];
+        $object->caps = [];
 
         return $object;
     }
@@ -483,7 +498,7 @@ if (!function_exists('get_bloginfo')) {
             'description' => $settings->site_description ?? '',
             'url', 'home' => url('/'),
             'wpurl', 'siteurl' => url('/'),
-            'admin_email' => $settings->contact_email ?? '',
+            'admin_email' => $settings->admin_email ?? '',
             'charset' => 'UTF-8',
             'language' => app()->getLocale(),
             'version' => app()->version(),
@@ -820,5 +835,286 @@ if (!function_exists('wp_get_attachment_url')) {
         $media = \App\Models\Media::find($attachmentId);
 
         return $media ? $media->url : false;
+    }
+}
+
+if (!function_exists('wp_mail')) {
+    /**
+     * Send an email using the configured Laravel mailer.
+     */
+    function wp_mail($to, string $subject, string $message, $headers = '', array $attachments = []): bool
+    {
+        $to = is_array($to) ? implode(',', $to) : (string) $to;
+        $headers = is_array($headers)
+            ? $headers
+            : preg_split('/\r\n|\r|\n/', (string) $headers, -1, PREG_SPLIT_NO_EMPTY);
+
+        $parseAddress = static function (string $value): array {
+            $value = trim($value);
+
+            if (preg_match('/^(.*)<([^>]+)>$/', $value, $matches)) {
+                return [trim($matches[2]), trim($matches[1], " \t\"'")];
+            }
+
+            return [$value, null];
+        };
+
+        $from = null;
+        $replyTo = null;
+        $cc = [];
+        $bcc = [];
+
+        foreach ($headers as $header) {
+            $header = trim((string) $header);
+
+            if (stripos($header, 'From:') === 0) {
+                $from = trim(substr($header, 5));
+            } elseif (stripos($header, 'Reply-To:') === 0) {
+                $replyTo = trim(substr($header, 9));
+            } elseif (stripos($header, 'Cc:') === 0) {
+                $cc[] = trim(substr($header, 3));
+            } elseif (stripos($header, 'Bcc:') === 0) {
+                $bcc[] = trim(substr($header, 4));
+            }
+        }
+
+        try {
+            \Illuminate\Support\Facades\Mail::raw($message, function ($mail) use ($to, $subject, $from, $replyTo, $cc, $bcc, $attachments, $parseAddress) {
+                $mail->to($to)->subject($subject);
+
+                if ($from) {
+                    [$address, $name] = $parseAddress($from);
+                    $mail->from($address, $name ?: null);
+                }
+
+                if ($replyTo) {
+                    [$address, $name] = $parseAddress($replyTo);
+                    $mail->replyTo($address, $name ?: null);
+                }
+
+                if ($cc !== []) {
+                    foreach ($cc as $address) {
+                        $mail->cc($address);
+                    }
+                }
+
+                if ($bcc !== []) {
+                    foreach ($bcc as $address) {
+                        $mail->bcc($address);
+                    }
+                }
+
+                foreach ($attachments as $attachment) {
+                    if (is_string($attachment) && is_file($attachment)) {
+                        $mail->attach($attachment);
+                    }
+                }
+            });
+
+            return true;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return false;
+        }
+    }
+}
+
+if (!function_exists('get_post_meta')) {
+    /**
+     * Read metadata stored in a post's meta JSON column.
+     */
+    function get_post_meta($post_id, $key = '', $single = false)
+    {
+        $post = $post_id instanceof \App\Models\Post ? $post_id : get_post($post_id);
+
+        if (!$post) {
+            return $single ? '' : [];
+        }
+
+        $meta = $post->meta ?? [];
+
+        if ($key === '') {
+            return $meta;
+        }
+
+        if (!array_key_exists($key, $meta)) {
+            return $single ? '' : [];
+        }
+
+        return $single ? $meta[$key] : [$meta[$key]];
+    }
+}
+
+if (!function_exists('update_post_meta')) {
+    /**
+     * Persist a metadata value for a post.
+     */
+    function update_post_meta($post_id, $meta_key, $meta_value, $prev_value = ''): bool
+    {
+        $post = $post_id instanceof \App\Models\Post ? $post_id : get_post($post_id);
+
+        if (!$post) {
+            return false;
+        }
+
+        $meta = $post->meta ?? [];
+        $meta[$meta_key] = $meta_value;
+        $post->meta = $meta;
+
+        return (bool) $post->save();
+    }
+}
+
+if (!function_exists('add_post_meta')) {
+    /**
+     * Add a metadata value, optionally only when the key is absent.
+     */
+    function add_post_meta($post_id, $meta_key, $meta_value, $unique = false): bool
+    {
+        $post = $post_id instanceof \App\Models\Post ? $post_id : get_post($post_id);
+
+        if (!$post) {
+            return false;
+        }
+
+        $meta = $post->meta ?? [];
+
+        if ($unique && array_key_exists($meta_key, $meta)) {
+            return false;
+        }
+
+        return update_post_meta($post, $meta_key, $meta_value);
+    }
+}
+
+if (!function_exists('delete_post_meta')) {
+    /**
+     * Remove a metadata key from a post.
+     */
+    function delete_post_meta($post_id, $meta_key, $meta_value = ''): bool
+    {
+        $post = $post_id instanceof \App\Models\Post ? $post_id : get_post($post_id);
+
+        if (!$post) {
+            return false;
+        }
+
+        $meta = $post->meta ?? [];
+
+        if (!array_key_exists($meta_key, $meta)) {
+            return false;
+        }
+
+        unset($meta[$meta_key]);
+        $post->meta = $meta;
+
+        return (bool) $post->save();
+    }
+}
+
+if (!function_exists('metadata_exists')) {
+    function metadata_exists(string $meta_type, $object_id, string $meta_key): bool
+    {
+        if ($meta_type !== 'post') {
+            return false;
+        }
+
+        $post = get_post($object_id);
+
+        return $post ? array_key_exists($meta_key, $post->meta ?? []) : false;
+    }
+}
+
+if (!function_exists('get_the_date')) {
+    function get_the_date(string $format = '', $post = null)
+    {
+        $post = $post ? get_post($post) : compat()->getCurrentPost();
+        $date = $post->published_at ?? $post->created_at ?? null;
+
+        return $date ? $date->format($format ?: 'F j, Y') : '';
+    }
+}
+
+if (!function_exists('the_date')) {
+    function the_date(string $format = '', string $before = '', string $after = '')
+    {
+        $date = get_the_date($format);
+
+        if ($date !== '') {
+            echo $before . e($date) . $after;
+        }
+    }
+}
+
+if (!function_exists('get_the_author')) {
+    function get_the_author($post = null)
+    {
+        $post = $post ? get_post($post) : compat()->getCurrentPost();
+
+        return $post->user->name ?? '';
+    }
+}
+
+if (!function_exists('get_the_author_meta')) {
+    function get_the_author_meta(string $field = 'display_name', $user_id = null)
+    {
+        $post = compat()->getCurrentPost();
+        $user = $user_id
+            ? \App\Models\User::find($user_id)
+            : ($post->user ?? auth()->user());
+
+        if (!$user) {
+            return '';
+        }
+
+        return match ($field) {
+            'ID', 'id' => $user->id,
+            'user_login', 'user_email', 'email' => $user->email,
+            'display_name', 'name' => $user->name,
+            'user_nicename' => \Illuminate\Support\Str::slug($user->name),
+            default => '',
+        };
+    }
+}
+
+if (!function_exists('get_the_category')) {
+    function get_the_category($post = null)
+    {
+        $post = $post ? get_post($post) : compat()->getCurrentPost();
+
+        if (!$post) {
+            return [];
+        }
+
+        return $post->categories->map(function ($category) {
+            return (object) [
+                'term_id' => $category->id,
+                'cat_ID' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'description' => $category->description ?? '',
+            ];
+        })->all();
+    }
+}
+
+if (!function_exists('get_the_tags')) {
+    function get_the_tags($post = null)
+    {
+        $post = $post ? get_post($post) : compat()->getCurrentPost();
+
+        if (!$post) {
+            return [];
+        }
+
+        return $post->tags->map(function ($tag) {
+            return (object) [
+                'term_id' => $tag->id,
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+                'description' => $tag->description ?? '',
+            ];
+        })->all();
     }
 }
