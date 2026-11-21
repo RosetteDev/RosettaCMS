@@ -5,7 +5,7 @@ use Illuminate\Http\Request;
 define('LARAVEL_START', microtime(true));
 
 // Check if vendor directory exists - if not, show dependency error
-if (!file_exists(__DIR__.'/../vendor/autoload.php')) {
+if (!file_exists(__DIR__.'/vendor/autoload.php')) {
     http_response_code(503);
     echo '<h1>Dependencies Not Installed</h1>';
     echo '<p>Run these commands on your server (one at a time):</p>';
@@ -20,7 +20,7 @@ if (!file_exists(__DIR__.'/../vendor/autoload.php')) {
 }
 
 // Register the Composer autoloader...
-require __DIR__.'/../vendor/autoload.php';
+require __DIR__.'/vendor/autoload.php';
 
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
