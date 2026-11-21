@@ -9,3 +9,23 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Exclude documentation from production builds
+IMPLEMENTATION_SUMMARY.md export-ignore
+USER_EXPERIENCE.md export-ignore
+USER_EXPERIENCE_CHECKLIST.md export-ignore
+ROSETTAMAPS_LIVE_AUDIT.md export-ignore
+SECURITY_AUDIT_REPORT.md export-ignore
+SECURITY_CHANGES_SUMMARY.md export-ignore
+SECURITY_IMPLEMENTATION_SUMMARY.md export-ignore
+MEDIA_LIBRARY_UPDATE.md export-ignore
+TAXONOMY_IMPLEMENTATION.md export-ignore
+DEPLOYMENT_GUIDE.md export-ignore
+QUICK_FIX.md export-ignore
+FIX_403.md export-ignore
+SERVER_TRoubleshooting.md export-ignore
+
+# Exclude development files
+test.php export-ignore
+check.php export-ignore
+.env export-ignore
