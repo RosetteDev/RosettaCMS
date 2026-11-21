@@ -53,7 +53,7 @@
 @endif
 
 @if($favicon)
-    <link rel="icon" href="{{ $favicon }}">
+    <link rel="icon" href="{{ \App\Facades\CDN::cdnUrl($favicon) }}">
 @endif
 
 {{-- Feeds and sitemap --}}

@@ -12,9 +12,12 @@ use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Cache;
 
 class FrontendController extends Controller
 {
+    use CacheHelper;
+
     /**
      * Resolved sites, keyed by request host.
      *
@@ -51,14 +54,8 @@ class FrontendController extends Controller
      */
     protected function settings(): SiteSetting
     {
-        $site = $this->site();
-        $key = $site?->id ?? 0;
-
-        if (!isset($this->settingsBySite[$key])) {
-            $this->settingsBySite[$key] = SiteSetting::forSite($site);
-        }
-
-        return $this->settingsBySite[$key];
+        // Use settingsWithCache() from CacheHelper trait
+        return $this->settingsWithCache();
     }
 
     /**
@@ -387,6 +384,7 @@ class FrontendController extends Controller
             ->published()
             ->where('post_type', 'post')
             ->orderByDesc('published_at')
+            ->with(['author', 'categories', 'tags'])
             ->paginate($settings->post_per_page ?: 10);
 
         return $this->render('category', [
@@ -412,6 +410,7 @@ class FrontendController extends Controller
             ->published()
             ->where('post_type', 'post')
             ->orderByDesc('published_at')
+            ->with(['author', 'categories', 'tags'])
             ->paginate($settings->post_per_page ?: 10);
 
         return $this->render('tag', [
@@ -435,6 +434,7 @@ class FrontendController extends Controller
             ->published()
             ->where('post_type', 'post')
             ->orderByDesc('published_at')
+            ->with(['author', 'categories', 'tags'])
             ->paginate($settings->post_per_page ?: 10);
 
         return $this->render('category', [
@@ -467,6 +467,7 @@ class FrontendController extends Controller
                 });
             })
             ->orderByDesc('published_at')
+            ->with(['author', 'categories', 'tags'])
             ->paginate($settings->post_per_page ?: 10);
 
         return $this->render('search', [
@@ -495,6 +496,7 @@ class FrontendController extends Controller
             ->published()
             ->where('post_type', 'post')
             ->orderByDesc('updated_at')
+            ->with(['author', 'categories', 'tags'])
             ->get(['slug', 'updated_at', 'featured_image']);
 
         $pages = $this->scoped(Post::query())

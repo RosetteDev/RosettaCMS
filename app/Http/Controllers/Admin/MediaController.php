@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\ImageOptimizer;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use App\Models\Media;
@@ -11,6 +12,8 @@ use Illuminate\Support\Str;
 
 class MediaController extends Controller
 {
+    use ImageOptimizer;
+
     /**
      * Display a listing of media.
      */
@@ -169,6 +172,20 @@ class MediaController extends Controller
             }
             
             $storagePath = $file->storeAs('media', $filepath, 'public');
+            
+            // Optimize image if applicable
+            if (str_starts_with($detectedMimeType, 'image/')) {
+                $fullPath = storage_path('app/public/' . $storagePath);
+                
+                // Convert to WebP
+                $webpPath = $this->convertToWebP($fullPath);
+                
+                // Generate responsive images
+                $this->generateResponsiveImages($fullPath);
+                
+                // Optimize original
+                $this->optimizeImage($fullPath);
+            }
             
             $media = Media::create([
                 'user_id' => auth()->id(),
