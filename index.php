@@ -4,23 +4,23 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Check if vendor directory exists - if not, redirect to installer
+// Check if vendor directory exists - if not, show dependency error
 if (!file_exists(__DIR__.'/../vendor/autoload.php')) {
-    // Check if install directory exists
-    if (file_exists(__DIR__.'/../app/Http/Controllers/InstallController.php')) {
-        http_response_code(503);
-        echo '<h1>Dependencies Not Installed</h1>';
-        echo '<p>Please run <code>composer install --optimize-autoloader</code> first.</p>';
-        echo '<p>Or visit <a href="/install/check">/install/check</a> to run the web installer.</p>';
-        exit(1);
-    }
-    
-    die('<h1>Dependencies Not Installed</h1>
-    <p>Please run: <code>php composer.phar install --optimize-autoloader</code></p>');
+    http_response_code(503);
+    echo '<h1>Dependencies Not Installed</h1>';
+    echo '<p>Run these commands on your server:</p>';
+    echo '<pre>php -r "copy(\"https://getcomposer.org/installer\", \"composer-setup.php\");"\nphp composer-setup.php\nphp -r "unlink(\"composer-setup.php\");"\nphp -d detect_unicode=0 composer.phar install --optimize-autoloader --no-dev</pre>';
+    echo '<p>Or visit <a href="/install/check">/install/check</a> to run the web installer.</p>';
+    exit(1);
 }
 
 // Register the Composer autoloader...
 require __DIR__.'/../vendor/autoload.php';
+
+// Determine if the application is in maintenance mode...
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
+}
 
 // Bootstrap Laravel and handle the request...
 (require_once __DIR__.'/../bootstrap/app.php')
