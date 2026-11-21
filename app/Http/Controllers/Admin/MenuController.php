@@ -135,4 +135,31 @@ class MenuController extends Controller
             'order' => $validated['order'] ?? 0,
         ];
     }
+
+    /**
+     * Reorder menu items.
+     */
+    public function reorder(Request $request, Menu $menu)
+    {
+        $validated = $request->validate([
+            'items' => 'required|array',
+            'items.*.id' => 'required|exists:menu_items,id',
+            'items.*.order' => 'required|integer',
+            'items.*.parent_id' => 'nullable|exists:menu_items,id',
+        ]);
+
+        foreach ($validated['items'] as $itemData) {
+            MenuItem::where('id', $itemData['id'])
+                ->where('menu_id', $menu->id)
+                ->update([
+                    'order' => $itemData['order'],
+                    'parent_id' => $itemData['parent_id'] ?? null,
+                ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Menu items reordered successfully.',
+        ]);
+    }
 }

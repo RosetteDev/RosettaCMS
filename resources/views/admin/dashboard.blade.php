@@ -1,5 +1,53 @@
 @extends('admin.layouts.app')
 
+@push('styles')
+@php
+    use App\Models\CustomWidget;
+@endphp
+<style>
+    .widget-area {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .widget {
+        background-color: var(--light-color);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+    }
+    
+    .widget:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .widget-header {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .widget-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    .widget-body {
+        padding: 1rem;
+    }
+    
+    .widget-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+</style>
+@endpush
+
 @section('content')
     {{-- Page heading --}}
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
@@ -12,6 +60,46 @@
                 <i class="fas fa-plus me-1"></i>New Post
             </a>
         </div>
+    </div>
+
+    {{-- Custom Widgets Area --}}
+    <div class="widget-area" id="customWidgets">
+        @if(isset($widgets) && is_array($widgets))
+            @foreach($widgets as $widgetId => $widgetConfig)
+                @if($widgetConfig['status'] ?? 'enabled' === 'enabled')
+                    @php
+                        $widget = \App\Models\CustomWidget::find($widgetId);
+                    @endphp
+                    
+                    @if($widget && $widget->enabled)
+                        <div class="widget" data-widget-id="{{ $widget->id }}">
+                            <div class="widget-header">
+                                <h3>{{ $widget->name }}</h3>
+                                <div class="widget-actions">
+                                    <a href="{{ route('admin.widgets.edit', $widget->id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="widget-body">
+                                @if($widget->type === 'html')
+                                    {!! $widget->content !!}
+                                @elseif($widget->type === 'rss')
+                                    <div class="rss-widget">
+                                        <p class="text-muted small">RSS feed content would be loaded here</p>
+                                    </div>
+                                @elseif($widget->type === 'custom')
+                                    @php
+                                        // Allow custom widget rendering via event or hook
+                                        echo $widget->content ?? 'Custom widget content';
+                                    @endphp
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                @endif
+            @endforeach
+        @endif
     </div>
 
     {{-- Stat cards --}}
@@ -34,7 +122,7 @@
             <div class="col">
                 <div class="card h-100 border-0 shadow-sm text-center">
                     <div class="card-body py-4">
-                        <div class="mb-2" style="font-size: 2.25rem; line-height: 1;">{{ $card['icon'] }}</div>
+                        <div class="mb-2" style="font-size: 2.25rem; line-height: 1%;">{{ $card['icon'] }}</div>
                         <h3 class="mb-1 fw-bold" style="color: {{ $card['color'] }};">
                             {{ $stats[$card['key']] ?? 0 }}
                         </h3>
@@ -54,9 +142,9 @@
                     <a href="{{ url('/admin/posts') }}" class="btn btn-sm btn-outline-primary">View all</a>
                 </div>
                 <div class="card-body p-0">
-                    @if(count($recent_posts) > 0)
+                    @if(count($recentPosts) > 0)
                         <div class="list-group list-group-flush">
-                            @foreach($recent_posts as $post)
+                            @foreach($recentPosts as $post)
                                 @php
                                     $editUrl = url('/admin/' . ($post->post_type === 'page' ? 'pages' : 'posts') . '/' . $post->id . '/edit');
                                 @endphp
@@ -106,6 +194,9 @@
                             <span class="me-1">🖼️</span> Upload Media
                         </a>
                         @if(auth()->user()?->hasRole('admin'))
+                        <a href="{{ url('/admin/widgets') }}" class="btn btn-outline-primary text-start">
+                            <span class="me-1">🧩</span> Manage Widgets
+                        </a>
                         <a href="{{ url('/admin/themes') }}" class="btn btn-outline-primary text-start">
                             <span class="me-1">🎨</span> Manage Themes
                         </a>
@@ -118,4 +209,58 @@
             </div>
         </div>
     </div>
+    
+    <div class="row g-4">
+        {{-- Recent media --}}
+        @if(count($recentMedia) > 0)
+        <div class="col-lg-12">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Recent Media</h2>
+                    <a href="{{ url('/admin/media') }}" class="btn btn-sm btn-outline-primary">View all</a>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        @foreach($recentMedia as $media)
+                            <div class="col-6 col-md-4 col-lg-2">
+                                <div class="media-card" style="position: relative; border-radius: 8px; overflow: hidden;">
+                                    @if(str_starts_with($media->mime_type, 'image/'))
+                                        <img src="{{ $media->url }}" alt="{{ $media->alt_text }}" style="width: 100%; height: 80px; object-fit: cover;">
+                                    @else
+                                        <div class="d-flex align-items-center justify-content-center" style="width: 100%; height: 80px; background-color: var(--light-color);">
+                                            <i class="fas fa-file fa-2x text-muted"></i>
+                                        </div>
+                                    @endif
+                                    <div class="media-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;">
+                                        <a href="{{ url('/admin/media/' . $media->id) }}" class="btn btn-sm btn-white">View</a>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-truncate small" style="font-size: 0.75rem;">{{ $media->filename }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+    </div>
 @endsection
+
+@push('scripts')
+<script>
+    // Widget management
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add widget drag-and-drop functionality
+        const widgets = document.querySelectorAll('.widget');
+        
+        widgets.forEach(widget => {
+            widget.addEventListener('click', function(e) {
+                if (e.target.closest('.widget-actions')) return;
+                
+                // Widget click handler
+                console.log('Widget clicked:', widget.dataset.widgetId);
+            });
+        });
+    });
+</script>
+@endpush

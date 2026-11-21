@@ -134,6 +134,62 @@ class PostController extends Controller
     }
 
     /**
+     * Handle bulk operations on posts
+     */
+    public function bulk(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|exists:posts,id',
+            'action' => 'required|in:delete,publish,unpublish,trash,restore',
+        ]);
+
+        $posts = Post::whereIn('id', $validated['ids'])->get();
+
+        switch ($validated['action']) {
+            case 'delete':
+                foreach ($posts as $post) {
+                    $post->delete();
+                }
+                return response()->json(['success' => true, 'message' => count($posts) . ' posts permanently deleted.']);
+            
+            case 'publish':
+                foreach ($posts as $post) {
+                    $post->status = 'published';
+                    if (!$post->published_at) {
+                        $post->published_at = now();
+                    }
+                    $post->save();
+                }
+                return response()->json(['success' => true, 'message' => count($posts) . ' posts published.']);
+            
+            case 'unpublish':
+                foreach ($posts as $post) {
+                    $post->status = 'draft';
+                    $post->published_at = null;
+                    $post->save();
+                }
+                return response()->json(['success' => true, 'message' => count($posts) . ' posts unpublished (drafted).']);
+            
+            case 'trash':
+                foreach ($posts as $post) {
+                    $post->status = 'trash';
+                    $post->save();
+                }
+                return response()->json(['success' => true, 'message' => count($posts) . ' posts moved to trash.']);
+            
+            case 'restore':
+                foreach ($posts as $post) {
+                    $post->status = 'draft';
+                    $post->save();
+                }
+                return response()->json(['success' => true, 'message' => count($posts) . ' posts restored from trash.']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Invalid action.'], 400);
+    }
+
+    /**
      * Validate and persist a post/page from the shared editor.
      */
     protected function savePost(Request $request, Post $post, string $type = 'post'): Post

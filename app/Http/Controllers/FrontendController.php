@@ -274,12 +274,16 @@ class FrontendController extends Controller
 
         $page = $query->firstOrFail();
 
+        // Determine if inline edit mode is enabled
+        $inlineEdit = request()->input('inline_edit') || config('rosetta.inline_edit_enabled', false);
+
         return $this->render('page', [
             'page' => $page,
             'post' => $page,
             'relatedPosts' => collect(),
             'preview' => $preview,
             'seo' => $this->seoForPost($page, $preview),
+            'inlineEdit' => $inlineEdit,
         ]);
     }
 
@@ -455,6 +459,9 @@ class FrontendController extends Controller
     {
         $settings = $this->settings();
         $query = trim((string) $request->input('q'));
+        
+        // Limit search query length to prevent abuse
+        $query = mb_substr($query, 0, 100);
 
         $posts = $this->scoped(Post::query())
             ->published()

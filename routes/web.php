@@ -24,7 +24,13 @@ use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PluginController;
+use App\Http\Controllers\Admin\BlockController;
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\InlineEditController;
+use App\Http\Controllers\PreviewController;
+use App\Http\Controllers\Admin\WordPressController;
+use App\Http\Controllers\Admin\WidgetController;
+use App\Http\Controllers\Admin\RevisionController;
 use Illuminate\Support\Facades\View;
 
 /*
@@ -85,6 +91,21 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 
+// Inline editing routes
+Route::middleware('can:inline_edit')->group(function () {
+    Route::get('/inline-edit/{post}', [InlineEditController::class, 'show'])->name('inline-edit.show');
+    Route::put('/inline-edit/{post}/blocks/{block}', [InlineEditController::class, 'updateBlock'])->name('inline-edit.blocks.update');
+    Route::delete('/inline-edit/{post}/blocks/{block}', [InlineEditController::class, 'destroyBlock'])->name('inline-edit.blocks.destroy');
+});
+
+// Preview routes
+Route::middleware('auth')->group(function () {
+    Route::get('/preview/{post}', [PreviewController::class, 'show'])->name('preview.show');
+    Route::post('/preview/{post}', [PreviewController::class, 'preview'])->name('preview.update');
+    Route::post('/preview/theme', [PreviewController::class, 'themePreview'])->name('preview.theme');
+    Route::post('/preview/exit', [PreviewController::class, 'exitThemePreview'])->name('preview.exit');
+});
+
 // Authentication routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -94,9 +115,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [RegisterController::class, 'register']);
 
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email')
+        ->middleware('throttle:3,1');
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store')
+        ->middleware('throttle:3,1');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -117,6 +140,9 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::get('/{post}', [PostController::class, 'show'])->name('show');
         Route::put('/{post}', [PostController::class, 'update'])->name('update');
         Route::delete('/{post}', [PostController::class, 'destroy'])->name('destroy');
+        
+        // Bulk actions
+        Route::post('/bulk', [PostController::class, 'bulk'])->name('bulk');
     });
 
     // Media management
@@ -158,6 +184,17 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::get('/{page}', [PageController::class, 'show'])->name('show');
         Route::put('/{page}', [PageController::class, 'update'])->name('update');
         Route::delete('/{page}', [PageController::class, 'destroy'])->name('destroy');
+    });
+
+    // Blocks management
+    Route::prefix('admin/pages/{post}/blocks')->name('admin.pages.blocks.')->group(function () {
+        Route::get('/', [BlockController::class, 'index'])->name('index');
+        Route::post('/', [BlockController::class, 'store'])->name('store');
+        Route::put('/{block}', [BlockController::class, 'update'])->name('update');
+        Route::delete('/{block}', [BlockController::class, 'destroy'])->name('destroy');
+        Route::post('/reorder', [BlockController::class, 'reorder'])->name('reorder');
+        Route::get('/media-picker', [BlockController::class, 'mediaPicker'])->name('media-picker');
+        Route::get('/block-types', [BlockController::class, 'blockTypes'])->name('block-types');
     });
 
     // Categories management
@@ -251,6 +288,38 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::post('/{menu}/items', [MenuController::class, 'storeItem'])->name('items.store');
         Route::put('/{menu}/items/{item}', [MenuController::class, 'updateItem'])->name('items.update');
         Route::delete('/{menu}/items/{item}', [MenuController::class, 'destroyItem'])->name('items.destroy');
+        Route::post('/{menu}/reorder', [MenuController::class, 'reorder'])->name('reorder');
+    });
+
+    // Custom widgets management
+    Route::prefix('admin/widgets')->name('admin.widgets.')->group(function () {
+        Route::get('/', [WidgetController::class, 'index'])->name('index');
+        Route::get('/create', [WidgetController::class, 'create'])->name('create');
+        Route::post('/', [WidgetController::class, 'store'])->name('store');
+        Route::get('/{widget}/edit', [WidgetController::class, 'edit'])->name('edit');
+        Route::put('/{widget}', [WidgetController::class, 'update'])->name('update');
+        Route::delete('/{widget}', [WidgetController::class, 'destroy'])->name('destroy');
+        Route::post('/toggle', [WidgetController::class, 'toggle'])->name('toggle');
+    });
+
+    // Post revisions management
+    Route::prefix('admin/posts/{post}/revisions')->name('admin.posts.revisions.')->group(function () {
+        Route::get('/', [RevisionController::class, 'index'])->name('index');
+        Route::get('/{revision}', [RevisionController::class, 'show'])->name('show');
+        Route::get('/diff', [RevisionController::class, 'diff'])->name('diff');
+        Route::post('/restore/{revision}', [RevisionController::class, 'restore'])->name('restore');
+    });
+
+    // WordPress compatibility routes
+    Route::prefix('admin/wordpress')->name('admin.wordpress.')->middleware('role:admin')->group(function () {
+        Route::get('/', [WordPressController::class, 'index'])->name('index');
+        Route::get('/export', [WordPressController::class, 'export'])->name('export');
+        Route::get('/export-all', [WordPressController::class, 'exportAll'])->name('export-all');
+        Route::delete('/export', [WordPressController::class, 'deleteExport'])->name('export.delete');
+        Route::post('/import', [WordPressController::class, 'uploadImport'])->name('import');
+        Route::get('/migrate', [WordPressController::class, 'migrate'])->name('migrate');
+        Route::post('/migrate', [WordPressController::class, 'runMigration'])->name('migrate.run');
+        Route::get('/check-connection', [WordPressController::class, 'checkConnection'])->name('check-connection');
     });
 });
 

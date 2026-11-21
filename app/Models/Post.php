@@ -40,6 +40,22 @@ class Post extends Model
     }
 
     /**
+     * Get the blocks for the post.
+     */
+    public function blocks()
+    {
+        return $this->hasMany(Block::class)->orderBy('order');
+    }
+
+    /**
+     * Get the menu items that reference this post.
+     */
+    public function menuItems()
+    {
+        return $this->hasMany(MenuItem::class, 'page_id');
+    }
+
+    /**
      * Get the user that owns the post.
      */
     public function user()

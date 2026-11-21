@@ -336,6 +336,11 @@
                             <button type="submit" style="background: none; border: none; color: white; cursor: pointer; font-family: inherit;">Logout</button>
                         </form>
                     </li>
+                    <li>
+                        <a href="#" id="darkModeToggle" style="color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; transition: background-color 0.2s;">
+                            <i class="fas fa-moon" id="darkModeIcon"></i>
+                        </a>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -383,5 +388,58 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     @stack('scripts')
+    
+    <script>
+        // Dark mode toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const darkModeIcon = document.getElementById('darkModeIcon');
+            const htmlElement = document.documentElement;
+            
+            // Check for saved user preference
+            const savedTheme = localStorage.getItem('admin_theme') || '{{ auth()->user()?->admin_theme ?? "light" }}';
+            
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                darkModeIcon.classList.remove('fa-moon');
+                darkModeIcon.classList.add('fa-sun');
+            }
+            
+            darkModeToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('admin_theme', newTheme);
+                
+                // Update icon
+                if (newTheme === 'dark') {
+                    darkModeIcon.classList.remove('fa-moon');
+                    darkModeIcon.classList.add('fa-sun');
+                } else {
+                    darkModeIcon.classList.remove('fa-sun');
+                    darkModeIcon.classList.add('fa-moon');
+                }
+            });
+        });
+    </script>
+    
+    <script>
+        // Update CSS variables for dark mode
+        document.addEventListener('DOMContentLoaded', function() {
+            const htmlElement = document.documentElement;
+            const isDark = htmlElement.getAttribute('data-theme') === 'dark';
+            
+            if (isDark) {
+                htmlElement.style.setProperty('--bg-color', '#1a1a2e');
+                htmlElement.style.setProperty('--text-color', '#eaeaea');
+                htmlElement.style.setProperty('--light-color', '#16213e');
+                htmlElement.style.setProperty('--border-color', '#0f3460');
+                htmlElement.style.setProperty('--dark-color', '#0f3460');
+            }
+        });
+    </script>
 </body>
 </html>

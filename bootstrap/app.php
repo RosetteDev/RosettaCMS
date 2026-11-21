@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(\App\Http\Middleware\CurrentSite::class);
         $middleware->append(\App\Http\Middleware\CheckMaintenanceMode::class);
+        $middleware->append(\App\Http\Middleware\InlineEdit::class);
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(\App\Http\Middleware\TrimStringsWithLimits::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);

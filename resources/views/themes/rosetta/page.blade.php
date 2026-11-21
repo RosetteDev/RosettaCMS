@@ -1,6 +1,17 @@
 @extends('themes.rosetta.layout')
 
 @section('content')
+    @if(($inlineEdit ?? false) && $page && $page->exists && Auth::check() && Auth::user()->hasRole('admin'))
+        <!-- Inline Edit Button -->
+        <div class="rosetta-inline-edit float-end" style="position:fixed;top:2rem;right:1rem;z-index:1000;">
+            <a href="{{ url('/pages/' . $page->slug . '?inline_edit=1') }}" class="btn btn-primary btn-lg rounded-circle shadow-lg" title="Edit this page">
+                <i class="fas fa-pen-nib"></i>
+            </a>
+        </div>
+        
+        @include('themes.rosetta.partials.inline-edit-modal')
+    @endif
+
     <!-- Hero Section -->
     <div class="hero">
         <div class="container">
@@ -44,5 +55,40 @@
                 <img src="{{ $page->featured_image_url }}" alt="{{ $page->title }}" style="width:100%;border-radius:.5rem;">
             </div>
         </section>
+    @endif
+
+    @if(($inlineEdit ?? false) && $page && $page->exists && Auth::check() && Auth::user()->hasRole('admin'))
+        @push('scripts')
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Open inline edit mode
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.rosetta-inline-edit')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openInlineEdit();
+                }
+            });
+
+            window.openInlineEdit = function() {
+                const modal = document.getElementById('inlineEditModal');
+                if (modal) {
+                    modal.classList.add('show');
+                    modal.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                }
+            };
+
+            window.closeInlineEdit = function() {
+                const modal = document.getElementById('inlineEditModal');
+                if (modal) {
+                    modal.classList.remove('show');
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            };
+        });
+        </script>
+        @endpush
     @endif
 @endsection

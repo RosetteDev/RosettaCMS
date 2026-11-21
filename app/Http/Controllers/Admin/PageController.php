@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use App\Models\Post;
+use App\Models\Block;
 
 class PageController extends PostController
 {
