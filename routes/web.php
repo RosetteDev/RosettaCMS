@@ -42,6 +42,9 @@ use Illuminate\Support\Facades\View;
 Route::get('/', [FrontendController::class, 'home'])->name('home');
 Route::get('/about', [FrontendController::class, 'about'])->name('about');
 Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
+Route::post('/contact', [FrontendController::class, 'submitContact'])
+    ->middleware('throttle:5,1')
+    ->name('contact.submit');
 Route::get('/blog', [FrontendController::class, 'blog'])->name('blog');
 Route::get('/posts/{slug}', [FrontendController::class, 'post'])->name('post.show');
 Route::post('/posts/{slug}/comments', [FrontendController::class, 'storeComment'])

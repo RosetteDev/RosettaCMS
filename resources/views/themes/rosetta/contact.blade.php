@@ -12,6 +12,27 @@
     <!-- Contact Section -->
     <section style="padding: 4rem 0;">
         <div class="container">
+            @if(session('status'))
+                <div style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;border-radius:8px;padding:0.9rem 1.1rem;margin-bottom:2rem;">
+                    {{ session('status') }}
+                </div>
+            @endif
+            @if(session('error'))
+                <div style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:0.9rem 1.1rem;margin-bottom:2rem;">
+                    {{ session('error') }}
+                </div>
+            @endif
+            @if($errors->any())
+                <div style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:0.9rem 1.1rem;margin-bottom:2rem;">
+                    <strong>Please check the form:</strong>
+                    <ul style="margin:0.5rem 0 0 1.25rem;">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 3rem;">
                 <!-- Contact Form -->
                 <div>
@@ -19,25 +40,29 @@
                     
                     <form class="contact-form" action="{{ url('/contact') }}" method="POST">
                         @csrf
+                        <div style="position:absolute;left:-9999px;" aria-hidden="true">
+                            <label for="website">Website</label>
+                            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                        </div>
                         
                         <div class="form-group">
                             <label for="name">Name</label>
-                            <input type="text" id="name" name="name" required>
+                            <input type="text" id="name" name="name" value="{{ old('name', auth()->user()->name ?? '') }}" required>
                         </div>
                         
                         <div class="form-group">
                             <label for="email">Email</label>
-                            <input type="email" id="email" name="email" required>
+                            <input type="email" id="email" name="email" value="{{ old('email', auth()->user()->email ?? '') }}" required>
                         </div>
                         
                         <div class="form-group">
                             <label for="subject">Subject</label>
-                            <input type="text" id="subject" name="subject" required>
+                            <input type="text" id="subject" name="subject" value="{{ old('subject') }}" required>
                         </div>
                         
                         <div class="form-group">
                             <label for="message">Message</label>
-                            <textarea id="message" name="message" required></textarea>
+                            <textarea id="message" name="message" required>{{ old('message') }}</textarea>
                         </div>
                         
                         <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
@@ -53,7 +78,7 @@
                         
                         <div style="margin-bottom: 1rem;">
                             <strong style="display: block; color: var(--primary-color);">Email</strong>
-                            <span>info@rosettacms.com</span>
+                            <span>{{ $settings->admin_email ?? 'info@rosettacms.com' }}</span>
                         </div>
                         
                         <div style="margin-bottom: 1rem;">

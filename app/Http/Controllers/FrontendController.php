@@ -11,6 +11,7 @@ use App\Models\SiteSetting;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Mail;
 
 class FrontendController extends Controller
 {
@@ -250,6 +251,52 @@ class FrontendController extends Controller
     /**
      * Contact page: prefer a CMS page, otherwise fall back to the theme's Contact.
      */
+    /**
+     * Send a contact-form message to the site administrator.
+     */
+    public function submitContact(Request $request)
+    {
+        // Silently accept bots that fill the hidden honeypot field.
+        if ($request->filled('website')) {
+            return back()->with('status', 'Thanks! Your message has been sent.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'subject' => ['required', 'string', 'max:255'],
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $recipient = $this->settings->admin_email
+            ?: $this->settings->contact_email
+            ?: config('mail.from.address');
+
+        if (!$recipient) {
+            return back()->withInput()
+                ->with('error', 'This site has not configured a contact address yet.');
+        }
+
+        $subject = trim(str_replace(["\r", "\n"], ' ', $validated['subject']));
+
+        try {
+            Mail::to($recipient)->send(new \App\Mail\ContactMessage(
+                senderName: $validated['name'],
+                senderEmail: $validated['email'],
+                messageSubject: $subject,
+                messageBody: $validated['message'],
+                siteName: $this->settings->site_title ?? $this->site->name ?? 'your website',
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withInput()
+                ->with('error', 'Sorry, your message could not be sent. Please try again later.');
+        }
+
+        return back()->with('status', 'Thanks! Your message has been sent.');
+    }
+
     public function contact()
     {
         $page = Post::query()->published()->where('post_type', 'page')

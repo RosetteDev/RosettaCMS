@@ -6,6 +6,8 @@ use App\Models\Role;
 use App\Models\Site;
 use App\Models\User;
 use App\Models\Post;
+use App\Mail\ContactMessage;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -89,6 +91,59 @@ class CoreFeaturesTest extends TestCase
         $output = $compat->applyFilters('the_content', '<p>[qa_hello name="QA"]</p>');
 
         $this->assertStringContainsString('Hello QA', $output);
+    }
+
+    public function test_the_contact_form_sends_a_message_to_the_site_admin(): void
+    {
+        Site::create([
+            'name' => 'Contact Site',
+            'slug' => 'contact-site',
+        ]);
+
+        Mail::fake();
+
+        $this->post('/contact', [
+            'name' => 'Reader One',
+            'email' => 'reader@example.com',
+            'subject' => 'Hello there',
+            'message' => 'I would like to know more.',
+        ])->assertRedirect();
+
+        Mail::assertSent(ContactMessage::class, function (ContactMessage $mail) {
+            return $mail->senderEmail === 'reader@example.com'
+                && $mail->messageSubject === 'Hello there';
+        });
+    }
+
+    public function test_the_contact_form_validates_required_fields(): void
+    {
+        Site::create([
+            'name' => 'Contact Site',
+            'slug' => 'contact-site',
+        ]);
+
+        $this->post('/contact', [])
+            ->assertSessionHasErrors(['name', 'email', 'subject', 'message']);
+    }
+
+    public function test_the_contact_form_silently_rejects_honeypot_spam(): void
+    {
+        Site::create([
+            'name' => 'Contact Site',
+            'slug' => 'contact-site',
+        ]);
+
+        Mail::fake();
+
+        $this->post('/contact', [
+            'name' => 'Bot',
+            'email' => 'bot@example.com',
+            'subject' => 'Spam',
+            'message' => 'Buy things',
+            'website' => 'https://spam.example.com',
+        ])->assertRedirect()->assertSessionHas('status');
+
+        Mail::assertNothingSent();
     }
 
     public function test_a_scheduled_homepage_is_not_shown_before_its_publish_time(): void
