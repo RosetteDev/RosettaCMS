@@ -495,13 +495,13 @@ class FrontendController extends Controller
             ->published()
             ->where('post_type', 'post')
             ->orderByDesc('updated_at')
-            ->get(['slug', 'updated_at']);
+            ->get(['slug', 'updated_at', 'featured_image']);
 
         $pages = $this->scoped(Post::query())
             ->published()
             ->where('post_type', 'page')
             ->orderByDesc('updated_at')
-            ->get(['slug', 'updated_at']);
+            ->get(['slug', 'updated_at', 'featured_image']);
 
         $urls = collect([
             ['loc' => url('/'), 'lastmod' => $site?->updated_at],
@@ -511,11 +511,29 @@ class FrontendController extends Controller
         ]);
 
         foreach ($posts as $post) {
-            $urls->push(['loc' => route('post.show', $post->slug), 'lastmod' => $post->updated_at]);
+            $postUrl = ['loc' => route('post.show', $post->slug), 'lastmod' => $post->updated_at];
+            
+            // Add featured image if exists
+            if (!empty($post->featured_image)) {
+                $postUrl['images'] = [
+                    ['url' => $post->featured_image]
+                ];
+            }
+            
+            $urls->push($postUrl);
         }
 
         foreach ($pages as $page) {
-            $urls->push(['loc' => route('page.show', $page->slug), 'lastmod' => $page->updated_at]);
+            $pageUrl = ['loc' => route('page.show', $page->slug), 'lastmod' => $page->updated_at];
+            
+            // Add featured image if exists
+            if (!empty($page->featured_image)) {
+                $pageUrl['images'] = [
+                    ['url' => $page->featured_image]
+                ];
+            }
+            
+            $urls->push($pageUrl);
         }
 
         foreach ($this->scoped(Category::query())->orderBy('name')->get(['slug', 'updated_at']) as $category) {
