@@ -1,23 +1,65 @@
-/.phpunit.cache
-/node_modules
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build artifacts
 /public/build
 /public/hot
 /public/storage
+
+# Storage files
 /storage/*.key
 /storage/pail
+
+# Development tools
 /vendor
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-Homestead.json
-Homestead.yaml
+node_modules
 npm-debug.log
 yarn-error.log
-/auth.json
+
+# IDE/Editor files
 /.fleet
 /.idea
 /.nova
 /.vscode
 /.zed
+
+# Testing
+/.phpunit.cache
+/.phpunit.result.cache
+
+# Laravel
+/.phpactor.json
+Homestead.json
+Homestead.yaml
+
+# Documentation (should not be in production)
+*.md
+!README.md
+IMPLEMENTATION_SUMMARY.md
+USER_EXPERIENCE.md
+USER_EXPERIENCE_CHECKLIST.md
+ROSETTAMAPS_LIVE_AUDIT.md
+SECURITY_AUDIT_REPORT.md
+SECURITY_CHANGES_SUMMARY.md
+SECURITY_IMPLEMENTATION_SUMMARY.md
+MEDIA_LIBRARY_UPDATE.md
+TAXONOMY_IMPLEMENTATION.md
+DEPLOYMENT_GUIDE.md
+QUICK_FIX.md
+FIX_403.md
+SERVER_TRoubleshooting.md
+
+# Composer
+auth.json
+composer.phar
+
+# IDE
+.nova
+.fleet
+.idea
+.vscode
+
+# Log files
+*.log
