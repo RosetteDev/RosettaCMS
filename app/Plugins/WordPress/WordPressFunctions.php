@@ -314,6 +314,13 @@ if (!function_exists('get_the_permalink')) {
     }
 }
 
+if (!function_exists('the_permalink')) {
+    function the_permalink($post = 0)
+    {
+        echo e(get_permalink($post));
+    }
+}
+
 if (!function_exists('get_post_type')) {
     function get_post_type($post = null)
     {

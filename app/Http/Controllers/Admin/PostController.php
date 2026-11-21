@@ -142,7 +142,9 @@ class PostController extends Controller
             'title' => 'required|string|max:255',
             'slug' => [
                 'nullable', 'string', 'max:255', 'alpha_dash',
-                Rule::unique('posts', 'slug')->ignore($post->id),
+                Rule::unique('posts', 'slug')
+                    ->where('site_id', $post->site_id ?? optional(\App\Models\Site::first())->id)
+                    ->ignore($post->id),
             ],
             'content' => 'nullable|string',
             'excerpt' => 'nullable|string',

@@ -18,7 +18,7 @@ class ContentController extends Controller
      */
     public function index(): JsonResponse
     {
-        $site = Site::first();
+        $site = $this->site();
         $settings = SiteSetting::forSite($site);
 
         return response()->json([
@@ -77,7 +77,7 @@ class ContentController extends Controller
      */
     public function categories(): JsonResponse
     {
-        $categories = Category::query()
+        $categories = $this->scoped(Category::query())
             ->withCount(['posts' => fn ($query) => $query->published()->where('post_type', 'post')])
             ->orderBy('name')
             ->get()
@@ -98,7 +98,7 @@ class ContentController extends Controller
      */
     public function tags(): JsonResponse
     {
-        $tags = Tag::query()
+        $tags = $this->scoped(Tag::query())
             ->withCount(['posts' => fn ($query) => $query->published()->where('post_type', 'post')])
             ->orderBy('name')
             ->get()
@@ -148,7 +148,7 @@ class ContentController extends Controller
      */
     public function wordpressIndex(): JsonResponse
     {
-        $site = Site::first();
+        $site = $this->site();
         $settings = SiteSetting::forSite($site);
 
         return response()->json([
@@ -199,7 +199,7 @@ class ContentController extends Controller
     public function wordpressCategories(): JsonResponse
     {
         return response()->json(
-            Category::query()
+            $this->scoped(Category::query())
                 ->withCount(['posts' => fn ($query) => $query->published()->where('post_type', 'post')])
                 ->orderBy('name')
                 ->get()
@@ -222,7 +222,7 @@ class ContentController extends Controller
     public function wordpressTags(): JsonResponse
     {
         return response()->json(
-            Tag::query()
+            $this->scoped(Tag::query())
                 ->withCount(['posts' => fn ($query) => $query->published()->where('post_type', 'post')])
                 ->orderBy('name')
                 ->get()
@@ -318,10 +318,32 @@ class ContentController extends Controller
      */
     protected function baseQuery(string $type)
     {
-        return Post::query()
+        return $this->scoped(Post::query())
             ->published()
             ->where('post_type', $type)
             ->with(['user', 'categories', 'tags']);
+    }
+
+    /**
+     * Resolve the site for the current request.
+     */
+    protected function site(): ?Site
+    {
+        return Site::where('domain', request()->getHost())->first() ?: Site::first();
+    }
+
+    /**
+     * Constrain a query to the current site when one is resolved.
+     */
+    protected function scoped($query)
+    {
+        $site = $this->site();
+
+        if ($site) {
+            $query->where($query->getModel()->getTable() . '.site_id', $site->id);
+        }
+
+        return $query;
     }
 
     /**

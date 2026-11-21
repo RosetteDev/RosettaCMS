@@ -7,6 +7,7 @@ use App\Models\Tag;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class TagController extends Controller
 {
@@ -26,9 +27,14 @@ class TagController extends Controller
 
     public function store(Request $request)
     {
+        $siteId = \App\Models\Site::first()?->id;
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:tags,slug',
+            'slug' => [
+                'nullable', 'string', 'max:255',
+                Rule::unique('tags', 'slug')->where('site_id', $siteId),
+            ],
             'description' => 'nullable|string',
             'color' => 'nullable|string|hex_color',
             'order' => 'nullable|integer',
@@ -37,6 +43,8 @@ class TagController extends Controller
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);
         }
+
+        $validated['site_id'] = $siteId;
 
         Tag::create($validated);
 
@@ -53,7 +61,12 @@ class TagController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:tags,slug,' . $tag->id,
+            'slug' => [
+                'nullable', 'string', 'max:255',
+                Rule::unique('tags', 'slug')
+                    ->where('site_id', $tag->site_id)
+                    ->ignore($tag->id),
+            ],
             'description' => 'nullable|string',
             'color' => 'nullable|string|hex_color',
             'order' => 'nullable|integer',

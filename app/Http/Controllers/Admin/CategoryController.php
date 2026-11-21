@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
 {
@@ -26,9 +27,14 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
+        $siteId = \App\Models\Site::first()?->id;
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:categories,slug',
+            'slug' => [
+                'nullable', 'string', 'max:255',
+                Rule::unique('categories', 'slug')->where('site_id', $siteId),
+            ],
             'description' => 'nullable|string',
             'color' => 'nullable|string|hex_color',
             'order' => 'nullable|integer',
@@ -37,6 +43,8 @@ class CategoryController extends Controller
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);
         }
+
+        $validated['site_id'] = $siteId;
 
         Category::create($validated);
 
@@ -53,7 +61,12 @@ class CategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:categories,slug,' . $category->id,
+            'slug' => [
+                'nullable', 'string', 'max:255',
+                Rule::unique('categories', 'slug')
+                    ->where('site_id', $category->site_id)
+                    ->ignore($category->id),
+            ],
             'description' => 'nullable|string',
             'color' => 'nullable|string|hex_color',
             'order' => 'nullable|integer',
