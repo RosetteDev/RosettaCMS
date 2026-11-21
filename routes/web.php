@@ -31,6 +31,7 @@ use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\Admin\WordPressController;
 use App\Http\Controllers\Admin\WidgetController;
 use App\Http\Controllers\Admin\RevisionController;
+use App\Http\Controllers\InstallController;
 use Illuminate\Support\Facades\View;
 
 /*
@@ -63,6 +64,13 @@ Route::get('/search', [FrontendController::class, 'search'])->name('search');
 Route::get('/sitemap.xml', [FrontendController::class, 'sitemap'])->name('sitemap');
 Route::get('/feed', [FrontendController::class, 'feed'])->name('feed');
 Route::get('/robots.txt', [FrontendController::class, 'robots'])->name('robots');
+
+// Installation routes
+Route::middleware(['web', 'guest'])->group(function () {
+    Route::get('/install/check', [InstallController::class, 'check'])->name('install.check');
+    Route::get('/install', [InstallController::class, 'form'])->name('install');
+    Route::post('/install', [InstallController::class, 'process'])->name('install.process');
+});
 
 // WordPress-compatible read-only REST API.
 Route::prefix('wp-json/wp/v2')->name('wp.')
