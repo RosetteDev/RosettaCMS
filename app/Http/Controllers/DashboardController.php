@@ -37,8 +37,11 @@ class DashboardController extends Controller
         ];
 
         // Get recent posts
-        $recent_posts = \App\Models\Post::orderBy('updated_at', 'desc')->limit(5)->get();
+        $recentPosts = \App\Models\Post::orderBy('updated_at', 'desc')->limit(5)->get();
 
-        return view('admin.dashboard', compact('stats', 'recent_posts', 'settings'));
+        // Get recent media
+        $recentMedia = \App\Models\Media::orderBy('created_at', 'desc')->limit(5)->get();
+
+        return view('admin.dashboard', compact('stats', 'recentPosts', 'recentMedia', 'settings'));
     }
 }
