@@ -17,6 +17,9 @@ class CurrentSite
      */
     public function handle(Request $request, Closure $next)
     {
+        if ($request->is('install', 'install/*')) {
+            return $next($request);
+        }
         // Try to resolve the current site based on the domain
         $site = Site::where('domain', $request->getHost())->first();
 

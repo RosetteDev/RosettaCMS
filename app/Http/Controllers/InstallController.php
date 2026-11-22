@@ -40,6 +40,8 @@ class InstallController extends Controller
      */
     public function process(Request $request)
     {
+        // Installation must be explicitly enabled by the server administrator.
+        abort_unless(config('app.install_enabled', false), 403);
         $validated = $request->validate([
             'db_connection' => 'required|in:mysql,pgsql,sqlite,sqlsrv',
             'db_host' => 'required_if:db_connection,mysql|nullable',
@@ -53,12 +55,100 @@ class InstallController extends Controller
             'site_name' => 'required',
         ]);
 
-        // Test database connection
+        $connection = $validated['db_connection'];
+        
+        // For MySQL, create a buffered connection to avoid "unbuffered queries" errors
+        if ($connection === 'mysql') {
+            try {
+                // Map validated fields to expected config keys
+                $dbConfig = [
+                    'host' => $validated['db_host'] ?? '127.0.0.1',
+                    'port' => $validated['db_port'] ?? 3306,
+                    'database' => $validated['db_database'],
+                    'username' => $validated['db_username'],
+                    'password' => $validated['db_password'] ?? '',
+                ];
+                $pdo = $this->createBufferedMysqlConnection($dbConfig);
+            } catch (\PDOException $e) {
+                $errorMessage = $e->getMessage();
+                
+                // Provide helpful hint for database creation failure
+                if (str_contains($errorMessage, 'Unknown database') || str_contains($errorMessage, 'Unknown MySQL database')) {
+                    $errorMessage .= ' If your MySQL user doesn\'t have CREATE DATABASE permission, create the database manually first.';
+                }
+                
+                return back()->withErrors(['db_error' => 'Could not connect to the database: ' . $errorMessage]);
+            }
+        } else {
+            // For other database types, use the standard Laravel DB connection
+            config(['database.default' => $connection]);
+            foreach (['host' => 'db_host', 'port' => 'db_port', 'database' => 'db_database', 'username' => 'db_username', 'password' => 'db_password'] as $setting => $field) {
+                if (isset($validated[$field])) {
+                    config(["database.connections.{$connection}.{$setting}" => $validated[$field]]);
+                }
+            }
+            DB::purge($connection);
+            DB::reconnect($connection);
+        }
+
+        // Test database connection and refuse to modify an existing application.
         try {
-            $testConnection = DB::connection()->getPDO();
-            $testConnection->exec('SELECT 1');
+            // Create database if it doesn't exist (MySQL only)
+            if ($connection === 'mysql' && isset($validated['db_host'])) {
+                try {
+                    // Connect to MySQL server without specifying database with buffered queries enabled
+                    $serverConnection = new \PDO(
+                        "mysql:host={$validated['db_host']};port=" . ($validated['db_port'] ?? 3306),
+                        $validated['db_username'],
+                        $validated['db_password'] ?? ''
+                    );
+                    $serverConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+                    $serverConnection->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+                    
+                    // Create database if it doesn't exist
+                    $dbName = $validated['db_database'];
+                    $serverConnection->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}`");
+                    
+                    \Log::info('Database created or already exists: ' . $dbName);
+                } catch (\PDOException $e) {
+                    // Log the warning but don't fail - user might have created it manually
+                    \Log::warning('Could not auto-create database (may need manual creation): ' . $e->getMessage());
+                }
+            }
+            
+            // Check for existing tables using direct PDO with buffered queries
+            $tablesExist = false;
+            if ($connection === 'mysql') {
+                try {
+                    $stmt = DB::connection()->getPdo()->prepare("
+                        SELECT COUNT(*) 
+                        FROM information_schema.tables 
+                        WHERE table_schema = ? 
+                        AND table_name IN ('users', 'migrations')
+                    ");
+                    $stmt->execute([$validated['db_database']]);
+                    $count = $stmt->fetchColumn();
+                    $tablesExist = (int)$count > 0;
+                } catch (\Exception $e) {
+                    \Log::warning('Could not check for existing tables: ' . $e->getMessage());
+                }
+            } else {
+                // For non-MySQL databases, use Schema facade
+                $tablesExist = Schema::hasTable('users') || Schema::hasTable('migrations');
+            }
+            
+            if ($tablesExist && !config('app.installed')) {
+                return back()->withErrors(['db_error' => 'The selected database already contains application tables. Use an empty database.']);
+            }
         } catch (\Exception $e) {
-            return back()->withErrors(['db_error' => 'Could not connect to the database: ' . $e->getMessage()]);
+            $errorMessage = $e->getMessage();
+            
+            // Provide helpful hint for database creation failure
+            if (str_contains($errorMessage, 'Unknown database') || str_contains($errorMessage, 'Unknown MySQL database')) {
+                $errorMessage .= ' If your MySQL user doesn\'t have CREATE DATABASE permission, create the database manually first.';
+            }
+            
+            return back()->withErrors(['db_error' => 'Could not connect to the database: ' . $errorMessage]);
         }
 
         // Generate app key if not exists
@@ -69,7 +159,9 @@ class InstallController extends Controller
 
         // Run migrations
         try {
-            Artisan::call('migrate:fresh', ['--force' => true]);
+            if (Artisan::call('migrate', ['--force' => true]) !== 0) {
+                throw new \RuntimeException('Migration failed. Check the server log.');
+            }
         } catch (\Exception $e) {
             return back()->withErrors(['migrate_error' => 'Failed to run migrations: ' . $e->getMessage()]);
         }
@@ -82,7 +174,7 @@ class InstallController extends Controller
                 'password' => Hash::make($validated['admin_password']),
             ]);
 
-            $role = \App\Models\Role::firstOrCreate(['name' => 'admin', 'display_name' => 'Administrator']);
+            $role = \App\Models\Role::firstOrCreate(['slug' => 'admin'], ['name' => 'Administrator']);
             $user->roles()->attach($role);
         } catch (\Exception $e) {
             return back()->withErrors(['user_error' => 'Failed to create admin user: ' . $e->getMessage()]);
@@ -90,13 +182,7 @@ class InstallController extends Controller
 
         // Update site settings
         try {
-            $site = \App\Models\Site::first();
-            if ($site) {
-                $site->update([
-                    'name' => $validated['site_name'],
-                    'description' => 'Just another Rosetta CMS site',
-                ]);
-            }
+            \App\Models\Site::create(['name' => $validated['site_name'], 'description' => 'Just another Rosetta CMS site']);
         } catch (\Exception $e) {
             // Non-critical, continue
         }
@@ -112,6 +198,7 @@ class InstallController extends Controller
                 'DB_DATABASE' => $validated['db_database'],
                 'DB_USERNAME' => $validated['db_username'],
                 'DB_PASSWORD' => $validated['db_password'] ?? '',
+                'INSTALL_ENABLED' => 'false',
             ]);
         }
 
@@ -267,5 +354,39 @@ class InstallController extends Controller
         }
 
         file_put_contents($envPath, $content);
+    }
+
+    /**
+     * Create a MySQL connection with buffered queries enabled.
+     */
+    private function createBufferedMysqlConnection(array $config)
+    {
+        $dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$config['database']}";
+        
+        $options = [
+            PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ];
+
+        $pdo = new PDO($dsn, $config['username'], $config['password'] ?? '', $options);
+        
+        // Set the Laravel DB connection to use this PDO instance
+        DB::purge('mysql');
+        config([
+            'database.connections.mysql.host' => $config['host'],
+            'database.connections.mysql.port' => $config['port'],
+            'database.connections.mysql.database' => $config['database'],
+            'database.connections.mysql.username' => $config['username'],
+            'database.connections.mysql.password' => $config['password'] ?? '',
+            'database.connections.mysql.charset' => 'utf8mb4',
+            'database.connections.mysql.collation' => 'utf8mb4_unicode_ci',
+            'database.connections.mysql.strict' => true,
+        ]);
+        
+        DB::connection('mysql')->setPdo($pdo);
+        DB::setDefaultConnection('mysql');
+        
+        return $pdo;
     }
 }

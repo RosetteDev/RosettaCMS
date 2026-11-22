@@ -1,9 +1,9 @@
 <?php
 
-namespace RosettaCMS\Http\Controllers\Admin;
+namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
-use RosettaCMS\Http\Controllers\Controller;
+use App\Http\Controllers\Controller;
 use RosettaCMS\Plugins\WordPress\ImportExport\WXRExporter;
 use RosettaCMS\Plugins\WordPress\ImportExport\WXRImporter;
 use RosettaCMS\Plugins\WordPress\Migrations\WordPressMigrationTool;

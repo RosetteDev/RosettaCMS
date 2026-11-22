@@ -80,11 +80,15 @@
                 <input type="password" name="db_password" id="db_password" value="{{ old('db_password') }}">
             </div>
 
+            <div style="background: #e8f4fd; border-left: 4px solid #3498db; padding: 12px; margin: 15px 0; font-size: 14px;">
+                <strong>Note:</strong> If your MySQL user has CREATE DATABASE permission, Rosetta CMS can create the database automatically. Otherwise, please create the database manually before proceeding.
+            </div>
+
             <h2 style="color: #34495e; margin: 30px 0 20px; font-size: 18px;">Site Configuration</h2>
 
             <div class="form-group">
                 <label for="app_url">Site URL</label>
-                <input type="url" name="app_url" id="app_url" value="{{ old('app_url', 'https://crm.rosettedevelopment.com') }}" required>
+                <input type="url" name="app_url" id="app_url" value="{{ old('app_url', request()->getSchemeAndHttpHost()) }}" required>
             </div>
 
             <div class="form-group">

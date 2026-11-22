@@ -16,7 +16,7 @@ class InlineEdit
     public function handle(Request $request, Closure $next)
     {
         // Only process for GET requests
-        if ($request->getMethod() !== 'GET') {
+        if ($request->getMethod() !== 'GET' || $request->is('install', 'install/*')) {
             return $next($request);
         }
 
