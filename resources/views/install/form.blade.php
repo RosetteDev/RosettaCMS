@@ -67,17 +67,17 @@
 
             <div class="form-group">
                 <label for="db_database">Database Name</label>
-                <input type="text" name="db_database" id="db_database" value="{{ old('db_database') }}" required>
+                <input type="text" name="db_database" id="db_database" value="{{ old('db_database', config('database.connections.mysql.database', '')) }}" required>
             </div>
 
             <div class="form-group">
                 <label for="db_username">Username</label>
-                <input type="text" name="db_username" id="db_username" value="{{ old('db_username') }}" required>
+                <input type="text" name="db_username" id="db_username" value="{{ old('db_username', config('database.connections.mysql.username', '')) }}" required>
             </div>
 
             <div class="form-group">
                 <label for="db_password">Password</label>
-                <input type="password" name="db_password" id="db_password" value="{{ old('db_password') }}">
+                <input type="password" name="db_password" id="db_password" value="{{ old('db_password', config('database.connections.mysql.password', '')) }}">
             </div>
 
             <div style="background: #e8f4fd; border-left: 4px solid #3498db; padding: 12px; margin: 15px 0; font-size: 14px;">
