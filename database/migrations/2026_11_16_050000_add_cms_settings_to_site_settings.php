@@ -24,7 +24,7 @@ return new class extends Migration
             $table->boolean('captcha_enabled')->default(false)->after('rate_limit_per_minute');
 
             // Display / theme
-            $table->string('font_family')->default('system-ui, sans-serif')->after('border_color');
+            $table->string('font_family')->default('system-ui, sans-serif')->after('bg_color');
             $table->string('container_width')->default('1200px')->after('font_family');
 
             // Permalinks

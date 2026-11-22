@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('theme')->default('rosetta')->after('home_post_id');
             $table->text('theme_options')->nullable()->after('theme');
             
-            // Add theme options to sites_settings table
-            $table->string('logo')->nullable()->after('site_id');
+            // Add color options
+            $table->string('logo')->nullable()->after('theme_options');
             $table->string('favicon')->nullable()->after('logo');
             $table->string('primary_color')->nullable()->after('favicon');
             $table->string('secondary_color')->nullable()->after('primary_color');
