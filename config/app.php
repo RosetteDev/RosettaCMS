@@ -2,6 +2,7 @@
 
 return [
     'install_enabled' => env('INSTALL_ENABLED', false),
+    'installed' => env('APP_INSTALLED', false),
 
     /*
     |--------------------------------------------------------------------------
