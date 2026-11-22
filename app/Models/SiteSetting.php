@@ -88,9 +88,31 @@ class SiteSetting extends Model
         $site = $site ?: Site::first();
 
         if (!$site) {
-            return new static();
+            $setting = new static();
+            // Set default values when no site exists
+            $setting->primary_color = '#3b82f6';
+            $setting->secondary_color = '#6b7280';
+            $setting->accent_color = '#10b981';
+            $setting->text_color = '#1f2937';
+            $setting->bg_color = '#ffffff';
+            $setting->border_color = '#e5e7eb';
+            $setting->site_title = 'Rosetta CMS';
+            return $setting;
         }
 
-        return static::firstOrNew(['site_id' => $site->id]);
+        $setting = static::firstOrNew(['site_id' => $site->id]);
+        
+        // Set default values if the record is new (no id yet)
+        if (!$setting->exists) {
+            $setting->primary_color = '#3b82f6';
+            $setting->secondary_color = '#6b7280';
+            $setting->accent_color = '#10b981';
+            $setting->text_color = '#1f2937';
+            $setting->bg_color = '#ffffff';
+            $setting->border_color = '#e5e7eb';
+            $setting->site_title = 'Rosetta CMS';
+        }
+        
+        return $setting;
     }
 }
