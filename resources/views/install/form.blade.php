@@ -4,18 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rosetta CMS - Setup</title>
+    <!-- Tailwind CSS via CDN -->
+    <script>
+        tailwind = {
+            config: {
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            sans: ['Inter', 'system-ui', 'sans-serif'],
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom Styles (inline CSS for runtime compatibility) -->
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
+        
         .section-divider {
             position: relative;
             height: 1px;
-            background: linear-gradient(90deg, transparent, theme('colors.gray.200'), transparent);
+            background: linear-gradient(90deg, transparent, #d4d4d8, transparent);
             margin: 2rem 0;
         }
+        
         .section-divider::before {
             content: attr(data-text);
             position: absolute;
@@ -24,27 +49,32 @@
             transform: translate(-50%, -50%);
             background: white;
             padding: 0 1rem;
-            color: theme('colors.gray.500');
+            color: #71717a;
             font-size: 0.875rem;
             font-weight: 500;
         }
+        
         .input-group {
             position: relative;
         }
+        
         .input-group i {
             position: absolute;
             left: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            color: theme('colors.gray.400');
+            color: #a1a1aa;
         }
+        
         .input-field {
             transition: all 0.2s;
         }
+        
         .input-field:focus {
             box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-            border-color: theme('colors.violet.500');
+            border-color: #8b5cf6;
         }
+        
         .btn-primary {
             transition: all 0.3s;
             background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
