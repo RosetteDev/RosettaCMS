@@ -16,12 +16,13 @@ class SecurityHeaders
     {
         $response = $next($request);
 
-        // Security headers
-        $response->header('X-Frame-Options', 'SAMEORIGIN');
-        $response->header('X-Content-Type-Options', 'nosniff');
-        $response->header('X-XSS-Protection', '1; mode=block');
-        $response->header('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+        // Security headers. Use the header bag directly: StreamedResponse
+        // (downloads) has no header() method.
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('X-XSS-Protection', '1; mode=block');
+        $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
         // CSP header - enforced. 'unsafe-inline' is required by inline scripts and
         // styles in existing views (tighten over time). CDN hosts are allowlisted
@@ -36,7 +37,7 @@ class SecurityHeaders
                "base-uri 'self'; " .
                "form-action 'self';";
 
-        $response->header('Content-Security-Policy', $csp);
+        $response->headers->set('Content-Security-Policy', $csp);
 
         return $response;
     }

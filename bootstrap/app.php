@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         // Publish posts whose scheduled publish date has arrived.
         $schedule->command('posts:publish-due')->everyMinute();
+
+        // Create a backup of the database and media library every day.
+        $schedule->command('backups:create')->dailyAt('03:00');
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(\App\Http\Middleware\SetActiveLanguage::class);

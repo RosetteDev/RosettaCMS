@@ -16,3 +16,14 @@ Artisan::command('posts:publish-due', function () {
 
     $this->info("Published {$count} scheduled post(s).");
 })->purpose('Publish posts whose scheduled publish date has arrived');
+
+Artisan::command('backups:create', function () {
+    if (!filter_var(env('BACKUP_ENABLED', true), FILTER_VALIDATE_BOOLEAN)) {
+        $this->info('Backups are disabled (BACKUP_ENABLED=false).');
+        return;
+    }
+
+    $backup = app(\App\Services\BackupService::class)->create();
+
+    $this->info("Backup created: {$backup->name} ({$backup->human_size}).");
+})->purpose('Create a scheduled backup of the database and media library');

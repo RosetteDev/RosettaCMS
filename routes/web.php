@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PluginController;
 use App\Http\Controllers\Admin\ApiKeyController;
+use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\BlockController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\InlineEditController;
@@ -261,6 +262,16 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::post('/bulk/approve', [CommentController::class, 'bulkApprove'])->name('bulk.approve');
         Route::post('/bulk/reject', [CommentController::class, 'bulkReject'])->name('bulk.reject');
         Route::post('/bulk/destroy', [CommentController::class, 'bulkDestroy'])->name('bulk.destroy');
+    });
+
+    // Backups management - Admin only
+    Route::prefix('admin/backups')->middleware('role:admin')->name('admin.backups.')->group(function () {
+        Route::get('/', [BackupController::class, 'index'])->name('index');
+        Route::post('/', [BackupController::class, 'store'])->name('store');
+        Route::get('/export/{format}', [BackupController::class, 'export'])->name('export');
+        Route::get('/{backup}/download', [BackupController::class, 'download'])->whereNumber('backup')->name('download');
+        Route::post('/{backup}/restore', [BackupController::class, 'restore'])->whereNumber('backup')->name('restore');
+        Route::delete('/{backup}', [BackupController::class, 'destroy'])->whereNumber('backup')->name('destroy');
     });
 
     // Users management - Admin only
