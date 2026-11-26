@@ -31,16 +31,21 @@ Baseline (do not re-solve):
 
 ## High-impact enhancements
 
-### 1. A real public REST API (not just the wp-json subset)
+### 1. A real public REST API (not just the wp-json subset) — ✅ mostly done
 The wp-json compatibility layer proves the content model works, but it is
 a compatibility shim, not a developer platform. This is WordPress's
 biggest ecosystem advantage and Rosetta's biggest gap.
 
-- Authenticated API with token/OAuth auth and rate limiting
+**Done (2026-11):** versioned `/api/v1/...` endpoints (read + write for
+posts and pages), API key management (hashed, scoped, expiring, revocable)
+with an admin UI at `/admin/api-keys`, bearer/X-API-Key/query-param auth
+via `api.key` middleware, per-key rate limiting via the existing global
+throttle, and scope enforcement (`posts:write` vs `pages:write`).
+
+**Still open:**
 - Documented schema (OpenAPI/Swagger UI) for posts, pages, media, menus,
-  categories, tags
-- API key management UI (create/revoke/scope keys)
-- Versioned endpoints (`/api/v1/...`)
+  categories, tags (an in-app docs screen exists via `/api/v1/` discovery
+  document, but no Swagger UI yet)
 - Webhooks on content events (publish, update, comment, new media)
 
 ### 2. E-commerce foundation (or a deliberately positioned alternative)

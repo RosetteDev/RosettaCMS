@@ -104,6 +104,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the API keys owned by this user.
+     */
+    public function apiKeys(): HasMany
+    {
+        return $this->hasMany(ApiKey::class);
+    }
+
+    /**
      * Scope a query to only include verified users.
      */
     public function scopeVerified($query)

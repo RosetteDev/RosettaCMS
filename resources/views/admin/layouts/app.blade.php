@@ -363,6 +363,7 @@
             @php($currentUser = auth()->user())
             <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') || request()->is('admin') ? 'active' : '' }}">Dashboard</a>
             <a href="{{ url('/profile') }}" class="{{ request()->is('profile') ? 'active' : '' }}">Profile</a>
+            <a href="{{ url('/admin/api-keys') }}" class="{{ request()->is('admin/api-keys*') ? 'active' : '' }}">API Keys</a>
 
             @if($currentUser?->isStaff())
             <div class="sidebar-group">

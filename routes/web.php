@@ -24,6 +24,7 @@ use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PluginController;
+use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\BlockController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\InlineEditController;
@@ -131,6 +132,15 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// API keys management (any signed-in user manages their own keys)
+Route::middleware('auth')->prefix('admin/api-keys')->name('admin.api-keys.')->group(function () {
+    Route::get('/', [ApiKeyController::class, 'index'])->name('index');
+    Route::get('/create', [ApiKeyController::class, 'create'])->name('create');
+    Route::post('/', [ApiKeyController::class, 'store'])->name('store');
+    Route::get('/{apiKey}', [ApiKeyController::class, 'show'])->name('show');
+    Route::delete('/{apiKey}', [ApiKeyController::class, 'destroy'])->name('destroy');
+});
 
 // Admin routes
 Route::middleware(['auth', 'role:admin|editor'])->group(function () {

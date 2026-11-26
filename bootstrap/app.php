@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\TrimStringsWithLimits::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'api.key' => \App\Http\Middleware\AuthenticateApiKey::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
