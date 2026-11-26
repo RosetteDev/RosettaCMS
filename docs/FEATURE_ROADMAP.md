@@ -124,10 +124,16 @@ The `languages` and `language_content` tables are now wired up.
 - Security headers and CSP (already in place) + a site-health report
 
 ### 7. Backups, restore and migration
-- Scheduled backups (database + media) with offsite storage (S3/B2)
-- One-click restore and migration between installs
-- Content export in JSON/CSV (not just WXR) and import
-- Site snapshot / staging copy for testing theme changes
+- [x] Scheduled backups (database + media) with offsite storage (S3/B2)
+      — `backups:create` runs daily at 03:00 and writes to `BACKUP_DISK`
+      (`local` by default; `s3` + `AWS_*` for offsite). Managed at
+      `/admin/backups` (admin only).
+- [x] One-click restore — restore from `/admin/backups` (modal confirmation)
+      replaces the database and media library. JSON/CSV content export
+      (posts/pages/categories/tags) is also on that page.
+- [ ] One-click migration between installs (zip export + import flow)
+- [ ] Content import from JSON/CSV
+- [ ] Site snapshot / staging copy for testing theme changes
 
 ### 8. Performance and scale
 - Full-page caching with smart invalidation (object cache exists; extend)
