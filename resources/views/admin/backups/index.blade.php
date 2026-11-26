@@ -58,6 +58,19 @@
         <small class="text-muted">JSON restores posts, pages, categories and tags; CSV restores posts/pages only.</small>
     </div>
 
+    <div style="padding-bottom: 1rem; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;">
+        <form method="POST" action="{{ route('admin.backups.import-backup') }}" enctype="multipart/form-data"
+              style="display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;">
+            @csrf
+            <input type="file" name="file" accept=".zip" required
+                   class="form-control form-control-sm" style="max-width: 320px;">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-file-zipper me-1"></i> Import backup (migration)
+            </button>
+        </form>
+        <small class="text-muted">Upload a backup zip from another install, then restore it below.</small>
+    </div>
+
     <div class="alert alert-info">
         <i class="fas fa-info-circle me-1"></i>
         A backup archives every table (except ephemeral sessions/cache/jobs) plus all media files.

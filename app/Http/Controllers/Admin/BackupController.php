@@ -85,6 +85,33 @@ class BackupController extends Controller
     }
 
     /**
+     * Import a backup zip (migration flow: source install → target install).
+     */
+    public function importBackup(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:512000'], // 500 MB
+        ]);
+
+        $file = $request->file('file');
+
+        if (strtolower($file->getClientOriginalExtension()) !== 'zip') {
+            return redirect()->route('admin.backups.index')
+                ->with('error', 'Only .zip backup archives can be imported.');
+        }
+
+        try {
+            $backup = $this->backups->importZip(file_get_contents($file->getRealPath()), auth()->user());
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.backups.index')
+                ->with('error', 'Backup import failed: ' . $e->getMessage());
+        }
+
+        return redirect()->route('admin.backups.index')
+            ->with('success', 'Backup imported: ' . $backup->name . ' (' . $backup->human_size . '). Restore it from the list below to migrate this install.');
+    }
+
+    /**
      * Import content from a JSON export or a CSV export.
      */
     public function import(Request $request)

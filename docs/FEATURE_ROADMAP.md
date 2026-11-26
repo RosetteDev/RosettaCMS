@@ -131,11 +131,18 @@ The `languages` and `language_content` tables are now wired up.
 - [x] One-click restore — restore from `/admin/backups` (modal confirmation)
       replaces the database and media library. JSON/CSV content export
       (posts/pages/categories/tags) is also on that page.
-- [ ] One-click migration between installs (zip export + import flow)
+- [x] One-click migration between installs — export a backup zip from the
+      source (`/admin/backups` or `backups:create`), upload it on the target
+      (`/admin/backups` → Import backup), restore with the confirmation
+      modal or `php artisan backups:restore {id} --force`. See
+      `docs/MIGRATION_AND_STAGING.md`.
 - [x] Content import from JSON/CSV — upload a JSON export (full posts/pages/
       categories/tags) or a CSV export (posts/pages skeletons) from
       `/admin/backups`. Duplicate slugs are skipped.
-- [ ] Site snapshot / staging copy for testing theme changes
+- [x] Site snapshot / staging copy for testing theme changes —
+      `php artisan backups:snapshot "label"` creates a restorable snapshot;
+      restore onto a staging database with `backups:restore {id} --force`.
+      See `docs/MIGRATION_AND_STAGING.md`.
 
 ### 8. Performance and scale
 - Full-page caching with smart invalidation (object cache exists; extend)

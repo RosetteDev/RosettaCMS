@@ -291,6 +291,118 @@ class BackupTest extends TestCase
         $response->assertSessionHas('error');
     }
 
+    public function test_backups_snapshot_command_creates_backup(): void
+    {
+        $this->artisan('backups:snapshot', ['name' => 'test-snapshot'])
+            ->expectsOutputToContain('Snapshot created')
+            ->assertSuccessful();
+
+        $this->assertDatabaseHas('backups', ['name' => 'test-snapshot ' . now()->format('Y-m-d H:i')]);
+    }
+
+    public function test_backups_restore_command_requires_force(): void
+    {
+        $backup = app(BackupService::class)->create($this->admin);
+
+        $this->artisan('backups:restore', ['backup' => $backup->id])
+            ->expectsOutputToContain('--force')
+            ->assertFailed();
+    }
+
+    public function test_backups_restore_command_restores_with_force(): void
+    {
+        $backup = app(BackupService::class)->create($this->admin);
+
+        $this->makePost();
+        $this->assertDatabaseHas('posts', ['slug' => 'original-post']);
+
+        $this->artisan('backups:restore', ['backup' => $backup->id, '--force' => true])
+            ->expectsOutputToContain('restored')
+            ->assertSuccessful();
+
+        // Backup was created before the post existed, so the post is gone.
+        $this->assertDatabaseMissing('posts', ['slug' => 'original-post']);
+    }
+
+    public function test_backups_restore_command_errors_on_missing_backup(): void
+    {
+        $this->artisan('backups:restore', ['backup' => 999, '--force' => true])
+            ->expectsOutputToContain('Backup not found')
+            ->assertFailed();
+    }
+
+    public function test_import_backup_zip_creates_restorable_record(): void
+    {
+        $this->makePost();
+        $source = app(BackupService::class)->create($this->admin);
+
+        $zipContents = Storage::disk('local')->get($source->path);
+
+        $imported = app(BackupService::class)->importZip($zipContents, $this->admin);
+
+        $this->assertDatabaseHas('backups', ['id' => $imported->id]);
+        $this->assertSame($imported->disk, 'local');
+        $this->assertTrue(Storage::disk('local')->exists($imported->path));
+        $this->assertGreaterThan(0, $imported->size_bytes);
+    }
+
+    public function test_import_backup_zip_rejects_invalid_archive(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        app(BackupService::class)->importZip('not a zip at all', $this->admin);
+    }
+
+    public function test_admin_can_import_backup_via_web(): void
+    {
+        $this->makePost();
+        $source = app(BackupService::class)->create($this->admin);
+
+        $tmpZip = tempnam(sys_get_temp_dir(), 'backup-') . '.zip';
+        file_put_contents($tmpZip, Storage::disk('local')->get($source->path));
+
+        $response = $this->actingAs($this->admin)
+            ->post('/admin/backups/import-backup', [
+                'file' => new \Illuminate\Http\UploadedFile($tmpZip, 'backup.zip', 'application/zip', null, true),
+            ]);
+
+        @unlink($tmpZip);
+
+        $response->assertRedirect(route('admin.backups.index'));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('backups', ['disk' => 'local']);
+    }
+
+    public function test_admin_can_restore_imported_backup_via_cli(): void
+    {
+        $this->makePost();
+        $source = app(BackupService::class)->create($this->admin);
+        $imported = app(BackupService::class)->importZip(Storage::disk('local')->get($source->path), $this->admin);
+
+        // Delete the post, then restore the imported backup: post returns.
+        Post::where('slug', 'original-post')->delete();
+        $this->assertDatabaseMissing('posts', ['slug' => 'original-post']);
+
+        $this->artisan('backups:restore', ['backup' => $imported->id, '--force' => true])
+            ->assertSuccessful();
+
+        $this->assertDatabaseHas('posts', ['slug' => 'original-post']);
+    }
+
+    public function test_non_admin_cannot_import_backup_via_web(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'backup-') . '.zip';
+        file_put_contents($file, 'not a zip');
+
+        $response = $this->actingAs($this->editor)
+            ->post('/admin/backups/import-backup', [
+                'file' => new \Illuminate\Http\UploadedFile($file, 'backup.zip', 'application/zip', null, true),
+            ]);
+
+        @unlink($file);
+
+        $response->assertForbidden();
+    }
+
     public function test_admin_can_delete_backup(): void
     {
         $backup = app(BackupService::class)->create($this->admin);

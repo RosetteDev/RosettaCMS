@@ -270,6 +270,7 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::post('/', [BackupController::class, 'store'])->name('store');
         Route::get('/export/{format}', [BackupController::class, 'export'])->name('export');
         Route::post('/import', [BackupController::class, 'import'])->name('import');
+        Route::post('/import-backup', [BackupController::class, 'importBackup'])->name('import-backup');
         Route::get('/{backup}/download', [BackupController::class, 'download'])->whereNumber('backup')->name('download');
         Route::post('/{backup}/restore', [BackupController::class, 'restore'])->whereNumber('backup')->name('restore');
         Route::delete('/{backup}', [BackupController::class, 'destroy'])->whereNumber('backup')->name('destroy');

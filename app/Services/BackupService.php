@@ -200,6 +200,62 @@ class BackupService
     }
 
     /**
+     * Import a backup zip from a source install: validate it, store it on the
+     * configured disk, and register it as a Backup so it can be restored from
+     * the admin UI or the CLI. Used by the migration flow.
+     */
+    public function importZip(string $zipContents, ?User $actor = null): Backup
+    {
+        $tmpZip = tempnam(sys_get_temp_dir(), 'import-backup-') . '.zip';
+        file_put_contents($tmpZip, $zipContents);
+
+        try {
+            $zip = new \ZipArchive();
+
+            if ($zip->open($tmpZip) !== true) {
+                throw new \RuntimeException('The file is not a valid backup archive.');
+            }
+
+            $hasManifest = $zip->getFromName('manifest.json') !== false;
+            $hasDatabase = $zip->getFromName('database.json') !== false;
+
+            if (!$hasManifest || !$hasDatabase) {
+                $zip->close();
+                throw new \RuntimeException('The archive is missing manifest.json or database.json.');
+            }
+
+            $manifest = json_decode($zip->getFromName('manifest.json'), true);
+            $database = json_decode($zip->getFromName('database.json'), true);
+
+            if (!is_array($database['tables'] ?? null)) {
+                $zip->close();
+                throw new \RuntimeException('The archive contains no database dump.');
+            }
+
+            $zip->close();
+
+            $disk = $this->disk();
+            $name = 'backup-' . now()->format('Y-m-d-His') . '-' . Str::lower(Str::random(6)) . '.zip';
+            $path = 'backups/' . $name;
+
+            Storage::disk($disk)->put($path, $zipContents);
+
+            return Backup::create([
+                'name' => ($manifest['name'] ?? 'Backup') . ' ' . now()->format('Y-m-d H:i'),
+                'disk' => $disk,
+                'path' => $path,
+                'size_bytes' => strlen($zipContents),
+                'tables_count' => count($database['tables']),
+                'media_count' => $manifest['media_count'] ?? 0,
+                'manifest' => $manifest,
+                'created_by' => $actor?->id,
+            ]);
+        } finally {
+            @unlink($tmpZip);
+        }
+    }
+
+    /**
      * Delete the archive and its record.
      */
     public function delete(Backup $backup): void
