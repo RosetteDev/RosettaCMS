@@ -63,12 +63,6 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let blockOrder = [];
-
-    @if($page && $page->blocks)
-        blockOrder = @json($page->blocks->keyBy('id')->toArray());
-    @endif
-
     // Initialize drag and drop
     const editor = document.getElementById('inlineContentEditor');
     if (editor) {
@@ -87,41 +81,73 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.saveInlineContent = function() {
-        // Collect all blocks and their content
-        const blocks = [];
+        const pageId = {{ $page->id ?? 0 }}; // route /inline-edit/{post}/blocks/{block}
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         const blockElements = document.querySelectorAll('.block-item');
-        
-        blockElements.forEach((el, index) => {
+        const updates = [];
+        const orderedIds = [];
+
+        blockElements.forEach(function(el) {
             const blockId = el.dataset.blockId;
-            const blockType = el.dataset.blockType;
-            
-            blocks.push({
-                id: blockId,
-                type: blockType,
-                content: el.querySelector('.block-content-editable')?.value || '',
-                order: index + 1
-            });
+            const type = el.dataset.blockType;
+
+            let content = {};
+            try {
+                content = JSON.parse(el.dataset.blockContent || '{}');
+            } catch (e) {
+                content = {};
+            }
+
+            const editable = el.querySelector('.block-content-editable');
+            if (editable && editable.getAttribute('contenteditable') === 'true') {
+                const text = (editable.innerText || '').trim();
+                if (['text', 'heading', 'callout', 'quote'].indexOf(type) !== -1) {
+                    content.text = text;
+                }
+            }
+
+            updates.push({ id: blockId, content: content });
+            orderedIds.push(blockId);
         });
 
-        // Save to server
-        fetch('{{ route("admin.pages.blocks.reorder", $page->id) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('[name="csrf-token"]')?.content ||
-                              document.querySelector('meta[name="csrf-token"]')?.content
-            },
-            body: JSON.stringify({ order: blocks })
+        if (updates.length === 0) {
+            alert('No blocks to save');
+            return;
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        };
+
+        // Persist each block's content, then persist the new order.
+        Promise.all(updates.map(function(u) {
+            return fetch('/inline-edit/' + pageId + '/blocks/' + u.id, {
+                method: 'PUT',
+                headers: headers,
+                body: JSON.stringify({ content: u.content })
+            }).then(function(r) {
+                if (!r.ok) throw new Error('Failed to save block ' + u.id);
+                return r;
+            });
+        }))
+        .then(function() {
+            return fetch('/admin/pages/' + pageId + '/blocks/reorder', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ order: orderedIds })
+            });
         })
-        .then(r => r.json())
-        .then(() => {
+        .then(function(r) {
+            if (!r.ok) throw new Error('Failed to save block order');
             alert('Content saved successfully!');
             closeInlineEdit();
             location.reload();
         })
-        .catch(err => {
+        .catch(function(err) {
             console.error('Save error:', err);
-            alert('Failed to save changes');
+            alert('Failed to save changes: ' + err.message);
         });
     };
 
@@ -139,22 +165,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleDrop(e) {
         e.preventDefault();
         const blockId = e.dataTransfer.getData('text/plain');
-        const draggedEl = document.querySelector(`.block-item[data-block-id="${blockId}"]`);
+        const draggedEl = document.querySelector('.block-item[data-block-id="' + blockId + '"]');
         const targetEl = e.target.closest('.block-item');
-        
+
         if (draggedEl && targetEl && draggedEl !== targetEl) {
             const blocks = document.querySelectorAll('.block-item');
             const targetIndex = Array.from(blocks).indexOf(targetEl);
             const draggedIndex = Array.from(blocks).indexOf(draggedEl);
-            
+
             if (targetIndex > draggedIndex) {
                 targetEl.after(draggedEl);
             } else {
                 targetEl.before(draggedEl);
             }
         }
-        
-        draggedEl.classList.remove('dragging', 'opacity-50');
+
+        if (draggedEl) {
+            draggedEl.classList.remove('dragging', 'opacity-50');
+        }
     }
 
     function handleDragEnd(e) {

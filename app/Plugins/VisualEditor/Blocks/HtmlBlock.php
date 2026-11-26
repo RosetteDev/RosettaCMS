@@ -55,7 +55,7 @@ class HtmlBlock extends Block
      */
     public function render(): string
     {
-        $code = $this->getAttribute('code', '');
+        $code = $this->getAttribute('code', '') ?: $this->getAttribute('html', '') ?: $this->getAttribute('content', '');
         $format = $this->getAttribute('format', 'html');
 
         if (empty($code)) {

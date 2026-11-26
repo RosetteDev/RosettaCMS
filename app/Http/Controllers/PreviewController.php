@@ -22,6 +22,9 @@ class PreviewController extends Controller
         // Load blocks for the post
         $post->load('blocks');
 
+        // The page view expects a page model; the previewed post is the page.
+        $page = $post;
+
         // Get preview parameters
         $theme = $request->input('theme', config('app.theme'));
         $layout = $request->input('layout', 'default');
@@ -32,7 +35,7 @@ class PreviewController extends Controller
             $request->session()->put('preview.changes.'.$postId, $changes);
         }
 
-        return view('themes.rosetta.page', compact('post', 'theme', 'layout'));
+        return view('themes.rosetta.page', compact('post', 'page', 'theme', 'layout'));
     }
 
     /**
@@ -51,13 +54,12 @@ class PreviewController extends Controller
         // Apply any pending changes from request
         if ($request->has('blocks')) {
             $changes = $request->json('blocks');
-            // Apply changes to blocks (simplified for demo)
+
             foreach ($changes as $change) {
-                if (isset($post->blocks[$change['id']])) {
-                    $post->blocks[$change['id']]->attributes = array_merge(
-                        $post->blocks[$change['id']]->attributes ?? [],
-                        $change['attributes'] ?? []
-                    );
+                $block = $post->blocks->firstWhere('id', $change['id'] ?? null);
+
+                if ($block && isset($change['content']) && is_array($change['content'])) {
+                    $block->content = array_merge($block->content ?? [], $change['content']);
                 }
             }
         }

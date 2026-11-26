@@ -266,8 +266,10 @@ class WordPressMigrationTool
         foreach ($headings[0] as $index => $markup) {
             $blocks[] = [
                 'type' => 'heading',
-                'content' => strip_tags($markup),
-                'level' => (int)$headings[1][$index],
+                'content' => [
+                    'text' => strip_tags($markup),
+                    'level' => 'h' . (int)$headings[1][$index],
+                ],
                 'order' => $index * 10,
             ];
         }
@@ -277,7 +279,7 @@ class WordPressMigrationTool
         foreach ($paragraphs[0] as $index => $markup) {
             $blocks[] = [
                 'type' => 'text',
-                'content' => strip_tags($markup),
+                'content' => ['text' => strip_tags($markup)],
                 'order' => 5 + ($index * 10),
             ];
         }
@@ -287,13 +289,13 @@ class WordPressMigrationTool
         foreach ($images[0] as $index => $markup) {
             preg_match('/src=["\']([^"\']+)["\']/i', $markup, $srcMatch);
             preg_match('/alt=["\']([^"\']+)["\']/i', $markup, $altMatch);
-            
+
             $blocks[] = [
                 'type' => 'image',
-                'content' => $srcMatch[1] ?? '',
-                'settings' => json_encode([
-                    'alt' => $altMatch[1] ?? '',
-                ]),
+                'content' => [
+                    'image' => $srcMatch[1] ?? '',
+                    'caption' => $altMatch[1] ?? '',
+                ],
                 'order' => 2 + ($index * 10),
             ];
         }
@@ -305,7 +307,7 @@ class WordPressMigrationTool
             $block->site_id = $post->site_id ?? 1;
             $block->type = $blockData['type'];
             $block->content = $blockData['content'];
-            $block->settings = $blockData['settings'] ?? json_encode([]);
+            $block->settings = $blockData['settings'] ?? [];
             $block->order = $blockData['order'];
             $block->save();
         }

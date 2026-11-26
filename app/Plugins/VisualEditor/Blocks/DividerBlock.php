@@ -48,4 +48,23 @@ class DividerBlock extends Block
     {
         return 'visual-editor::blocks.divider';
     }
+
+    /**
+     * Render the block.
+     */
+    public function render(): string
+    {
+        $style = $this->getAttribute('style', 'solid');
+        $thickness = (int) $this->getAttribute('thickness', 1);
+
+        if (!in_array($style, ['solid', 'dashed', 'dotted'], true)) {
+            $style = 'solid';
+        }
+
+        if ($thickness < 1) {
+            $thickness = 1;
+        }
+
+        return '<hr style="border-top: ' . $thickness . 'px ' . $style . ' #dee2e6;">';
+    }
 }

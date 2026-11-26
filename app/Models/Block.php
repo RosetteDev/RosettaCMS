@@ -12,6 +12,7 @@ class Block extends Model
     protected $fillable = [
         'post_id',
         'site_id',
+        'parent_block_id',
         'type',
         'content',
         'settings',
@@ -82,19 +83,33 @@ class Block extends Model
 
     /**
      * Render the block.
+     *
+     * Several block types have no instantiable renderer (they are view-only),
+     * so any failure to render falls back to a safe text representation of the
+     * content instead of fataling the whole page.
      */
     public function render(): string
     {
-        $rendererClass = $this->getRendererClass();
+        try {
+            $rendererClass = $this->getRendererClass();
 
-        if (!$rendererClass) {
-            return '<div class="block block-'.e($this->type).'"><p>Unknown block type: '.e($this->type).'</p></div>';
+            if (!$rendererClass) {
+                return '<div class="block block-'.e($this->type).'"><p>Unknown block type: '.e($this->type).'</p></div>';
+            }
+
+            $renderer = new $rendererClass();
+            $renderer->setAttributes($this->content ?? []);
+
+            return $renderer->render();
+        } catch (\Throwable $e) {
+            $text = $this->content['text'] ?? $this->content['content'] ?? '';
+
+            if (is_string($text) && trim($text) === '') {
+                return '<div class="block block-'.e($this->type).'"></div>';
+            }
+
+            return '<div class="block block-'.e($this->type).'">'.nl2br(e((string) $text)).'</div>';
         }
-
-        $renderer = new $rendererClass();
-        $renderer->setAttributes($this->content);
-
-        return $renderer->render();
     }
 
     /**

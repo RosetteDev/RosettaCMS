@@ -20,12 +20,15 @@ class InlineEditController extends Controller
         // Load blocks for the post
         $post->load('blocks');
 
-        // Return the page with inline editing enabled
-        return view('themes.rosetta.page', compact('post', 'request'));
+        // Return the page with inline editing enabled. The page view
+        // expects a page model; the previewed post is the page.
+        $page = $post;
+
+        return view('themes.rosetta.page', compact('post', 'page', 'request') + ['inlineEdit' => true]);
     }
 
     /**
-     * Update a block's attributes.
+     * Update a block's content (and optional settings).
      */
     public function updateBlock(Request $request, Post $post, $blockId)
     {
@@ -35,22 +38,27 @@ class InlineEditController extends Controller
         }
 
         $validated = $request->validate([
-            'attributes' => 'required|array',
+            'content' => 'required|array',
+            'settings' => 'nullable|array',
         ]);
 
         $block = $post->blocks()->find($blockId);
-        
+
         if (!$block) {
             return response()->json(['error' => 'Block not found'], 404);
         }
 
-        $block->update([
-            'attributes' => $validated['attributes'],
-        ]);
+        $block->content = array_merge($block->content ?? [], $validated['content']);
+
+        if (isset($validated['settings'])) {
+            $block->settings = array_merge($block->settings ?? [], $validated['settings']);
+        }
+
+        $block->save();
 
         return response()->json([
             'success' => true,
-            'block' => $block,
+            'block' => $block->fresh(),
         ]);
     }
 

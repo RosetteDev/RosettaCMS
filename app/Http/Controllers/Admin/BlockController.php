@@ -41,7 +41,9 @@ class BlockController extends Controller
         ]);
 
         $validated['post_id'] = $post->id;
-        $validated['order'] = $validated['order'] ?? Block::where('post_id', $post->id)->max('order') + 1;
+        $validated['parent_block_id'] = $validated['parent_id'] ?? null;
+        unset($validated['parent_id']);
+        $validated['order'] = $validated['order'] ?? (Block::where('post_id', $post->id)->max('order') + 1);
 
         $block = Block::create($validated);
 
@@ -77,6 +79,11 @@ class BlockController extends Controller
             'content' => 'nullable|array',
             'settings' => 'nullable|array',
         ]);
+
+        if (array_key_exists('parent_id', $validated)) {
+            $validated['parent_block_id'] = $validated['parent_id'];
+            unset($validated['parent_id']);
+        }
 
         $block->update($validated);
 

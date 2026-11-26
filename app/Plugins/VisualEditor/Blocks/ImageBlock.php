@@ -50,4 +50,28 @@ class ImageBlock extends Block
     {
         return 'visual-editor::blocks.image';
     }
+
+    /**
+     * Render the block.
+     */
+    public function render(): string
+    {
+        $image = $this->getAttribute('image', '') ?: $this->getAttribute('url', '');
+        $caption = $this->getAttribute('caption', '');
+        $showCaption = $this->getAttribute('showCaption', false);
+
+        if (!is_string($image) || trim($image) === '') {
+            return '';
+        }
+
+        $html = '<figure class="block-image mb-3"><img src="' . e($image) . '" alt="' . e($caption ?: '') . '" class="img-fluid rounded">';
+
+        if ($showCaption && $caption) {
+            $html .= '<figcaption class="text-muted small text-center mt-2">' . e($caption) . '</figcaption>';
+        }
+
+        $html .= '</figure>';
+
+        return $html;
+    }
 }

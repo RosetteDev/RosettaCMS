@@ -59,7 +59,7 @@ class VideoBlock extends Block
      */
     public function render(): string
     {
-        $source = $this->getAttribute('source', '');
+        $source = $this->getAttribute('source', '') ?: $this->getAttribute('url', '') ?: $this->getAttribute('video', '');
         $poster = $this->getAttribute('poster', '');
         $autoplay = $this->getAttribute('autoplay', false) ? ' autoplay' : '';
         $loop = $this->getAttribute('loop', false) ? ' loop' : '';

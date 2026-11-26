@@ -18,7 +18,6 @@ class Post extends Model
         'content',
         'excerpt',
         'featured_image',
-        'blocks',
         'meta',
         'post_type',
         'status',
@@ -27,7 +26,6 @@ class Post extends Model
     ];
 
     protected $casts = [
-        'blocks' => 'array',
         'meta' => 'array',
         'published_at' => 'datetime',
     ];

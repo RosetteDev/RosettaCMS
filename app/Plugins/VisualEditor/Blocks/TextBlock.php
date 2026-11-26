@@ -48,4 +48,18 @@ class TextBlock extends Block
     {
         return 'visual-editor::blocks.text';
     }
+
+    /**
+     * Render the block.
+     */
+    public function render(): string
+    {
+        $text = $this->getAttribute('text', '');
+
+        if (!is_string($text) || trim($text) === '') {
+            return '';
+        }
+
+        return '<div class="block-text">' . $this->parseText($text) . '</div>';
+    }
 }

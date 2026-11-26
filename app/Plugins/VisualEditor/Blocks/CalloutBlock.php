@@ -2,7 +2,7 @@
 
 namespace RosettaCMS\Plugins\VisualEditor\Blocks;
 
-use RosettaCMS\Plugins\VisualEditor\Blocks\Block;
+use RosettaCMS\Plugins\VisualEditor\Block;
 
 class CalloutBlock extends Block
 {
@@ -14,7 +14,7 @@ class CalloutBlock extends Block
     /**
      * Default settings for the block
      */
-    protected $defaults = [
+    protected $defaultAttributes = [
         'text' => '',
         'style' => 'primary',
         'icon' => '',

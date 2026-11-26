@@ -47,4 +47,30 @@ class ColumnsBlock extends Block
     {
         return 'visual-editor::blocks.columns';
     }
+
+    /**
+     * Render the block.
+     */
+    public function render(): string
+    {
+        $columns = (int) $this->getAttribute('columns', 2);
+
+        if ($columns < 1) {
+            $columns = 1;
+        }
+
+        if ($columns > 6) {
+            $columns = 6;
+        }
+
+        $html = '<div class="row g-3 mb-3">';
+
+        for ($i = 0; $i < $columns; $i++) {
+            $html .= '<div class="col" style="flex: 1 1 0;"></div>';
+        }
+
+        $html .= '</div>';
+
+        return $html;
+    }
 }

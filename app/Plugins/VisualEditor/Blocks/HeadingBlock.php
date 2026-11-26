@@ -49,4 +49,23 @@ class HeadingBlock extends Block
     {
         return 'visual-editor::blocks.heading';
     }
+
+    /**
+     * Render the block.
+     */
+    public function render(): string
+    {
+        $text = $this->getAttribute('text', '');
+        $level = $this->getAttribute('level', 'h2');
+
+        if (!is_string($text) || trim($text) === '') {
+            return '';
+        }
+
+        if (!preg_match('/^h[1-6]$/', (string) $level)) {
+            $level = 'h2';
+        }
+
+        return '<' . $level . ' class="block-heading">' . e($text) . '</' . $level . '>';
+    }
 }

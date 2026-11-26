@@ -46,4 +46,18 @@ class SpacerBlock extends Block
     {
         return 'visual-editor::blocks.spacer';
     }
+
+    /**
+     * Render the block.
+     */
+    public function render(): string
+    {
+        $height = (int) $this->getAttribute('height', 40);
+
+        if ($height < 0) {
+            $height = 0;
+        }
+
+        return '<div class="block-spacer" style="height: ' . $height . 'px;"></div>';
+    }
 }

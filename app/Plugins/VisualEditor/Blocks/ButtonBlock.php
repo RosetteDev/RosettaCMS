@@ -50,4 +50,22 @@ class ButtonBlock extends Block
     {
         return 'visual-editor::blocks.button';
     }
+
+    /**
+     * Render the block.
+     */
+    public function render(): string
+    {
+        $text = $this->getAttribute('text', 'Click Here');
+        $url = $this->getAttribute('url', '');
+        $style = $this->getAttribute('style', 'primary');
+
+        if (!is_string($text) || trim($text) === '') {
+            return '';
+        }
+
+        $style = preg_match('/^[a-z-]+$/', (string) $style) ? $style : 'primary';
+
+        return '<div class="block-button mb-3"><a class="btn btn-' . e($style) . '" href="' . e($url ?: '#') . '">' . e($text) . '</a></div>';
+    }
 }

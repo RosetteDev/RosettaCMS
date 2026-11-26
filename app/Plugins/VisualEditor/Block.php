@@ -127,14 +127,37 @@ abstract class Block
     /**
      * Render the block.
      *
+     * The default implementation produces a safe text representation of the
+     * block's content. Subclasses override this with a real renderer.
+     *
      * @return string
      */
-    abstract public function render(): string;
+    public function render(): string
+    {
+        $text = $this->attributes['text'] ?? $this->attributes['content'] ?? $this->attributes['html'] ?? '';
+
+        if (!is_string($text) || trim($text) === '') {
+            return '';
+        }
+
+        return '<div class="block-render block-render-' . e($this->type) . '">' . $this->parseText($text) . '</div>';
+    }
 
     /**
      * Get the block view.
      *
      * @return string
      */
-    abstract public function view(): string;
+    public function view(): string
+    {
+        return 'visual-editor::blocks.' . $this->type;
+    }
+
+    /**
+     * Render plain text with line breaks preserved, HTML-escaped.
+     */
+    protected function parseText(string $text): string
+    {
+        return nl2br(e($text));
+    }
 }
