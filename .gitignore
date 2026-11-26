@@ -12,16 +12,9 @@
 /storage/*.key
 /storage/pail
 
-# Development tools (ignored by git archive for export)
-.gitignore
-.gitattributes
-.gitattributes export-ignore
-.gitattributes export-ignore
-.gitattributes export-ignore
-vendor export-ignore
-node_modules export-ignore
-npm-debug.log export-ignore
-yarn-error.log export-ignore
+# Dependencies
+/vendor
+/node_modules
 
 # IDE/Editor files
 /.fleet
@@ -39,32 +32,14 @@ yarn-error.log export-ignore
 Homestead.json
 Homestead.yaml
 
-# Documentation (should not be in production)
+# Documentation (should not be in production) — docs/ is tracked
 *.md
 !README.md
-IMPLEMENTATION_SUMMARY.md
-USER_EXPERIENCE.md
-USER_EXPERIENCE_CHECKLIST.md
-ROSETTAMAPS_LIVE_AUDIT.md
-SECURITY_AUDIT_REPORT.md
-SECURITY_CHANGES_SUMMARY.md
-SECURITY_IMPLEMENTATION_SUMMARY.md
-MEDIA_LIBRARY_UPDATE.md
-TAXONOMY_IMPLEMENTATION.md
-DEPLOYMENT_GUIDE.md
-QUICK_FIX.md
-FIX_403.md
-SERVER_TRoubleshooting.md
+!docs/**/*.md
 
 # Composer
 auth.json
 composer.phar
-
-# IDE
-.nova
-.fleet
-.idea
-.vscode
 
 # Log files
 *.log
