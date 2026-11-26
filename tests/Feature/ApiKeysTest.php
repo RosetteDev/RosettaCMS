@@ -137,6 +137,19 @@ class ApiKeysTest extends TestCase
             ->assertJsonPath('data.slug', 'public-post');
     }
 
+    public function test_query_string_api_keys_are_not_accepted(): void
+    {
+        // Keys in the query string must never authenticate — they would leak
+        // into access logs, proxies and browser history.
+        $key = ApiKey::createKey($this->user->id, 'Writer', ['posts:write'])['plaintext'];
+
+        $this->postJson('/api/v1/posts?api_key=' . $key, ['title' => 'Nope'])
+            ->assertUnauthorized();
+
+        $this->getJson('/api/v1/posts?api_key=' . $key)
+            ->assertOk(); // read endpoints are public, the param is simply ignored
+    }
+
     public function test_admin_api_keys_index_lists_only_the_current_users_keys(): void
     {
         $otherUser = User::factory()->create();

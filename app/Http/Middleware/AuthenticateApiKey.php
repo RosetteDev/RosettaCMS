@@ -51,6 +51,10 @@ class AuthenticateApiKey
 
     /**
      * Extract the plaintext key from the request headers.
+     *
+     * Only headers are accepted: keys in query strings would leak into
+     * access logs, proxies and browser history, so they are deliberately
+     * not supported.
      */
     protected function extractKey(Request $request): ?string
     {
@@ -64,13 +68,6 @@ class AuthenticateApiKey
 
         if ($xApiKey) {
             return trim($xApiKey);
-        }
-
-        // Allow a ?api_key= query parameter for simple integrations (curl, browsers).
-        $queryKey = $request->query('api_key');
-
-        if ($queryKey) {
-            return trim((string) $queryKey);
         }
 
         return null;
