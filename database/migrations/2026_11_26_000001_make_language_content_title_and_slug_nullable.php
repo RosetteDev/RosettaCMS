@@ -14,6 +14,8 @@ return new class extends Migration
      * NOT NULL, which does not match how translations are used (partial
      * translations are legitimate). Recreate the table with nullable
      * columns, preserving any rows.
+     *
+     * Works on both SQLite (local/tests) and MySQL (production).
      */
     public function up(): void
     {
@@ -21,22 +23,44 @@ return new class extends Migration
             return;
         }
 
-        $columns = DB::select('PRAGMA table_info(language_content)');
-        $title = collect($columns)->firstWhere('name', 'title');
-        $slug = collect($columns)->firstWhere('name', 'slug');
+        $driver = DB::connection()->getDriverName();
+
+        // Read the current nullability of title/slug.
+        if ($driver === 'sqlite') {
+            $columns = DB::select('PRAGMA table_info(language_content)');
+            $title = collect($columns)->firstWhere('name', 'title');
+            $slug = collect($columns)->firstWhere('name', 'slug');
+            $alreadyNullable = $title && $slug && (int) $title->notnull === 0 && (int) $slug->notnull === 0;
+        } else {
+            $columns = DB::select('SHOW COLUMNS FROM language_content');
+            $title = collect($columns)->firstWhere('Field', 'title');
+            $slug = collect($columns)->firstWhere('Field', 'slug');
+            $alreadyNullable = $title && $slug && strtoupper($title->Null) === 'YES' && strtoupper($slug->Null) === 'YES';
+        }
 
         // Already correct (e.g. fresh installs running the fixed original migration).
-        if ($title && $slug && (int) $title->notnull === 0 && (int) $slug->notnull === 0) {
+        if ($alreadyNullable) {
             return;
         }
 
         DB::statement('ALTER TABLE language_content RENAME TO language_content_old');
 
-        // SQLite keeps index names on rename; drop them so the recreated
-        // table can reuse the same names. The old table is about to be dropped.
-        DB::statement('DROP INDEX IF EXISTS language_content_content_type_content_id_language_id_unique');
-        DB::statement('DROP INDEX IF EXISTS language_content_content_type_content_id_index');
-        DB::statement('DROP INDEX IF EXISTS language_content_language_id_index');
+        // The recreated table reuses the same index names, so the old table's
+        // indexes must be dropped first. SQLite keeps index names on rename;
+        // MySQL does as well.
+        if ($driver === 'sqlite') {
+            DB::statement('DROP INDEX IF EXISTS language_content_content_type_content_id_language_id_unique');
+            DB::statement('DROP INDEX IF EXISTS language_content_content_type_content_id_index');
+            DB::statement('DROP INDEX IF EXISTS language_content_language_id_index');
+        } else {
+            foreach ([
+                'language_content_content_type_content_id_language_id_unique',
+                'language_content_content_type_content_id_index',
+                'language_content_language_id_index',
+            ] as $index) {
+                DB::statement("ALTER TABLE language_content_old DROP INDEX {$index}");
+            }
+        }
 
         Schema::create('language_content', function (Blueprint $table) {
             $table->id();
@@ -57,6 +81,11 @@ return new class extends Migration
         });
 
         DB::statement('INSERT INTO language_content (id, content_type, content_id, language_id, title, content, slug, excerpt, meta, translated_by, created_at, updated_at) SELECT id, content_type, content_id, language_id, title, content, slug, excerpt, meta, translated_by, created_at, updated_at FROM language_content_old');
+
+        // Bump the auto-increment counter so the next row gets a fresh id.
+        if ($driver !== 'sqlite') {
+            DB::statement('ALTER TABLE language_content AUTO_INCREMENT = (SELECT COALESCE(MAX(id), 0) + 1 FROM language_content)');
+        }
 
         Schema::drop('language_content_old');
     }
