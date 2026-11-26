@@ -85,6 +85,56 @@ class BackupController extends Controller
     }
 
     /**
+     * Import content from a JSON export or a CSV export.
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:51200'], // 50 MB
+        ]);
+
+        $file = $request->file('file');
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        try {
+            if ($extension === 'json') {
+                $payload = json_decode(file_get_contents($file->getRealPath()), true);
+
+                if (!is_array($payload)) {
+                    throw new \RuntimeException('The file is not valid JSON.');
+                }
+
+                $summary = $this->backups->importContent($payload, auth()->user());
+            } elseif ($extension === 'csv') {
+                $summary = $this->backups->importCsv(file_get_contents($file->getRealPath()), auth()->user());
+            } else {
+                throw new \RuntimeException('Only .json and .csv files are supported.');
+            }
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.backups.index')
+                ->with('error', 'Import failed: ' . $e->getMessage());
+        }
+
+        $parts = [];
+        foreach (['posts', 'pages', 'categories', 'tags'] as $key) {
+            if (!empty($summary[$key])) {
+                $parts[] = $summary[$key] . ' ' . $key;
+            }
+        }
+
+        $message = empty($parts)
+            ? 'Nothing was imported.'
+            : 'Imported ' . implode(', ', $parts) . '.';
+
+        if ($summary['skipped'] > 0) {
+            $message .= ' Skipped ' . $summary['skipped'] . ' duplicate' . ($summary['skipped'] === 1 ? '' : 's') . '.';
+        }
+
+        return redirect()->route('admin.backups.index')
+            ->with('success', $message);
+    }
+
+    /**
      * Export content as JSON or CSV.
      */
     public function export(string $format)

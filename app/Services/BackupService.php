@@ -3,6 +3,10 @@
 namespace App\Services;
 
 use App\Models\Backup;
+use App\Models\Category;
+use App\Models\Post;
+use App\Models\Site;
+use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -259,6 +263,184 @@ class BackupService
         fclose($handle);
 
         return $csv;
+    }
+
+    /**
+     * Import content from a structured array (the same shape exportContent
+     * produces). Categories/tags are matched by slug and created if missing;
+     * posts/pages are skipped when a post with the same slug and type already
+     * exists. Returns a summary of what was created.
+     */
+    public function importContent(array $data, ?User $actor = null): array
+    {
+        $site = Site::first();
+
+        if (!$site) {
+            throw new \RuntimeException('No site found to import content into.');
+        }
+
+        $summary = [
+            'posts' => 0,
+            'pages' => 0,
+            'categories' => 0,
+            'tags' => 0,
+            'skipped' => 0,
+        ];
+
+        $categoryIds = [];
+        foreach ($data['categories'] ?? [] as $category) {
+            if (empty($category['slug'])) {
+                continue;
+            }
+
+            $existing = Category::where('slug', $category['slug'])->first();
+
+            if ($existing) {
+                $categoryIds[$category['slug']] = $existing->id;
+                continue;
+            }
+
+            $created = Category::create([
+                'site_id' => $site->id,
+                'name' => $category['name'] ?? $category['slug'],
+                'slug' => $category['slug'],
+                'description' => $category['description'] ?? null,
+                'color' => $category['color'] ?? null,
+                'order' => $category['order'] ?? 0,
+            ]);
+
+            $categoryIds[$category['slug']] = $created->id;
+            $summary['categories']++;
+        }
+
+        $tagIds = [];
+        foreach ($data['tags'] ?? [] as $tag) {
+            if (empty($tag['slug'])) {
+                continue;
+            }
+
+            $existing = Tag::where('slug', $tag['slug'])->first();
+
+            if ($existing) {
+                $tagIds[$tag['slug']] = $existing->id;
+                continue;
+            }
+
+            $created = Tag::create([
+                'site_id' => $site->id,
+                'name' => $tag['name'] ?? $tag['slug'],
+                'slug' => $tag['slug'],
+                'description' => $tag['description'] ?? null,
+                'color' => $tag['color'] ?? null,
+                'order' => $tag['order'] ?? 0,
+            ]);
+
+            $tagIds[$tag['slug']] = $created->id;
+            $summary['tags']++;
+        }
+
+        foreach (['posts' => 'post', 'pages' => 'page'] as $key => $postType) {
+            foreach ($data[$key] ?? [] as $row) {
+                if (empty($row['slug'])) {
+                    $summary['skipped']++;
+                    continue;
+                }
+
+                $exists = Post::where('site_id', $site->id)
+                    ->where('slug', $row['slug'])
+                    ->where('post_type', $postType)
+                    ->exists();
+
+                if ($exists) {
+                    $summary['skipped']++;
+                    continue;
+                }
+
+                $status = in_array($row['status'] ?? null, ['draft', 'pending', 'published', 'private', 'trash'], true)
+                    ? $row['status']
+                    : 'draft';
+
+                $publishedAt = $row['published_at'] ?? null;
+                if ($status === 'published' && !$publishedAt) {
+                    $publishedAt = now();
+                }
+
+                Post::create([
+                    'site_id' => $site->id,
+                    'user_id' => $actor?->id ?? Post::first()?->user_id,
+                    'title' => $row['title'] ?? $row['slug'],
+                    'slug' => $row['slug'],
+                    'content' => $row['content'] ?? null,
+                    'excerpt' => $row['excerpt'] ?? null,
+                    'featured_image' => $row['featured_image'] ?? null,
+                    'meta' => is_array($row['meta'] ?? null) ? $row['meta'] : null,
+                    'post_type' => $postType,
+                    'status' => $status,
+                    'published_at' => $publishedAt,
+                    'comment_status' => $row['comment_status'] ?? 'open',
+                ]);
+
+                $summary[$key]++;
+            }
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Import posts/pages from a CSV produced by exportCsv(). Content is not
+     * carried by the CSV format, so imported posts start as skeletons with
+     * only title/slug/status/published_at set.
+     */
+    public function importCsv(string $csv, ?User $actor = null): array
+    {
+        $rows = ['post' => [], 'page' => []];
+        $handle = fopen('php://temp', 'r+');
+        fwrite($handle, $csv);
+        rewind($handle);
+
+        $headers = fgetcsv($handle);
+
+        if (!$headers) {
+            fclose($handle);
+            throw new \RuntimeException('CSV is empty or unreadable.');
+        }
+
+        $headers = array_map(fn ($h) => strtolower(trim((string) $h)), $headers);
+
+        while (($line = fgetcsv($handle)) !== false) {
+            if (count(array_filter($line, fn ($c) => $c !== null && $c !== '')) === 0) {
+                continue;
+            }
+
+            $row = [];
+            foreach ($headers as $i => $header) {
+                $row[$header] = $line[$i] ?? null;
+            }
+
+            $type = strtolower(trim((string) ($row['type'] ?? '')));
+            if (!in_array($type, ['post', 'page'], true)) {
+                continue;
+            }
+
+            $rows[$type][] = [
+                'title' => $row['title'] ?? null,
+                'slug' => $row['slug'] ?? null,
+                'status' => $row['status'] ?? 'draft',
+                'published_at' => $row['published_at'] ?? null,
+            ];
+        }
+
+        fclose($handle);
+
+        $data = [
+            'posts' => $rows['post'] ?? [],
+            'pages' => $rows['page'] ?? [],
+            'categories' => [],
+            'tags' => [],
+        ];
+
+        return $this->importContent($data, $actor);
     }
 
     /**

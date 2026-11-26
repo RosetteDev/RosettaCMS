@@ -177,6 +177,120 @@ class BackupTest extends TestCase
             ->assertSessionHasErrors('confirm');
     }
 
+    public function test_import_json_creates_content(): void
+    {
+        $payload = [
+            'posts' => [
+                ['title' => 'Imported Post', 'slug' => 'imported-post', 'content' => '<p>Hi</p>', 'post_type' => 'post', 'status' => 'published', 'published_at' => now()->toDateTimeString()],
+            ],
+            'pages' => [
+                ['title' => 'Imported Page', 'slug' => 'imported-page', 'content' => '<p>Page</p>', 'post_type' => 'page', 'status' => 'draft'],
+            ],
+            'categories' => [
+                ['name' => 'Imported Category', 'slug' => 'imported-category'],
+            ],
+            'tags' => [
+                ['name' => 'Imported Tag', 'slug' => 'imported-tag'],
+            ],
+        ];
+
+        $summary = app(BackupService::class)->importContent($payload, $this->admin);
+
+        $this->assertSame(1, $summary['posts']);
+        $this->assertSame(1, $summary['pages']);
+        $this->assertSame(1, $summary['categories']);
+        $this->assertSame(1, $summary['tags']);
+        $this->assertSame(0, $summary['skipped']);
+
+        $this->assertDatabaseHas('posts', ['slug' => 'imported-post', 'post_type' => 'post']);
+        $this->assertDatabaseHas('posts', ['slug' => 'imported-page', 'post_type' => 'page']);
+        $this->assertDatabaseHas('categories', ['slug' => 'imported-category']);
+        $this->assertDatabaseHas('tags', ['slug' => 'imported-tag']);
+    }
+
+    public function test_import_json_skips_existing_posts(): void
+    {
+        $this->makePost();
+
+        $payload = [
+            'posts' => [
+                ['title' => 'Dup', 'slug' => 'original-post', 'content' => '<p>Dup</p>', 'status' => 'draft'],
+            ],
+        ];
+
+        $summary = app(BackupService::class)->importContent($payload, $this->admin);
+
+        $this->assertSame(0, $summary['posts']);
+        $this->assertSame(1, $summary['skipped']);
+        $this->assertSame(1, Post::where('slug', 'original-post')->count());
+    }
+
+    public function test_import_csv_creates_skeleton_posts(): void
+    {
+        $csv = "type,title,slug,status,published_at,created_at\n" .
+            "post,CSV Post,csv-post,published,2026-11-01 10:00:00,2026-11-01 10:00:00\n" .
+            "page,CSV Page,csv-page,draft,,2026-11-01 10:00:00\n";
+
+        $summary = app(BackupService::class)->importCsv($csv, $this->admin);
+
+        $this->assertSame(1, $summary['posts']);
+        $this->assertSame(1, $summary['pages']);
+        $this->assertDatabaseHas('posts', ['slug' => 'csv-post', 'post_type' => 'post', 'status' => 'published']);
+        $this->assertDatabaseHas('posts', ['slug' => 'csv-page', 'post_type' => 'page', 'status' => 'draft']);
+    }
+
+    public function test_admin_can_import_json_via_web(): void
+    {
+        $payload = [
+            'posts' => [['title' => 'Web Post', 'slug' => 'web-post', 'content' => '<p>Body</p>', 'status' => 'draft']],
+        ];
+
+        $file = tempnam(sys_get_temp_dir(), 'import-') . '.json';
+        file_put_contents($file, json_encode($payload));
+
+        $response = $this->actingAs($this->admin)
+            ->post('/admin/backups/import', [
+                'file' => new \Illuminate\Http\UploadedFile($file, 'import.json', 'application/json', null, true),
+            ]);
+
+        @unlink($file);
+
+        $response->assertRedirect(route('admin.backups.index'));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('posts', ['slug' => 'web-post']);
+    }
+
+    public function test_non_admin_cannot_import(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'import-') . '.json';
+        file_put_contents($file, json_encode(['posts' => []]));
+
+        $response = $this->actingAs($this->editor)
+            ->post('/admin/backups/import', [
+                'file' => new \Illuminate\Http\UploadedFile($file, 'import.json', 'application/json', null, true),
+            ]);
+
+        @unlink($file);
+
+        $response->assertForbidden();
+    }
+
+    public function test_import_rejects_invalid_extension(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'import-') . '.txt';
+        file_put_contents($file, 'not json');
+
+        $response = $this->actingAs($this->admin)
+            ->post('/admin/backups/import', [
+                'file' => new \Illuminate\Http\UploadedFile($file, 'import.txt', 'text/plain', null, true),
+            ]);
+
+        @unlink($file);
+
+        $response->assertRedirect(route('admin.backups.index'));
+        $response->assertSessionHas('error');
+    }
+
     public function test_admin_can_delete_backup(): void
     {
         $backup = app(BackupService::class)->create($this->admin);

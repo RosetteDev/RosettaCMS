@@ -132,7 +132,9 @@ The `languages` and `language_content` tables are now wired up.
       replaces the database and media library. JSON/CSV content export
       (posts/pages/categories/tags) is also on that page.
 - [ ] One-click migration between installs (zip export + import flow)
-- [ ] Content import from JSON/CSV
+- [x] Content import from JSON/CSV — upload a JSON export (full posts/pages/
+      categories/tags) or a CSV export (posts/pages skeletons) from
+      `/admin/backups`. Duplicate slugs are skipped.
 - [ ] Site snapshot / staging copy for testing theme changes
 
 ### 8. Performance and scale
