@@ -53,7 +53,8 @@ class PluginServiceProvider extends ServiceProvider
      */
     protected function bootPlugins(): void
     {
-        $manager = $this->app->make('plugin.manager');
+        // Use the existing plugin.manager binding from RosettaCMSProvider
+        $manager = $this->app['plugin.manager'];
 
         foreach ($manager->scan() as $name => $plugin) {
             if ($this->shouldActivatePlugin($plugin)) {

@@ -1,6 +1,7 @@
 @extends('admin.layouts.app')
 
 @push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dropzone@6.0.0-beta.2/dist/basic.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dropzone@6.0.0-beta.2/dist/dropzone.css">
 <style>
     /* Dropzone Styles */
@@ -762,7 +763,7 @@
 </div>
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/dropzone@6.0.0-beta.2/dist/dropzone.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dropzone@6.0.0-beta.2/dist/dropzone-min.js"></script>
 <script>
 Dropzone.autoDiscover = false;
 

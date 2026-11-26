@@ -16,6 +16,10 @@ class RosettaCMSProvider extends ServiceProvider
             return new PluginManager($app);
         });
 
+        $this->app->singleton(PluginManager::class, function ($app) {
+            return $app['plugin.manager'];
+        });
+
         $this->app->alias('plugin.manager', 'rosetta.plugins');
     }
 }

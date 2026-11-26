@@ -104,7 +104,7 @@ class InstallController extends Controller
                         $validated['db_password'] ?? ''
                     );
                     $serverConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-                    $serverConnection->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+                    $serverConnection->setAttribute(\Pdo\Mysql::ATTR_USE_BUFFERED_QUERY, true);
                     
                     // Create database if it doesn't exist
                     $dbName = $validated['db_database'];
@@ -365,7 +365,7 @@ class InstallController extends Controller
         $dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$config['database']}";
         
         $options = [
-            PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
+            \Pdo\Mysql::ATTR_USE_BUFFERED_QUERY => true,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ];

@@ -101,8 +101,10 @@ class SiteSetting extends Model
         }
 
         $setting = static::firstOrNew(['site_id' => $site->id]);
-        
-        // Set default values if the record is new (no id yet)
+
+        // Set default values if the record is new (no id yet).
+        // Deliberately leave site_title unset: callers fall back to the site's
+        // own name so the CMS never misrepresents a site's identity.
         if (!$setting->exists) {
             $setting->primary_color = '#3b82f6';
             $setting->secondary_color = '#6b7280';
@@ -110,9 +112,8 @@ class SiteSetting extends Model
             $setting->text_color = '#1f2937';
             $setting->bg_color = '#ffffff';
             $setting->border_color = '#e5e7eb';
-            $setting->site_title = 'Rosetta CMS';
         }
-        
+
         return $setting;
     }
 }
