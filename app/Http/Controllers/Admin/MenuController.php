@@ -50,11 +50,11 @@ class MenuController extends Controller
     public function edit(Menu $menu)
     {
         $menu->load(['rootItems.children']);
-        $items = $menu->rootItems()->with('children')->get();
+        $rootItems = $menu->rootItems()->with('children')->get();
         $allItems = MenuItem::where('menu_id', $menu->id)->orderBy('order')->get();
         $content = Post::whereIn('post_type', ['page', 'post'])->orderBy('title')->get();
 
-        return view('admin.menus.edit', compact('menu', 'items', 'allItems', 'content'));
+        return view('admin.menus.edit', compact('menu', 'rootItems', 'allItems', 'content'));
     }
 
     public function update(Request $request, Menu $menu)

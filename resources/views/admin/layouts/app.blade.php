@@ -2,13 +2,25 @@
     // Ensure the layout always has settings available, even for views whose
     // controller does not explicitly pass them.
     $settings = $settings ?? \App\Models\SiteSetting::forSite();
+
+    // Derive a sensible page title from the current route when the view
+    // does not set one explicitly.
+    if ($title ?? null) {
+        $pageTitle = $title;
+    } elseif (request()->routeIs('dashboard')) {
+        $pageTitle = 'Dashboard';
+    } else {
+        $segment = \Illuminate\Support\Str::after(request()->route()?->getName() ?? '', 'admin.');
+        $parts = explode('.', $segment);
+        $pageTitle = $parts && $parts[0] ? \Illuminate\Support\Str::headline($parts[0]) : 'Admin Dashboard';
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Admin Dashboard' }} - Rosetta CMS</title>
+    <title>{{ $pageTitle }} - Rosetta CMS</title>
     <meta name="description" content="{{ $description ?? '' }}">
     
     <!-- SEO Meta Tags -->
@@ -386,7 +398,10 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
+    <!-- Alpine.js for interactive admin widgets -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
+
     @stack('scripts')
     
     <script>

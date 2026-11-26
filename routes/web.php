@@ -325,7 +325,6 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::get('/export-all', [WordPressController::class, 'exportAll'])->name('export-all');
         Route::delete('/export', [WordPressController::class, 'deleteExport'])->name('export.delete');
         Route::post('/import', [WordPressController::class, 'uploadImport'])->name('import');
-        Route::get('/migrate', [WordPressController::class, 'migrate'])->name('migrate');
         Route::post('/migrate', [WordPressController::class, 'runMigration'])->name('migrate.run');
         Route::get('/check-connection', [WordPressController::class, 'checkConnection'])->name('check-connection');
     });

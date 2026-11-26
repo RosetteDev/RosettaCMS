@@ -23,18 +23,19 @@ class SecurityHeaders
         $response->header('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
-        // CSP header - enforced. 'unsafe-inline'/'unsafe-eval' are required by
-        // existing inline scripts and the admin editor; tighten over time.
+        // CSP header - enforced. 'unsafe-inline' is required by inline scripts and
+        // styles in existing views (tighten over time). CDN hosts are allowlisted
+        // for Bootstrap, Font Awesome, and the font providers used across views.
         $csp = "default-src 'self'; " .
-               "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " .
-               "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " .
+               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; " .
+               "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.bunny.net; " .
                "img-src 'self' data: https:; " .
-               "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " .
+               "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.gstatic.com https://fonts.bunny.net; " .
                "connect-src 'self'; " .
                "frame-ancestors 'self'; " .
                "base-uri 'self'; " .
                "form-action 'self';";
-        
+
         $response->header('Content-Security-Policy', $csp);
 
         return $response;

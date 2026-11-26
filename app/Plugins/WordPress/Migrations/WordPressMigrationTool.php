@@ -13,14 +13,39 @@ use Illuminate\Support\Str;
 
 class WordPressMigrationTool
 {
-    protected $connection;
     protected $prefix;
     protected $convertedData = [];
 
     public function __construct()
     {
-        $this->connection = DB::connection('wordpress');
         $this->prefix = config('rosetta.wordpress_db_prefix', 'wp_');
+    }
+
+    /**
+     * Resolve the WordPress database connection lazily so the tool can be
+     * constructed even when no WordPress connection is configured.
+     *
+     * @return \Illuminate\Database\Connection|null
+     */
+    protected function connection()
+    {
+        if (!config('database.connections.wordpress')) {
+            return null;
+        }
+
+        try {
+            return DB::connection('wordpress');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Whether a WordPress database connection is configured and usable.
+     */
+    public function isConfigured(): bool
+    {
+        return $this->connection() !== null;
     }
 
     /**
@@ -53,7 +78,10 @@ class WordPressMigrationTool
      */
     public function migrateUsers()
     {
-        $wpUsers = $this->connection->table("{$this->prefix}users")->get();
+        if (!$this->connection()) {
+            return ['migrated' => 0, 'errors' => ['WordPress database connection is not configured.']];
+        }
+        $wpUsers = $this->connection()->table("{$this->prefix}users")->get();
         $migrated = 0;
         $errors = [];
 
@@ -90,7 +118,10 @@ class WordPressMigrationTool
      */
     public function migrateTerms()
     {
-        $wpTerms = $this->connection->table("{$this->prefix}terms")->get();
+        if (!$this->connection()) {
+            return ['migrated' => 0, 'errors' => ['WordPress database connection is not configured.']];
+        }
+        $wpTerms = $this->connection()->table("{$this->prefix}terms")->get();
         $migrated = 0;
         $errors = [];
 
@@ -128,7 +159,10 @@ class WordPressMigrationTool
      */
     public function migratePosts()
     {
-        $wpPosts = $this->connection->table("{$this->prefix}posts")
+        if (!$this->connection()) {
+            return ['migrated' => 0, 'errors' => ['WordPress database connection is not configured.']];
+        }
+        $wpPosts = $this->connection()->table("{$this->prefix}posts")
             ->where('post_type', 'in', ['post', 'page'])
             ->get();
 
@@ -186,17 +220,17 @@ class WordPressMigrationTool
      */
     protected function migratePostTerms($wpPostId, $post)
     {
-        $termRelationships = $this->connection->table("{$this->prefix}term_relationships")
+        $termRelationships = $this->connection()->table("{$this->prefix}term_relationships")
             ->where('object_id', $wpPostId)
             ->get();
 
         foreach ($termRelationships as $rel) {
-            $termTaxonomy = $this->connection->table("{$this->prefix}term_taxonomy")
+            $termTaxonomy = $this->connection()->table("{$this->prefix}term_taxonomy")
                 ->where('term_taxonomy_id', $rel->term_taxonomy_id)
                 ->first();
 
             if ($termTaxonomy) {
-                $term = $this->connection->table("{$this->prefix}terms")
+                $term = $this->connection()->table("{$this->prefix}terms")
                     ->where('term_id', $termTaxonomy->term_id)
                     ->first();
 
@@ -282,7 +316,10 @@ class WordPressMigrationTool
      */
     public function migrateComments()
     {
-        $wpComments = $this->connection->table("{$this->prefix}comments")
+        if (!$this->connection()) {
+            return ['migrated' => 0, 'errors' => ['WordPress database connection is not configured.']];
+        }
+        $wpComments = $this->connection()->table("{$this->prefix}comments")
             ->where('comment_approved', 'in', ['0', '1', 'spam', 'trash'])
             ->get();
 
@@ -334,7 +371,10 @@ class WordPressMigrationTool
      */
     public function migrateMetadata()
     {
-        $wpMeta = $this->connection->table("{$this->prefix}postmeta")->get();
+        if (!$this->connection()) {
+            return ['migrated' => 0, 'errors' => ['WordPress database connection is not configured.']];
+        }
+        $wpMeta = $this->connection()->table("{$this->prefix}postmeta")->get();
         $migrated = 0;
 
         foreach ($wpMeta as $wpMetaItem) {
@@ -367,8 +407,12 @@ class WordPressMigrationTool
      */
     public function checkConnection()
     {
+        if (!$this->connection()) {
+            return false;
+        }
+
         try {
-            $this->connection->table("{$this->prefix}users")->limit(1)->get();
+            $this->connection()->table("{$this->prefix}users")->limit(1)->get();
             return true;
         } catch (\Exception $e) {
             return false;
@@ -382,12 +426,17 @@ class WordPressMigrationTool
     {
         $stats = [];
 
+        if (!$this->connection()) {
+            $stats['error'] = 'WordPress database connection is not configured.';
+            return $stats;
+        }
+
         try {
-            $stats['users'] = $this->connection->table("{$this->prefix}users")->count();
-            $stats['posts'] = $this->connection->table("{$this->prefix}posts")->count();
-            $stats['terms'] = $this->connection->table("{$this->prefix}terms")->count();
-            $stats['comments'] = $this->connection->table("{$this->prefix}comments")->count();
-            $stats['meta'] = $this->connection->table("{$this->prefix}postmeta")->count();
+            $stats['users'] = $this->connection()->table("{$this->prefix}users")->count();
+            $stats['posts'] = $this->connection()->table("{$this->prefix}posts")->count();
+            $stats['terms'] = $this->connection()->table("{$this->prefix}terms")->count();
+            $stats['comments'] = $this->connection()->table("{$this->prefix}comments")->count();
+            $stats['meta'] = $this->connection()->table("{$this->prefix}postmeta")->count();
         } catch (\Exception $e) {
             $stats['error'] = $e->getMessage();
         }

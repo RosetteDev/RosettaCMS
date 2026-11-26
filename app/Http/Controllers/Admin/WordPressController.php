@@ -29,7 +29,10 @@ class WordPressController extends Controller
         return view('admin.wordpress.index', [
             'exportedFiles' => $this->exporter->getExportedFiles(),
             'importedFiles' => $this->importer->getImportedFiles(),
+            'canConnect' => $this->migrator->checkConnection(),
+            'isConfigured' => $this->migrator->isConfigured(),
             'dbStats' => $this->migrator->getDatabaseStats(),
+            'prefix' => config('rosetta.wordpress_db_prefix', 'wp_'),
         ]);
     }
 
@@ -60,7 +63,14 @@ class WordPressController extends Controller
         $filename = basename($validated['filename']);
 
         if ($this->exporter->deleteExport($filename)) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => true]);
+            }
             return back()->with('success', 'Export deleted successfully');
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => false]);
         }
 
         return back()->with('error', 'Failed to delete export');
@@ -87,18 +97,6 @@ class WordPressController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Show migration tools
-     */
-    public function migrate()
-    {
-        return view('admin.wordpress.migrate', [
-            'canConnect' => $this->migrator->checkConnection(),
-            'dbStats' => $this->migrator->getDatabaseStats(),
-            'prefix' => config('rosetta.wordpress_db_prefix', 'wp_'),
-        ]);
     }
 
     /**

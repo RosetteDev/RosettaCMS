@@ -19,13 +19,12 @@ class BlockController extends Controller
 
     /**
      * Display a listing of blocks for a post.
+     *
+     * The page builder is embedded in the page form, so send users there.
      */
     public function index(Post $post)
     {
-        $blocks = Block::forPost($post->id)->with('childBlocks')->get();
-        $availableBlocks = $this->visualEditorService->getAvailableBlocks();
-
-        return view('admin.blocks.index', compact('post', 'blocks', 'availableBlocks'));
+        return redirect()->route('admin.pages.edit', $post);
     }
 
     /**
@@ -162,23 +161,25 @@ class BlockController extends Controller
     }
 
     /**
-     * Get media picker data.
+     * Get media picker data (images only).
      */
     public function mediaPicker()
     {
-        $media = \App\Models\Media::orderBy('created_at', 'desc')->take(50)->get(['id', 'filename', 'path', 'alt', 'title']);
+        $media = \App\Models\Media::where('mime_type', 'like', 'image/%')
+            ->orderBy('created_at', 'desc')
+            ->take(50)
+            ->get();
 
-        return response()->json([
-            'success' => true,
-            'media' => $media->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'name' => $item->title ?? $item->filename,
-                    'alt' => $item->alt ?? '',
-                    'url' => $item->url,
-                    'path' => $item->path,
-                ];
-            })->toArray(),
-        ]);
+        $items = $media->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'name' => $item->caption ?? $item->file_name,
+                'alt' => $item->alt_text ?? '',
+                'url' => $item->url,
+                'path' => $item->file_path,
+            ];
+        })->values()->all();
+
+        return response()->json($items);
     }
 }

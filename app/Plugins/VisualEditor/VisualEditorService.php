@@ -24,7 +24,7 @@ class VisualEditorService
      *
      * @return array
      */
-    protected function getAvailableBlocks(): array
+    public function getAvailableBlocks(): array
     {
         return [
             'text' => [
@@ -85,7 +85,7 @@ class VisualEditorService
      *
      * @return array
      */
-    protected function getAvailableTools(): array
+    public function getAvailableTools(): array
     {
         return [
             'style' => [
