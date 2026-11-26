@@ -87,6 +87,9 @@ class SettingsController extends Controller
             'bg_color' => 'nullable|string|max:20',
             'border_color' => 'nullable|string|max:20',
 
+            // E-commerce
+            'tax_rate' => 'nullable|numeric|min:0|max:100',
+
             // Home page selection
             'home_post_id' => 'nullable|integer|exists:posts,id',
         ]);

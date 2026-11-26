@@ -27,6 +27,10 @@ use App\Http\Controllers\Admin\PluginController;
 use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\WebhookController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\Admin\BlockController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\InlineEditController;
@@ -76,6 +80,17 @@ Route::get('/language/{code}', function (string $code) {
     session(['active_language' => $language->code]);
     return redirect()->back();
 })->name('language.switch');
+
+// Public storefront (e-commerce foundation)
+Route::get('/products', [StorefrontController::class, 'products'])->name('storefront.products');
+Route::get('/products/{slug}', [StorefrontController::class, 'product'])->name('storefront.product');
+Route::get('/cart', [StorefrontController::class, 'cart'])->name('storefront.cart');
+Route::post('/cart/add/{product}', [StorefrontController::class, 'addToCart'])->name('storefront.cart.add');
+Route::put('/cart/update/{product}', [StorefrontController::class, 'updateCart'])->name('storefront.cart.update');
+Route::delete('/cart/remove/{product}', [StorefrontController::class, 'removeCart'])->name('storefront.cart.remove');
+Route::get('/checkout', [StorefrontController::class, 'checkout'])->name('storefront.checkout');
+Route::post('/checkout', [StorefrontController::class, 'placeOrder'])->name('storefront.checkout.place');
+Route::get('/checkout/success/{order}', [StorefrontController::class, 'success'])->name('storefront.success');
 
 // Installation routes
 Route::middleware(['web', 'guest'])->group(function () {
@@ -286,6 +301,31 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::delete('/{webhook}', [WebhookController::class, 'destroy'])->whereNumber('webhook')->name('destroy');
     });
 
+    Route::prefix('admin/products')->middleware('role:admin')->name('admin.products.')->group(function () {
+        Route::get('/', [ProductController::class, 'index'])->name('index');
+        Route::get('/create', [ProductController::class, 'create'])->name('create');
+        Route::post('/', [ProductController::class, 'store'])->name('store');
+        Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('edit');
+        Route::put('/{product}', [ProductController::class, 'update'])->name('update');
+        Route::post('/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('admin/coupons')->middleware('role:admin')->name('admin.coupons.')->group(function () {
+        Route::get('/', [CouponController::class, 'index'])->name('index');
+        Route::get('/create', [CouponController::class, 'create'])->name('create');
+        Route::post('/', [CouponController::class, 'store'])->name('store');
+        Route::get('/{coupon}/edit', [CouponController::class, 'edit'])->name('edit');
+        Route::put('/{coupon}', [CouponController::class, 'update'])->name('update');
+        Route::delete('/{coupon}', [CouponController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('admin/orders')->middleware('role:admin')->name('admin.orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/{order}', [OrderController::class, 'show'])->whereNumber('order')->name('show');
+        Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->whereNumber('order')->name('status');
+    });
+
     // Users management - Admin only
     Route::prefix('admin/users')->middleware('role:admin')->name('admin.users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
@@ -384,6 +424,16 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
 });
 
 // View composers for theme partials
+View::composer('storefront.*', function ($view) {
+    $site = \App\Models\Site::first();
+    $cart = app(\App\Services\CartService::class);
+
+    $view->with([
+        'site' => $site,
+        'cartCount' => $cart->count(),
+    ]);
+});
+
 View::composer('themes.*.partials.sidebar', function ($view) {
     $categories = Category::withCount('posts')->get();
     $recentPosts = App\Models\Post::where('post_type', 'post')

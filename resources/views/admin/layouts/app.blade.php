@@ -391,6 +391,9 @@
             <a href="{{ url('/admin/plugins') }}" class="{{ request()->is('admin/plugins*') ? 'active' : '' }}">Plugins</a>
             <a href="{{ url('/admin/backups') }}" class="{{ request()->is('admin/backups*') ? 'active' : '' }}">Backups</a>
             <a href="{{ url('/admin/webhooks') }}" class="{{ request()->is('admin/webhooks*') ? 'active' : '' }}">Webhooks</a>
+            <a href="{{ url('/admin/products') }}" class="{{ request()->is('admin/products*') ? 'active' : '' }}">Products</a>
+            <a href="{{ url('/admin/orders') }}" class="{{ request()->is('admin/orders*') ? 'active' : '' }}">Orders</a>
+            <a href="{{ url('/admin/coupons') }}" class="{{ request()->is('admin/coupons*') ? 'active' : '' }}">Coupons</a>
             <a href="{{ url('/admin/settings') }}" class="{{ request()->is('admin/settings*') ? 'active' : '' }}">Settings</a>
             @endif
             @endif

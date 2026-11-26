@@ -57,21 +57,31 @@ per-site scoping, test-send button. See docs/WEBHOOKS.md.
 - Swagger UI proper (the in-app docs page is a self-contained HTML
   reference, not a Swagger UI instance)
 
-### 2. E-commerce foundation (or a deliberately positioned alternative)
-WordPress's biggest commercial driver is WooCommerce. Even a minimal
-product catalog with cart, checkout, orders, and payment capture
-(Stripe) would put Rosetta in the same league for small businesses.
+### 2. E-commerce foundation — ✅ done (foundation, 2026-11)
+WordPress's biggest commercial driver is WooCommerce. The foundation
+ships a scoped, honest version of the same: a product catalog, cart,
+checkout, orders, coupons and tax settings — plus a clean seam for a
+paid module to add live payment capture later.
 
-- Products with variants, pricing, inventory, categories
-- Cart + checkout flow with shipping/tax calculation
-- Order management dashboard
-- Stripe (and PayPal) payment capture
-- Coupons and tax settings
+**Done (2026-11):**
 
-If e-commerce is out of scope, the honest equivalent is a well-positioned
-"content-first" niche (portfolio/agency/blog) with an explicit promise of
-speed and simplicity — but it should be a deliberate product decision,
-not an accident.
+- Products with pricing, sale price, stock, SKU, categories and
+  draft/active status (no variants yet)
+- Session cart + checkout flow (subtotal, coupon, site tax rate, total)
+- Order management dashboard with status transitions and item snapshots
+- Coupons (percent/fixed, minimum subtotal, max uses, expiry)
+- Tax settings (site-wide rate in Site Settings)
+- Self-contained storefront (`/products`, `/cart`, `/checkout`) with no
+  theme coupling; theme-integrated storefront is a follow-up
+- Payment seam: `PaymentGateway` contract + `payments.default` config —
+  the foundation ships a manual/invoice gateway; a paid module implements
+  the contract and binds via `PAYMENTS_DEFAULT` without touching checkout
+
+**Deliberately deferred:** variants/options, inventory beyond the stock
+counter, shipping calculation, and live payment processing (Stripe/PayPal)
+— these belong to the paid module.
+
+See `docs/ECOMMERCE.md`.
 
 ### 3. A Gutenberg-class block editor
 Rosetta has a block builder, but it is not yet a visual editor. To match

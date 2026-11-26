@@ -18,6 +18,7 @@ class SiteSetting extends Model
         'disable_comments',
         'enable_comment_approval',
         'post_per_page',
+        'tax_rate',
         'theme',
         'site_title',
         'site_description',
@@ -67,6 +68,7 @@ class SiteSetting extends Model
         'disable_file_editor' => 'boolean',
         'enable_user_registration' => 'boolean',
         'post_per_page' => 'integer',
+        'tax_rate' => 'decimal:2',
         'rate_limit_per_minute' => 'integer',
         'max_upload_size' => 'integer',
     ];
