@@ -13,7 +13,9 @@ return new class extends Migration
             $table->foreignId('site_id')->nullable()->constrained()->nullOnDelete();
             $table->string('url', 500);
             $table->string('secret', 255);
-            $table->json('events')->default('[]');
+            // No default: JSON columns cannot have a default value in MySQL.
+            // The model always sets events explicitly.
+            $table->json('events');
             $table->string('description', 255)->nullable();
             $table->boolean('active')->default(true);
             $table->timestamp('last_fired_at')->nullable();
