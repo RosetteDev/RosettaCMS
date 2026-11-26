@@ -24,6 +24,8 @@ return new class extends Migration
         // Recovered/broken state: an earlier run renamed the table but failed
         // part-way. Rebuild from the leftover table, preserving rows.
         if (!Schema::hasTable('language_content') && Schema::hasTable('language_content_old')) {
+            $this->dropForeignKeyOnOldTable($driver);
+
             $this->createTable();
 
             DB::statement('INSERT INTO language_content (id, content_type, content_id, language_id, title, content, slug, excerpt, meta, translated_by, created_at, updated_at) SELECT id, content_type, content_id, language_id, title, content, slug, excerpt, meta, translated_by, created_at, updated_at FROM language_content_old');
@@ -68,6 +70,8 @@ return new class extends Migration
             DB::statement('DROP INDEX IF EXISTS language_content_content_type_content_id_language_id_unique');
             DB::statement('DROP INDEX IF EXISTS language_content_content_type_content_id_index');
             DB::statement('DROP INDEX IF EXISTS language_content_language_id_index');
+        } else {
+            $this->dropForeignKeyOnOldTable($driver);
         }
 
         $this->createTable();
@@ -89,6 +93,20 @@ return new class extends Migration
     {
         // Intentionally left as a no-op: re-adding NOT NULL constraints would
         // fail on rows with null title/slug.
+    }
+
+    /**
+     * Drop the leftover foreign key constraint from the old table. MySQL
+     * requires FK constraint names to be unique across the whole database,
+     * so the old constraint must be removed before the new table reuses the name.
+     */
+    private function dropForeignKeyOnOldTable(string $driver): void
+    {
+        if ($driver === 'sqlite') {
+            return;
+        }
+
+        DB::statement('ALTER TABLE language_content_old DROP FOREIGN KEY language_content_language_id_foreign');
     }
 
     private function createTable(): void
