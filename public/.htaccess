@@ -3,6 +3,20 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # Deny access to dotfiles (.env, .git, etc.)
+    <FilesMatch "^\.">
+        Require all denied
+    </FilesMatch>
+
+    # Deny execution of any PHP in the public directory (defense in depth),
+    # except the front controller index.php.
+    <FilesMatch "\.(php|phtml|phar)$">
+        Require all denied
+    </FilesMatch>
+    <FilesMatch "^index\.php$">
+        Require all granted
+    </FilesMatch>
+
     RewriteEngine On
 
     # Handle Authorization Header
@@ -11,7 +25,7 @@
 
     # Handle X-XSRF-Token Header
     RewriteCond %{HTTP:x-xsrf-token} .
-    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF_TOKEN}]
 
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d

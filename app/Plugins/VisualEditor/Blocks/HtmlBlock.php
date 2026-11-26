@@ -2,6 +2,7 @@
 
 namespace RosettaCMS\Plugins\VisualEditor\Blocks;
 
+use Mews\Purifier\Facades\Purifier;
 use RosettaCMS\Plugins\VisualEditor\Block;
 
 class HtmlBlock extends Block
@@ -62,7 +63,10 @@ class HtmlBlock extends Block
         }
 
         if ($format === 'html') {
-            return $code;
+            return Purifier::clean($code, [
+                'HTML.Allowed' => 'p,br,strong,b,em,i,u,s,ul,ol,li,a[href|title],div,span,hr,img[src|alt|title|width|height],table,thead,tbody,tr,th,td',
+                'Attr.EnableID' => true,
+            ]);
         }
 
         // For other formats, return as text

@@ -1,0 +1,7 @@
+# Prevent direct execution of any uploaded files (e.g. uploaded PHP/scripts)
+<FilesMatch "\.(php|phtml|phar|cgi|pl|py|sh)$">
+    Require all denied
+</FilesMatch>
+
+# Deny listing
+Options -Indexes

@@ -224,6 +224,8 @@ class WXRExporter
      */
     public function deleteExport($filename)
     {
+        // Only ever operate on plain filenames inside the exports directory
+        $filename = basename((string) $filename);
         $filepath = $this->exportsDir . '/' . $filename;
         if (file_exists($filepath)) {
             return unlink($filepath);
@@ -236,6 +238,8 @@ class WXRExporter
      */
     public function downloadExport($filename)
     {
+        // Only ever serve plain filenames inside the exports directory
+        $filename = basename((string) $filename);
         $filepath = $this->exportsDir . '/' . $filename;
         if (file_exists($filepath)) {
             return response()->download($filepath);

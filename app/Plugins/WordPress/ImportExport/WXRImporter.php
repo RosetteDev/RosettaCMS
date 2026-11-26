@@ -94,8 +94,17 @@ class WXRImporter
         if (!$user->exists) {
             $user->display_name = $displayName;
             $user->email = $email;
-            $user->password = bcrypt('password'); // Temp password
+            // Generate a strong temporary password and surface it once in the import report.
+            $tempPassword = Str::random(24);
+            $user->password = bcrypt($tempPassword);
             $user->save();
+
+            return [
+                'type' => 'author',
+                'login' => $login,
+                'action' => 'created',
+                'temp_password' => $tempPassword,
+            ];
         }
 
         return [

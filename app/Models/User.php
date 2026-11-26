@@ -73,6 +73,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Determine whether the user has the given permission via any of their roles.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        foreach ($this->roles as $role) {
+            $permissions = $role->permissions ?? [];
+            if (!empty($permissions[$permission])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Determine whether the user can reach the administration area.
      */
     public function isStaff(): bool

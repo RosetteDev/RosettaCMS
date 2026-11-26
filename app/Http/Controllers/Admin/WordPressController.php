@@ -53,7 +53,11 @@ class WordPressController extends Controller
      */
     public function deleteExport(Request $request)
     {
-        $filename = $request->input('filename');
+        $validated = $request->validate([
+            'filename' => 'required|string|max:255',
+        ]);
+
+        $filename = basename($validated['filename']);
 
         if ($this->exporter->deleteExport($filename)) {
             return back()->with('success', 'Export deleted successfully');

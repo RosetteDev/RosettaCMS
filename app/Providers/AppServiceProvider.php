@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,14 +23,37 @@ class AppServiceProvider extends ServiceProvider
     {
         // Set default timezone
         date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
-        
+
         // Set default encoding
         mb_internal_encoding('UTF-8');
-        
+
+        // Register content gates
+        $this->registerGates();
+
         // Register custom paths
         $this->registerPluginPaths();
     }
-    
+
+    /**
+     * Register content gates used by the inline editing and preview routes.
+     */
+    protected function registerGates(): void
+    {
+        Gate::define('inline_edit', function ($user) {
+            return $user->hasRole('admin', 'editor');
+        });
+
+        Gate::define('edit', function ($user, $post) {
+            return $user->hasRole('admin', 'editor', 'author')
+                || $user->hasPermission('posts');
+        });
+
+        Gate::define('view', function ($user, $post) {
+            return $user->hasRole('admin', 'editor', 'author')
+                || $user->hasPermission('posts');
+        });
+    }
+
     /**
      * Register plugin paths.
      */

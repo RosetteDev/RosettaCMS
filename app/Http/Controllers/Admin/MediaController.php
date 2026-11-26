@@ -120,7 +120,7 @@ class MediaController extends Controller
             ],
             'alt_text' => 'nullable|string|max:255',
             'caption' => 'nullable|string',
-            'folder' => 'nullable|string|max:255',
+            'folder' => 'nullable|string|max:255|regex:/^([A-Za-z0-9_\-]+\/)*[A-Za-z0-9_\-]*$/',
             'site_id' => 'nullable|exists:sites,id',
         ]);
 
@@ -236,7 +236,7 @@ class MediaController extends Controller
             'ids' => 'required|array|min:1',
             'ids.*' => 'required|exists:media,id',
             'action' => 'required|in:delete,move_to_folder',
-            'folder' => 'nullable|string|max:255',
+            'folder' => 'nullable|string|max:255|regex:/^([A-Za-z0-9_\-]+\/)*[A-Za-z0-9_\-]*$/',
         ]);
 
         $mediaItems = Media::whereIn('id', $validated['ids'])->get();

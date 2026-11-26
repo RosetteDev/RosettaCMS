@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Mews\Purifier\Facades\Purifier;
 
 class Post extends Model
 {
@@ -167,16 +168,43 @@ class Post extends Model
             return '';
         }
 
-        if (preg_match('/<\/[a-z][^>]*>/i', $content)) {
-            return $content;
+        if (!preg_match('/<\/[a-z][^>]*>/i', $content)) {
+            $converter = new \League\CommonMark\CommonMarkConverter([
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+            ]);
+
+            $content = (string) $converter->convert($content);
         }
 
-        $converter = new \League\CommonMark\CommonMarkConverter([
-            'html_input' => 'strip',
-            'allow_unsafe_links' => false,
+        // Always sanitize before output, whether the stored value was Markdown
+        // or raw HTML, so no view can render untrusted markup.
+        return $this->sanitize($content);
+    }
+
+    /**
+     * Sanitize HTML content to prevent XSS attacks.
+     */
+    protected function sanitize(string $content): string
+    {
+        $allowed = implode(',', [
+            'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'ul', 'ol', 'li',
+            'a[href|title|target|rel]',
+            'img[src|alt|title|width|height]',
+            'blockquote', 'code', 'pre',
+            'table', 'thead', 'tbody', 'tr', 'th', 'td',
+            'div', 'span', 'hr', 'figure', 'figcaption',
+            'iframe[src|width|height|frameborder|allowfullscreen]',
         ]);
 
-        return (string) $converter->convert($content);
+        return Purifier::clean($content, [
+            'HTML.Allowed' => $allowed,
+            'Attr.EnableID' => true,
+            'HTML.SafeIframe' => true,
+            'URI.SafeIframeRegexp' => '%^https://(www\.)?(youtube\.com/embed/|player\.vimeo\.com/video/)%',
+        ]);
     }
 
     /**

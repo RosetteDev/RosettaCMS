@@ -77,7 +77,8 @@ class LoginController extends Controller
      */
     protected function loginRateLimiterKey(Request $request)
     {
-        return $request->ip() . ':' . $request->email;
+        // Key by IP only so the limit cannot be bypassed by rotating the email field.
+        return $request->ip();
     }
 
     /**

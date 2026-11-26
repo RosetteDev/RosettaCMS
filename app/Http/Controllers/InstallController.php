@@ -45,15 +45,15 @@ class InstallController extends Controller
         abort_unless(config('app.install_enabled', false), 403);
         $validated = $request->validate([
             'db_connection' => 'required|in:mysql,pgsql,sqlite,sqlsrv',
-            'db_host' => 'required_if:db_connection,mysql|nullable',
-            'db_port' => 'nullable|numeric',
-            'db_database' => 'required',
-            'db_username' => 'required',
-            'db_password' => 'nullable',
+            'db_host' => 'required_if:db_connection,mysql|nullable|regex:/^[A-Za-z0-9_.\-]+$/|max:255',
+            'db_port' => 'nullable|numeric|min:1|max:65535',
+            'db_database' => 'required|regex:/^[A-Za-z0-9_\-]+$/|max:64',
+            'db_username' => 'required|string|max:64',
+            'db_password' => 'nullable|string|max:255',
             'app_url' => 'required|url',
             'admin_email' => 'required|email',
             'admin_password' => 'required|min:8|confirmed',
-            'site_name' => 'required',
+            'site_name' => 'required|string|max:255',
         ]);
 
         $connection = $validated['db_connection'];

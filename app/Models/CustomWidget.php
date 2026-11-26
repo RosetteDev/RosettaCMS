@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Mews\Purifier\Facades\Purifier;
 
 class CustomWidget extends Model
 {
@@ -23,6 +24,21 @@ class CustomWidget extends Model
         'enabled',
         'user_id',
     ];
+
+    /**
+     * Get widget content, sanitized so no view can render untrusted markup.
+     */
+    public function getContentAttribute($value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        return Purifier::clean((string) $value, [
+            'HTML.Allowed' => 'p,br,strong,b,em,i,u,s,ul,ol,li,a[href|title],div,span,hr,img[src|alt|title|width|height]',
+            'Attr.EnableID' => true,
+        ]);
+    }
 
     /**
      * Get the user that owns the widget.
