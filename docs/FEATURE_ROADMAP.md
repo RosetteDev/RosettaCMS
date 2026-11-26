@@ -151,14 +151,55 @@ The `languages` and `language_content` tables are now wired up.
 - Mail notifications on new submissions
 - Custom fields for form data
 
-### 11. SEO depth
-The SEO plugin exists but is config-driven, not UI-driven.
+### 11. SEO optimization pass
+The SEO plugin exists and is wired up, but the work that makes a
+WordPress-class site actually rank — a complete audit-and-fix pass
+across every template, with redirects, structured data and per-site
+defaults — is missing. This is one deliberate pass, not five small
+tickets.
 
-- Per-post SEO meta editor (title, description, OG image)
-- Per-site SEO defaults (title template, description, Twitter card)
-- Schema.org markup for posts, products, FAQs
-- Redirect manager (301s) and broken-link checker
-- Sitemap split by content type with per-site control
+**Already in place (do not re-solve):**
+- Per-post/page SEO fields in the editor: SEO title, meta description,
+  focus keyword, robots, canonical URL, OG image — plus a live
+  Google-style SERP preview and character counter
+- `themes/_shared/seo` head partial renders title, description,
+  keywords, robots, canonical, OG and Twitter tags from post meta +
+  settings
+- Title suffix applied in `seo()` (`seo_title_suffix` setting)
+- JSON-LD structured data: Website (homepage), Article (single posts),
+  LocalBusiness (contact/about pages)
+- XML sitemap (posts, pages, categories, tags; featured-image entries;
+  per-site toggle via `enable_xml_sitemap`) and robots.txt (`/admin`,
+  `/login`, `/search` disallowed + sitemap reference)
+- Preview rendering emits `noindex, nofollow`
+
+**The pass:**
+- Audit and fix every page template so each emits a valid, complete
+  `<head>`: title template, description, canonical, OG/Twitter, robots,
+  favicon — and no empty/duplicate tags
+- Per-site SEO defaults in the settings UI: title template with a `%s`
+  placeholder, default description, default OG image/site name, Twitter
+  handle, robots rule, search-engine verification meta (Google, Bing,
+  Yandex), canonical fallback
+- Structured data for every content type: Article (exists), BreadcrumbList
+  on posts/pages/archives, FAQPage, Product/Event when those post types
+  arrive; validate JSON-LD and add tests
+- i18n SEO: `hreflang` alternates in the `<head>` and per-language
+  sitemap entries (translations are stored but not applied yet)
+- Redirect manager: 301/302 map, admin UI, per-site scope, 404 fallback
+  rules
+- Sitemap index + split sitemaps by content type (posts/pages/categories/
+  tags), per-site control, exclude noindex/drafts, image entries for
+  pages/categories/tags (currently only posts and pages)
+- robots.txt rules per site (disallow patterns, per-site sitemap)
+- Broken-link checker for internal links in the dashboard
+- 404/410 error pages with proper `noindex`
+- Media SEO: alt text enforced in the editor, OG image picker (not just a
+  URL field), per-language OG locale
+- SEO health report in the admin (missing title/description/canonical,
+  no OG image, noindexed pages) with one-click fixes
+- Tests: sitemap/robots/JSON-LD/head-tag rendering, redirect behavior,
+  verification meta
 
 ### 12. Widgets and blocks for the frontend
 - Widget areas in the theme (currently custom widgets exist — surface them
