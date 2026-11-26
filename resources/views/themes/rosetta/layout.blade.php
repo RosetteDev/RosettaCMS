@@ -12,8 +12,14 @@
         'container_width' => '1200px',
     ], array_filter($theme_options, fn ($value) => $value !== null && $value !== ''));
 @endphp
+@php
+    $activeLanguage = $activeLanguage ?? (request()->attributes->get('activeLanguage') ?? \App\Models\Language::defaultLanguage());
+    $activeLanguageCode = $activeLanguage?->code ?? app()->getLocale();
+    $activeDirection = $activeLanguage?->isRtl() ? 'rtl' : 'ltr';
+    $availableLanguages = \App\Models\Language::where('is_active', true)->orderBy('sort_order')->get();
+@endphp
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}">
+<html lang="{{ $activeLanguageCode }}" dir="{{ $activeDirection }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -416,7 +422,17 @@
             
             @include('themes._shared.nav', ['menu' => $headerMenu ?? null, 'navClass' => 'nav-menu'])
             
-            <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                @if($availableLanguages->count() > 1)
+                    <div class="lang-switcher" style="display: flex; gap: 0.25rem; align-items: center;">
+                        @foreach($availableLanguages as $lang)
+                            <a href="{{ route('language.switch', $lang->code) }}"
+                               style="padding: 0.35rem 0.6rem; font-size: 0.8rem; border-radius: 6px; text-decoration: none;
+                                      {{ $lang->code === $activeLanguageCode ? 'background: var(--accent-color); color: #fff;' : 'background: transparent; color: var(--text-color); border: 1px solid var(--border-color);' }}"
+                               title="{{ $lang->name }}">{{ $lang->flag ?? strtoupper($lang->code) }}</a>
+                        @endforeach
+                    </div>
+                @endif
                 @auth
                     @if(auth()->user()->isStaff())
                         <a href="{{ route('dashboard') }}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Admin</a>

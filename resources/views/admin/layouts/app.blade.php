@@ -381,6 +381,10 @@
             <a href="{{ url('/admin/menus') }}" class="{{ request()->is('admin/menus*') ? 'active' : '' }}">Menus</a>
 
             @if($currentUser?->hasRole('admin'))
+            <a href="{{ url('/admin/languages') }}" class="{{ request()->is('admin/languages*') ? 'active' : '' }}">Languages</a>
+            @endif
+
+            @if($currentUser?->hasRole('admin'))
             <a href="{{ url('/admin/users') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}">Users</a>
             <a href="{{ url('/admin/sites') }}" class="{{ request()->is('admin/sites*') ? 'active' : '' }}">Sites</a>
             <a href="{{ url('/admin/themes') }}" class="{{ request()->is('admin/themes*') ? 'active' : '' }}">Themes</a>

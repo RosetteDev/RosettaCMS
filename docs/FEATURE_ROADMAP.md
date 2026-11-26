@@ -27,7 +27,8 @@ Baseline (do not re-solve):
 - Dashboard with widgets, install wizard, image optimizer, CDN helper,
   cache helper
 - Auth (login/register/reset), user roles, profile management
-- Languages/content tables exist but are unused (see below)
+- Languages/content tables wired up: admin language management, frontend
+  switcher, translated posts/pages, RTL (see below)
 
 ## High-impact enhancements
 
@@ -75,23 +76,44 @@ WordPress it needs:
   post-save, not live)
 - Inline editing polish (already scaffolded — finish it)
 
-### 4. Full localization (i18n)
-The `languages` and `language_content` tables exist but are unused.
-WordPress's multilingual story (WPML/Polylang) is a major reason it is
-dominant.
+### 4. Full localization (i18n) — ✅ done (core)
+The `languages` and `language_content` tables are now wired up.
 
-- Language switcher in admin and frontend
-- Per-site language with translated content
+**Done (2026-11):**
+- Language management (admin CRUD at `/admin/languages`, default language
+  cannot be deleted, enabling/disabling per language)
+- Frontend language switcher (`/language/{code}` sets the session; flag
+  dropdown in the layout, shown when more than one language is enabled)
+- Per-post/page translations in the editor (title, excerpt, content per
+  enabled language; empty fields fall back to the default language)
+- Frontend rendering applies translated title/excerpt/content in the active
+  language (default language unchanged; translated slugs stored but not
+  applied yet — the canonical URL stays on the default slug)
+- RTL support via `dir`/`lang` on `<html>` for RTL language codes
+  (ar/he/fa/ur/ps/yi/dv/ckb)
+- Locale is set from the active language on every request
+
+**Still open:**
 - Translated navigation menus and site settings
-- RTL support
+- Translated slugs applied to public URLs (currently stored but not used)
 - Translation memory / reusable string management
+- Per-site language default (currently site-wide)
 
-### 5. Scheduled posts, expiry and automation
-- Schedule publishing and expiry dates (partially present via
-  `published_at` — wire it up)
+### 5. Scheduled posts, expiry and automation — ✅ scheduled publishing done
+**Done (2026-11):**
+- Future publish dates force `status=pending` in both the admin form and
+  the API write endpoint
+- `posts:publish-due` artisan command publishes pending posts whose date
+  has arrived; runs every minute via `withSchedule`
+- Admin posts/pages lists show a "Scheduled" badge; publish form explains
+  the behavior
+- Public site hides scheduled posts (they stay pending until due)
+
+**Still open:**
+- Expiry dates (auto-unpublish after a date)
 - Recurring/repeat posts (daily/weekly/monthly)
 - Scheduled newsletters and digest emails
-- Cron-driven maintenance tasks (publish, expire, purge)
+- Cron-driven maintenance tasks beyond publish (expire, purge)
 
 ### 6. Security and admin trust
 - 2FA/TOTP for admin accounts (WordPress needs plugins for this; core

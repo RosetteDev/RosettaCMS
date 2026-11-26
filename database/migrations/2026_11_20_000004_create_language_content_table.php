@@ -16,9 +16,9 @@ return new class extends Migration
             $table->string('content_type', 50)->comment='Type of content (post, page, category, tag)';
             $table->unsignedBigInteger('content_id')->comment='ID of the original content';
             $table->foreignId('language_id')->constrained()->onDelete('cascade');
-            $table->string('title')->comment='Translated title';
+            $table->string('title')->nullable()->comment='Translated title';
             $table->text('content')->nullable()->comment='Translated content';
-            $table->string('slug')->comment='Translated slug';
+            $table->string('slug')->nullable()->comment='Translated slug';
             $table->text('excerpt')->nullable()->comment='Translated excerpt';
             $table->json('meta')->nullable()->comment='Additional translated metadata';
             $table->unsignedBigInteger('translated_by')->nullable()->comment='User who performed translation';

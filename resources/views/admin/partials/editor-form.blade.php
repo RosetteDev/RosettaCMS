@@ -134,6 +134,44 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Translations --}}
+            @php
+                $translationLanguages = \App\Models\Language::where('is_active', true)->where('is_default', false)->orderBy('sort_order')->get();
+                $existingTranslations = $post->exists
+                    ? \App\Models\LanguageContent::where('content_type', $postType)->where('content_id', $post->id)->get()->keyBy('language_id')
+                    : collect();
+            @endphp
+            @if($translationLanguages->isNotEmpty())
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h2 class="h5 mb-0">Translations</h2>
+                        <p class="small text-muted mb-0">Provide translated title, excerpt and content for each enabled language. Empty fields fall back to the default language.</p>
+                    </div>
+                    <div class="card-body">
+                        @foreach($translationLanguages as $lang)
+                            @php $translation = $existingTranslations->get($lang->id); @endphp
+                            <div class="mb-4 pb-3 {{ $loop->last ? '' : 'border-bottom' }}">
+                                <h3 class="h6 mb-2">{{ $lang->flag }} {{ $lang->name }} <code class="text-muted">{{ $lang->code }}</code></h3>
+                                <div class="mb-2">
+                                    <label class="form-label small" for="translation-title-{{ $lang->id }}">Translated title</label>
+                                    <input type="text" name="translations[{{ $lang->id }}][title]" id="translation-title-{{ $lang->id }}"
+                                           class="form-control" maxlength="255"
+                                           value="{{ old('translations.' . $lang->id . '.title', $translation->title ?? '') }}">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small" for="translation-excerpt-{{ $lang->id }}">Translated excerpt</label>
+                                    <textarea name="translations[{{ $lang->id }}][excerpt]" id="translation-excerpt-{{ $lang->id }}" class="form-control" rows="2">{{ old('translations.' . $lang->id . '.excerpt', $translation->excerpt ?? '') }}</textarea>
+                                </div>
+                                <div class="mb-0">
+                                    <label class="form-label small" for="translation-content-{{ $lang->id }}">Translated content</label>
+                                    <textarea name="translations[{{ $lang->id }}][content]" id="translation-content-{{ $lang->id }}" class="form-control" rows="6">{{ old('translations.' . $lang->id . '.content', $translation->content ?? '') }}</textarea>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </div>
 
         {{-- Sidebar --}}

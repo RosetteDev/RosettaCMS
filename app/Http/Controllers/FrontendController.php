@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Comment;
+use App\Models\Language;
+use App\Models\LanguageContent;
 use App\Models\Menu;
 use App\Models\Post;
 use App\Models\Site;
@@ -608,8 +610,109 @@ class FrontendController extends Controller
      * Render a theme view, falling back to the default theme when the active
      * theme does not provide it.
      */
+    /**
+     * Apply the active language's translation to a post/page in memory.
+     *
+     * When the site default language is active, or no translation exists,
+     * the post is returned unchanged. The model instance is mutated only
+     * for the duration of the request — the database is never touched.
+     */
+    protected function localizePost(?Post $post): ?Post
+    {
+        if (!$post instanceof Post) {
+            return $post;
+        }
+
+        $language = request()->attributes->get('activeLanguage');
+
+        if (!$language) {
+            return $post;
+        }
+
+        $default = Language::defaultLanguage();
+
+        if (!$default || $language->code === $default->code) {
+            return $post;
+        }
+
+        $translation = LanguageContent::where('content_type', $post->post_type)
+            ->where('content_id', $post->id)
+            ->where('language_id', $language->id)
+            ->first();
+
+        if (!$translation) {
+            return $post;
+        }
+
+        if ($translation->title) {
+            $post->title = $translation->title;
+        }
+
+        if ($translation->content !== null) {
+            $post->content = $translation->content;
+        }
+
+        if ($translation->excerpt !== null) {
+            $post->excerpt = $translation->excerpt;
+        }
+
+        // Note: the slug is intentionally left unchanged so the public URL
+        // keeps resolving to the default slug. Translated slugs are stored
+        // for future URL-based routing, but are not applied here.
+
+        return $post;
+    }
+
+    /**
+     * Localize any post-like values inside a render payload.
+     *
+     * localizePost() mutates the model in place, so this only walks the
+     * payload and touches any Post instances it finds (direct values,
+     * collections, paginators or nested arrays).
+     */
+    protected function localizeData(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            $this->localizeValue($value);
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  mixed  $value
+     */
+    protected function localizeValue($value): void
+    {
+        if ($value instanceof Post) {
+            $this->localizePost($value);
+            return;
+        }
+
+        if ($value instanceof \Illuminate\Contracts\Pagination\Paginator) {
+            foreach ($value->items() as $item) {
+                $this->localizeValue($item);
+            }
+            return;
+        }
+
+        if ($value instanceof \Illuminate\Support\Collection) {
+            foreach ($value as $item) {
+                $this->localizeValue($item);
+            }
+            return;
+        }
+
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                $this->localizeValue($item);
+            }
+        }
+    }
+
     protected function render(string $view, array $data = [])
     {
+        $data = $this->localizeData($data);
         $themeSlug = $this->themeSlug();
         $candidates = [
             "themes.{$themeSlug}.{$view}",

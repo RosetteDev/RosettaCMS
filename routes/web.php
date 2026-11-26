@@ -31,6 +31,7 @@ use App\Http\Controllers\InlineEditController;
 use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\Admin\WordPressController;
 use App\Http\Controllers\Admin\WidgetController;
+use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\RevisionController;
 use App\Http\Controllers\InstallController;
 use Illuminate\Support\Facades\View;
@@ -65,6 +66,14 @@ Route::get('/search', [FrontendController::class, 'search'])->name('search');
 Route::get('/sitemap.xml', [FrontendController::class, 'sitemap'])->name('sitemap');
 Route::get('/feed', [FrontendController::class, 'feed'])->name('feed');
 Route::get('/robots.txt', [FrontendController::class, 'robots'])->name('robots');
+Route::get('/language/{code}', function (string $code) {
+    $language = \App\Models\Language::where('code', $code)->where('is_active', true)->first();
+    if (!$language) {
+        return redirect()->back();
+    }
+    session(['active_language' => $language->code]);
+    return redirect()->back();
+})->name('language.switch');
 
 // Installation routes
 Route::middleware(['web', 'guest'])->group(function () {
@@ -280,6 +289,17 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::post('/', [SettingsController::class, 'update'])->name('update');
     });
     
+    // Languages - Admin only
+    Route::prefix('admin/languages')->middleware('role:admin')->name('admin.languages.')->group(function () {
+        Route::get('/', [LanguageController::class, 'index'])->name('index');
+        Route::get('/create', [LanguageController::class, 'create'])->name('create');
+        Route::post('/', [LanguageController::class, 'store'])->name('store');
+        Route::get('/{language}/edit', [LanguageController::class, 'edit'])->name('edit');
+        Route::put('/{language}', [LanguageController::class, 'update'])->name('update');
+        Route::post('/{language}/toggle', [LanguageController::class, 'toggle'])->name('toggle');
+        Route::delete('/{language}', [LanguageController::class, 'destroy'])->name('destroy');
+    });
+
     // Theme management - Admin only
     Route::prefix('admin/themes')->middleware('role:admin')->name('admin.themes.')->group(function () {
         Route::get('/', [ThemeController::class, 'index'])->name('index');

@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use App\Models\Post;
 use App\Models\Category;
+use App\Models\Language;
+use App\Models\LanguageContent;
 use App\Models\Tag;
 
 class PostController extends Controller
@@ -222,6 +224,13 @@ class PostController extends Controller
             'canonical_url' => 'nullable|url|max:2048',
             'robots' => 'nullable|in:index,follow,noindex,nofollow',
             'og_image' => 'nullable|string|max:2048',
+
+            // Translations
+            'translations' => 'nullable|array',
+            'translations.*.title' => 'nullable|string|max:255',
+            'translations.*.excerpt' => 'nullable|string|max:1000',
+            'translations.*.content' => 'nullable|string',
+            'translations.*.slug' => 'nullable|string|max:255',
         ]);
 
         $content = $validated['content'] ?? null;
@@ -278,6 +287,65 @@ class PostController extends Controller
             $post->tags()->sync($validated['tags'] ?? []);
         }
 
+        $this->saveTranslations($request, $post, $type);
+
         return $post;
+    }
+
+    /**
+     * Persist translated title/excerpt/content for each enabled language.
+     *
+     * Empty translation fields remove the stored translation; a fully
+     * populated translation upserts by (content_type, content_id, language).
+     */
+    protected function saveTranslations(Request $request, Post $post, string $type): void
+    {
+        $translations = $request->input('translations', []);
+
+        if (!is_array($translations)) {
+            return;
+        }
+
+        foreach ($translations as $languageId => $fields) {
+            $language = Language::find($languageId);
+
+            if (!$language || !$language->is_active || $language->is_default) {
+                continue;
+            }
+
+            $fields = is_array($fields) ? $fields : [];
+
+            $title = trim((string) ($fields['title'] ?? ''));
+            $excerpt = trim((string) ($fields['excerpt'] ?? ''));
+            $content = trim((string) ($fields['content'] ?? ''));
+            $slug = trim((string) ($fields['slug'] ?? ''));
+
+            $existing = LanguageContent::where('content_type', $type)
+                ->where('content_id', $post->id)
+                ->where('language_id', $language->id)
+                ->first();
+
+            if ($title === '' && $excerpt === '' && $content === '' && $slug === '') {
+                $existing?->delete();
+                continue;
+            }
+
+            $payload = [
+                'content_type' => $type,
+                'content_id' => $post->id,
+                'language_id' => $language->id,
+                'title' => $title !== '' ? $title : null,
+                'excerpt' => $excerpt !== '' ? $excerpt : null,
+                'slug' => $slug !== '' ? $slug : null,
+                'content' => $content !== '' ? $this->sanitizeContent($content) : null,
+                'translated_by' => auth()->id(),
+            ];
+
+            if ($existing) {
+                $existing->update($payload);
+            } else {
+                LanguageContent::create($payload);
+            }
+        }
     }
 }
