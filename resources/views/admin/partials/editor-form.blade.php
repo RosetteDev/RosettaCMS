@@ -156,7 +156,7 @@
                         <label for="published_at" class="form-label">Publish date</label>
                         <input type="datetime-local" name="published_at" id="published_at" class="form-control"
                                value="{{ old('published_at', $post->published_at ? $post->published_at->format('Y-m-d\\TH:i') : '') }}">
-                        <div class="form-text">Leave blank to publish immediately.</div>
+                        <div class="form-text">Leave blank to publish immediately. Set a future date to schedule the post — it will go live automatically when the date arrives.</div>
                     </div>
 
                     <div class="mb-3">

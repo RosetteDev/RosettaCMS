@@ -135,13 +135,19 @@
                                 {{ $post->user->name ?? 'Unknown' }}
                             </td>
                             <td style="padding: 1rem;">
-                                <span class="status-badge" style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;
-                                    @if($post->status === 'published') background-color: var(--success-color); color: white;
-                                    @elseif($post->status === 'draft') background-color: var(--warning-color); color: white;
-                                    @elseif($post->status === 'trash') background-color: #dc3545; color: white;
-                                    @else background-color: var(--secondary-color); color: white; @endif">
-                                    {{ ucfirst($post->status) }}
-                                </span>
+                                @if($post->isScheduled())
+                                    <span class="status-badge" style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; background-color: var(--secondary-color); color: white;">
+                                        Scheduled
+                                    </span>
+                                @else
+                                    <span class="status-badge" style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;
+                                        @if($post->status === 'published') background-color: var(--success-color); color: white;
+                                        @elseif($post->status === 'draft') background-color: var(--warning-color); color: white;
+                                        @elseif($post->status === 'trash') background-color: #dc3545; color: white;
+                                        @else background-color: var(--secondary-color); color: white; @endif">
+                                        {{ ucfirst($post->status) }}
+                                    </span>
+                                @endif
                             </td>
                             <td style="padding: 1rem; color: var(--text-color);">
                                 {{ $post->published_at ? $post->published_at->diffForHumans() : 'Not published' }}

@@ -50,12 +50,18 @@
                                 {{ $page->user->name ?? 'Unknown' }}
                             </td>
                             <td style="padding: 1rem;">
-                                <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;
-                                    @if($page->status === 'published') background-color: var(--success-color); color: white;
-                                    @elseif($page->status === 'draft') background-color: var(--warning-color); color: white;
-                                    @else background-color: var(--secondary-color); color: white; @endif">
-                                    {{ ucfirst($page->status) }}
-                                </span>
+                                @if($page->isScheduled())
+                                    <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; background-color: var(--secondary-color); color: white;">
+                                        Scheduled
+                                    </span>
+                                @else
+                                    <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;
+                                        @if($page->status === 'published') background-color: var(--success-color); color: white;
+                                        @elseif($page->status === 'draft') background-color: var(--warning-color); color: white;
+                                        @else background-color: var(--secondary-color); color: white; @endif">
+                                        {{ ucfirst($page->status) }}
+                                    </span>
+                                @endif
                             </td>
                             <td style="padding: 1rem; color: var(--text-color);">
                                 {{ $page->published_at ? $page->published_at->diffForHumans() : 'Not published' }}

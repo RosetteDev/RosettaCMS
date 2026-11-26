@@ -145,6 +145,25 @@ class Post extends Model
     }
 
     /**
+     * Determine whether the post is scheduled to go live in the future.
+     */
+    public function isScheduled(): bool
+    {
+        return $this->published_at !== null
+            && $this->published_at->isFuture()
+            && in_array($this->status, ['pending', 'published'], true);
+    }
+
+    /**
+     * Scope a query to only include scheduled posts (pending publication).
+     */
+    public function scopeScheduled($query)
+    {
+        return $query->whereIn('status', ['pending', 'published'])
+            ->where('published_at', '>', now());
+    }
+
+    /**
      * Scope a query to only include published posts.
      */
     public function scopePublished($query)

@@ -196,6 +196,11 @@ class WriteController extends ContentController
             $publishedAt = $post->published_at;
         }
 
+        // A future publish date makes the post scheduled.
+        if ($publishedAt && \Carbon\Carbon::parse($publishedAt)->isFuture()) {
+            $status = 'pending';
+        }
+
         $meta = array_filter([
             'seo_title' => $validated['seo_title'] ?? null,
             'seo_description' => $validated['seo_description'] ?? null,

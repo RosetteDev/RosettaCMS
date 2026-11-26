@@ -239,6 +239,12 @@ class PostController extends Controller
             $publishedAt = $post->published_at;
         }
 
+        // A future publish date makes the post scheduled — it stays out of
+        // the live frontend until the scheduler publishes it.
+        if ($publishedAt && \Carbon\Carbon::parse($publishedAt)->isFuture()) {
+            $status = 'pending';
+        }
+
         // Build the SEO meta payload (drops empty values).
         $meta = array_filter([
             'seo_title' => $validated['seo_title'] ?? null,
