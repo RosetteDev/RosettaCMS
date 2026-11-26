@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\Api\DocsController;
 use App\Http\Controllers\Api\WriteController;
 use Illuminate\Support\Facades\Route;
 
@@ -8,6 +9,8 @@ Route::middleware('throttle:120,1')->group(function () {
     // Versioned API — the canonical public namespace.
     Route::prefix('v1')->group(function () {
         Route::get('/', [ContentController::class, 'index'])->name('api.index');
+        Route::get('/openapi.json', [DocsController::class, 'spec'])->name('api.openapi');
+        Route::get('/docs', [DocsController::class, 'docs'])->name('api.docs');
 
         Route::get('/posts', [ContentController::class, 'posts'])->name('api.posts.index');
         Route::get('/posts/{slug}', [ContentController::class, 'post'])->name('api.posts.show');

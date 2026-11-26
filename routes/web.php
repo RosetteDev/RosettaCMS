@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PluginController;
 use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\BackupController;
+use App\Http\Controllers\Admin\WebhookController;
 use App\Http\Controllers\Admin\BlockController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\InlineEditController;
@@ -274,6 +275,15 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::get('/{backup}/download', [BackupController::class, 'download'])->whereNumber('backup')->name('download');
         Route::post('/{backup}/restore', [BackupController::class, 'restore'])->whereNumber('backup')->name('restore');
         Route::delete('/{backup}', [BackupController::class, 'destroy'])->whereNumber('backup')->name('destroy');
+    });
+
+    // Webhooks management - Admin only
+    Route::prefix('admin/webhooks')->middleware('role:admin')->name('admin.webhooks.')->group(function () {
+        Route::get('/', [WebhookController::class, 'index'])->name('index');
+        Route::get('/create', [WebhookController::class, 'create'])->name('create');
+        Route::post('/', [WebhookController::class, 'store'])->name('store');
+        Route::post('/{webhook}/test', [WebhookController::class, 'test'])->whereNumber('webhook')->name('test');
+        Route::delete('/{webhook}', [WebhookController::class, 'destroy'])->whereNumber('webhook')->name('destroy');
     });
 
     // Users management - Admin only

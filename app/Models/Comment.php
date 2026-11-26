@@ -97,4 +97,32 @@ class Comment extends Model
     {
         return $this->user_id === null;
     }
+
+    /**
+     * Fire a `comment.created` webhook when a comment is submitted.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (Comment $comment) {
+            try {
+                $post = $comment->post;
+                $siteId = $post?->site_id;
+
+                app(\App\Services\WebhookService::class)->dispatch(
+                    'comment.created',
+                    [
+                        'id' => $comment->id,
+                        'post_slug' => $post?->slug,
+                        'post_title' => $post?->title,
+                        'author_name' => $comment->author_name,
+                        'status' => $comment->status,
+                        'url' => $post ? url('/posts/' . $post->slug . '#comments') : null,
+                    ],
+                    $siteId
+                );
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        });
+    }
 }

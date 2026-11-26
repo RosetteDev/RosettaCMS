@@ -76,4 +76,29 @@ class Media extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Fire a `media.created` webhook when a file is uploaded.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (Media $media) {
+            try {
+                app(\App\Services\WebhookService::class)->dispatch(
+                    'media.created',
+                    [
+                        'id' => $media->id,
+                        'file_name' => $media->file_name,
+                        'url' => $media->url,
+                        'mime_type' => $media->mime_type,
+                        'file_size' => $media->file_size,
+                        'folder' => $media->folder,
+                    ],
+                    $media->site_id
+                );
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        });
+    }
 }

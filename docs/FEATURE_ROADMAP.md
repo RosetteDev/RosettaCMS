@@ -43,11 +43,19 @@ with an admin UI at `/admin/api-keys`, bearer/X-API-Key/query-param auth
 via `api.key` middleware, per-key rate limiting via the existing global
 throttle, and scope enforcement (`posts:write` vs `pages:write`).
 
+**Done (2026-11):** OpenAPI 3.0 document at `/api/v1/openapi.json` with an
+in-app docs page at `/api/v1/docs` (every endpoint, parameters, auth, and
+webhook signing — self-contained HTML, no CDN dependency). Webhooks on
+content events (`post.published`, `post.updated`, `page.published`,
+`page.updated`, `comment.created`, `media.created`) — admin UI at
+`/admin/webhooks`, signed HMAC-SHA256 delivery, one-time signing secret,
+per-site scoping, test-send button. See docs/WEBHOOKS.md.
+
 **Still open:**
-- Documented schema (OpenAPI/Swagger UI) for posts, pages, media, menus,
-  categories, tags (an in-app docs screen exists via `/api/v1/` discovery
-  document, but no Swagger UI yet)
-- Webhooks on content events (publish, update, comment, new media)
+- Public API endpoints for media and menus (the spec documents only what
+  exists — posts, pages, categories, tags, search)
+- Swagger UI proper (the in-app docs page is a self-contained HTML
+  reference, not a Swagger UI instance)
 
 ### 2. E-commerce foundation (or a deliberately positioned alternative)
 WordPress's biggest commercial driver is WooCommerce. Even a minimal

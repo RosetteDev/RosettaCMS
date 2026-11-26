@@ -282,4 +282,63 @@ class Post extends Model
     {
         return $query->where('post_type', $type);
     }
+
+    /**
+     * Fire webhook events when a post/page is created or updated.
+     *
+     * - Created while published, or transitioned to published on update,
+     *   fires `{type}.published`.
+     * - Any other save fires `{type}.updated`.
+     *
+     * Drafts created and saved are deliberately silent — the event stream
+     * tracks publishing, not keystrokes.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (Post $post) {
+            if ($post->status === 'published') {
+                static::dispatchWebhook($post, 'published');
+            }
+        });
+
+        static::updated(function (Post $post) {
+            $wasPublished = $post->getOriginal('status') === 'published';
+
+            if ($post->status === 'published' && !$wasPublished) {
+                static::dispatchWebhook($post, 'published');
+                return;
+            }
+
+            if ($post->wasChanged()) {
+                static::dispatchWebhook($post, 'updated');
+            }
+        });
+    }
+
+    /**
+     * Dispatch the post/page webhook event.
+     */
+    protected static function dispatchWebhook(Post $post, string $action): void
+    {
+        $type = $post->post_type === 'page' ? 'page' : 'post';
+        $path = $type === 'page' ? 'pages' : 'posts';
+
+        try {
+            app(\App\Services\WebhookService::class)->dispatch(
+                $type . '.' . $action,
+                [
+                    'type' => $type,
+                    'id' => $post->id,
+                    'slug' => $post->slug,
+                    'title' => $post->title,
+                    'status' => $post->status,
+                    'url' => url('/' . $path . '/' . $post->slug),
+                    'published_at' => $post->published_at?->toIso8601String(),
+                ],
+                $post->site_id
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
 }
