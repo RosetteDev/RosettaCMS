@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Language;
+use App\Models\Site;
 
 class SetActiveLanguage
 {
@@ -32,7 +33,8 @@ class SetActiveLanguage
         }
 
         if (!$language) {
-            $language = Language::defaultLanguage();
+            $site = Site::where('domain', $request->getHost())->first() ?? Site::first();
+            $language = Language::defaultLanguageFor($site);
         }
 
         if ($language) {

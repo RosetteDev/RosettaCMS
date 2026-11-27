@@ -426,9 +426,9 @@
         <div class="container nav-container">
             <a href="{{ url('/') }}" class="nav-logo">
                 @if(!empty($settings->logo_url))
-                    <img src="{{ $settings->logo_url }}" alt="{{ $settings->site_title ?? $site->name }}" style="height: 32px;">
+                    <img src="{{ $settings->logo_url }}" alt="{{ $settings->resolved_site_title ?? $site->name }}" style="height: 32px;">
                 @else
-                    {{ $settings->site_title ?? ($site->name ?? 'Rosetta CMS') }}
+                    {{ $settings->resolved_site_title ?? ($site->name ?? 'Rosetta CMS') }}
                 @endif
             </a>
             

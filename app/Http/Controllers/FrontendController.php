@@ -142,15 +142,9 @@ class FrontendController extends Controller
     {
         $preview = $this->wantsPreview();
 
-        $query = $this->scoped(Post::query())
-            ->where('post_type', 'post')
-            ->where('slug', $slug);
+        $post = $this->resolveBySlug('post', $slug, !$preview);
 
-        if (!$preview) {
-            $query->published();
-        }
-
-        $post = $query->firstOrFail();
+        abort_unless($post, 404);
 
         $commentsEnabled = !$this->settings()->disable_comments;
 
@@ -169,11 +163,9 @@ class FrontendController extends Controller
      */
     public function storeComment(Request $request, string $slug)
     {
-        $post = $this->scoped(Post::query())
-            ->published()
-            ->where('post_type', 'post')
-            ->where('slug', $slug)
-            ->firstOrFail();
+        $post = $this->resolveBySlug('post', $slug, true);
+
+        abort_unless($post, 404);
 
         if ($this->settings()->disable_comments) {
             return back()->with('error', 'Comments are disabled on this site.');
@@ -266,15 +258,9 @@ class FrontendController extends Controller
     {
         $preview = $this->wantsPreview();
 
-        $query = $this->scoped(Post::query())
-            ->where('post_type', 'page')
-            ->where('slug', $slug);
+        $page = $this->resolveBySlug('page', $slug, !$preview);
 
-        if (!$preview) {
-            $query->published();
-        }
-
-        $page = $query->firstOrFail();
+        abort_unless($page, 404);
 
         // Determine if inline edit mode is enabled
         $inlineEdit = request()->input('inline_edit') || config('rosetta.inline_edit_enabled', false);
@@ -629,7 +615,7 @@ class FrontendController extends Controller
             return $post;
         }
 
-        $default = Language::defaultLanguage();
+        $default = Language::defaultLanguageFor($this->site());
 
         if (!$default || $language->code === $default->code) {
             return $post;
@@ -656,9 +642,13 @@ class FrontendController extends Controller
             $post->excerpt = $translation->excerpt;
         }
 
-        // Note: the slug is intentionally left unchanged so the public URL
-        // keeps resolving to the default slug. Translated slugs are stored
-        // for future URL-based routing, but are not applied here.
+        // Apply the translated slug when one is stored — the URL rendered
+        // from this model (and its public_url / menu links) then points at
+        // the translated slug. The route resolver matches both the default
+        // and the translated slug, so both keep resolving.
+        if ($translation->slug) {
+            $post->slug = $translation->slug;
+        }
 
         return $post;
     }
@@ -787,6 +777,63 @@ class FrontendController extends Controller
         $page = (int) ($paginator->currentPage() ?? 1);
 
         return $page > 1 ? url($path) . '?page=' . $page : url($path);
+    }
+
+    /**
+     * Resolve a post/page by slug, trying the translated slug for the active
+     * language when the default slug does not match.
+     *
+     * The default slug is always honoured (so existing URLs keep resolving);
+     * a translated slug is only used as a fallback when the active language
+     * differs from the site's default language.
+     */
+    protected function resolveBySlug(string $type, string $slug, bool $published)
+    {
+        $query = $this->scoped(Post::query())
+            ->where('post_type', $type)
+            ->where('slug', $slug);
+
+        if ($published) {
+            $query->published();
+        }
+
+        $post = $query->first();
+
+        if ($post) {
+            return $post;
+        }
+
+        // Fall back to a translated slug for the active language.
+        $language = request()->attributes->get('activeLanguage');
+
+        if (!$language) {
+            return null;
+        }
+
+        $default = Language::defaultLanguageFor($this->site());
+
+        if (!$default || $language->code === $default->code) {
+            return null;
+        }
+
+        $translation = LanguageContent::where('content_type', $type)
+            ->where('language_id', $language->id)
+            ->where('slug', $slug)
+            ->first();
+
+        if (!$translation) {
+            return null;
+        }
+
+        $postQuery = $this->scoped(Post::query())
+            ->where('post_type', $type)
+            ->where('id', $translation->content_id);
+
+        if ($published) {
+            $postQuery->published();
+        }
+
+        return $postQuery->first();
     }
 
     /**

@@ -384,6 +384,7 @@
 
             @if($currentUser?->hasRole('admin'))
             <a href="{{ url('/admin/languages') }}" class="{{ request()->is('admin/languages*') ? 'active' : '' }}">Languages</a>
+            <a href="{{ url('/admin/translations') }}" class="{{ request()->is('admin/translations*') ? 'active' : '' }}">Translations</a>
             @endif
 
             @if($currentUser?->hasRole('admin'))

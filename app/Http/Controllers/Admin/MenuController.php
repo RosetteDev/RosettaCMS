@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Language;
+use App\Models\LanguageContent;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Post;
@@ -84,7 +86,9 @@ class MenuController extends Controller
     {
         $validated = $this->validateItem($request);
 
-        $menu->items()->create($validated + ['order' => $validated['order'] ?? 0]);
+        $item = $menu->items()->create($validated + ['order' => $validated['order'] ?? 0]);
+
+        $this->saveTranslations($request, $item);
 
         return redirect()->route('admin.menus.edit', $menu)->with('success', 'Menu item added.');
     }
@@ -99,6 +103,8 @@ class MenuController extends Controller
 
         $item->update($this->validateItem($request));
 
+        $this->saveTranslations($request, $item);
+
         return redirect()->route('admin.menus.edit', $menu)->with('success', 'Menu item updated.');
     }
 
@@ -108,6 +114,56 @@ class MenuController extends Controller
         $item->delete();
 
         return redirect()->route('admin.menus.edit', $menu)->with('success', 'Menu item removed.');
+    }
+
+    /**
+     * Persist translated label for each enabled (non-default) language.
+     *
+     * Empty translations remove the stored translation; a populated translation
+     * upserts by (content_type, content_id, language).
+     */
+    protected function saveTranslations(Request $request, MenuItem $item): void
+    {
+        $translations = $request->input('translations', []);
+
+        if (!is_array($translations)) {
+            return;
+        }
+
+        foreach ($translations as $languageId => $fields) {
+            $language = Language::find($languageId);
+
+            if (!$language || !$language->is_active || $language->is_default) {
+                continue;
+            }
+
+            $fields = is_array($fields) ? $fields : [];
+            $title = trim((string) ($fields['title'] ?? ''));
+
+            $existing = LanguageContent::where('content_type', 'menu_item')
+                ->where('content_id', $item->id)
+                ->where('language_id', $language->id)
+                ->first();
+
+            if ($title === '') {
+                $existing?->delete();
+                continue;
+            }
+
+            $payload = [
+                'content_type' => 'menu_item',
+                'content_id' => $item->id,
+                'language_id' => $language->id,
+                'title' => $title,
+                'translated_by' => auth()->id(),
+            ];
+
+            if ($existing) {
+                $existing->update($payload);
+            } else {
+                LanguageContent::create($payload);
+            }
+        }
     }
 
     /**

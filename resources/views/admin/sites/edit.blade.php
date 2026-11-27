@@ -62,6 +62,25 @@
                           name="description" 
                           rows="3">{{ old('description', $site->description) }}</textarea>
             </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="default_language_id">
+                    Default Language (Optional)
+                </label>
+                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        id="default_language_id"
+                        name="default_language_id">
+                    <option value="">— Use global default —</option>
+                    @foreach($languages as $language)
+                        <option value="{{ $language->id }}" {{ old('default_language_id', $site->default_language_id) == $language->id ? 'selected' : '' }}>
+                            {{ $language->flag }} {{ $language->name }} ({{ $language->code }})
+                        </option>
+                    @endforeach
+                </select>
+                <p class="text-sm text-gray-500 mt-1">
+                    The language visitors see by default on this site. Leave empty to use the global default.
+                </p>
+            </div>
             
             <div class="flex items-center justify-between">
                 <a href="{{ route('admin.sites.index') }}" class="text-gray-600 hover:text-gray-800">

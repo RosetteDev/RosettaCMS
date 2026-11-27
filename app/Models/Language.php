@@ -62,4 +62,21 @@ class Language extends Model
         return static::where('is_default', true)->first()
             ?? static::where('is_active', true)->orderBy('sort_order')->first();
     }
+
+    /**
+     * The default language for a given site.
+     *
+     * Falls back to the global default when the site has not configured one.
+     */
+    public static function defaultLanguageFor(?Site $site): ?self
+    {
+        if ($site) {
+            $resolved = $site->resolvedDefaultLanguage();
+            if ($resolved) {
+                return $resolved;
+            }
+        }
+
+        return static::defaultLanguage();
+    }
 }

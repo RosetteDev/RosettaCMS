@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Language;
+use App\Models\LanguageContent;
 use App\Models\Post;
 use App\Models\Site;
 use App\Models\SiteSetting;
@@ -23,7 +25,19 @@ class SettingsController extends Controller
             ->orderBy('title')
             ->get();
 
-        return view('admin.settings.index', compact('settings', 'pages', 'site'));
+        $translationLanguages = Language::where('is_active', true)
+            ->where('is_default', false)
+            ->orderBy('sort_order')
+            ->get();
+
+        $existingTranslations = $site
+            ? LanguageContent::where('content_type', 'site_setting')
+                ->where('content_id', $site->id)
+                ->get()
+                ->keyBy('language_id')
+            : collect();
+
+        return view('admin.settings.index', compact('settings', 'pages', 'site', 'translationLanguages', 'existingTranslations'));
     }
 
     /**
@@ -136,6 +150,65 @@ class SettingsController extends Controller
         ]);
         $site->save();
 
+        $this->saveTranslations($request, $site);
+
         return back()->with('success', 'Settings updated successfully.');
+    }
+
+    /**
+     * Persist translated site title/description for each enabled (non-default)
+     * language. Stored in language_content (content_type='site_setting'), with
+     * the per-field translations carried in the meta column.
+     */
+    protected function saveTranslations(Request $request, Site $site): void
+    {
+        $translations = $request->input('translations', []);
+
+        if (!is_array($translations)) {
+            return;
+        }
+
+        foreach ($translations as $languageId => $fields) {
+            $language = Language::find($languageId);
+
+            if (!$language || !$language->is_active || $language->is_default) {
+                continue;
+            }
+
+            $fields = is_array($fields) ? $fields : [];
+            $title = trim((string) ($fields['title'] ?? ''));
+            $description = trim((string) ($fields['description'] ?? ''));
+
+            $existing = LanguageContent::where('content_type', 'site_setting')
+                ->where('content_id', $site->id)
+                ->where('language_id', $language->id)
+                ->first();
+
+            if ($title === '' && $description === '') {
+                $existing?->delete();
+                continue;
+            }
+
+            $meta = array_filter([
+                'title' => $title !== '' ? $title : null,
+                'description' => $description !== '' ? $description : null,
+            ], fn ($v) => $v !== null);
+
+            $payload = [
+                'content_type' => 'site_setting',
+                'content_id' => $site->id,
+                'language_id' => $language->id,
+                'title' => $title !== '' ? $title : null,
+                'excerpt' => null,
+                'meta' => $meta,
+                'translated_by' => auth()->id(),
+            ];
+
+            if ($existing) {
+                $existing->update($payload);
+            } else {
+                LanguageContent::create($payload);
+            }
+        }
     }
 }

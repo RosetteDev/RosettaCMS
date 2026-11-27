@@ -1,5 +1,5 @@
 @php
-    $siteName = $settings->site_title ?? ($site->name ?? 'Rosetta CMS');
+    $siteName = $settings->resolved_site_title ?? ($site->name ?? 'Rosetta CMS');
     $footerMenu = $footerMenu ?? null;
     $footerLinks = $footerMenu ? $footerMenu->rootItems : collect();
     $adminEmail = $settings->admin_email ?? null;
@@ -8,7 +8,7 @@
 <div class="container footer-container">
     <div class="footer-section">
         <h3>{{ $siteName }}</h3>
-        <p>{{ $settings->site_description ?? ($site->description ?? '') }}</p>
+        <p>{{ $settings->resolved_site_description ?? ($site->description ?? '') }}</p>
     </div>
 
     <div class="footer-section">
@@ -19,7 +19,7 @@
                     <li>
                         <a href="{{ $item->resolved_url }}"
                            @if($item->target === '_blank') target="_blank" rel="noopener noreferrer" @endif>
-                            {{ $item->title }}
+                            {{ $item->resolved_title }}
                         </a>
                     </li>
                 @endforeach

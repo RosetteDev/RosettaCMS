@@ -3,9 +3,9 @@
 @section('content')
     <div class="hero">
         <div class="container">
-            <h1>Welcome to {{ $settings->site_title ?? ($site->name ?? 'Rosetta CMS') }}</h1>
+            <h1>Welcome to {{ $settings->resolved_site_title ?? ($site->name ?? 'Rosetta CMS') }}</h1>
             <p style="font-size: 1.2rem; margin-top: 1rem;">
-                {{ $settings->site_description ?? ($site->description ?? 'A modern, flexible content management system') }}
+                {{ $settings->resolved_site_description ?? ($site->description ?? 'A modern, flexible content management system') }}
             </p>
             <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                 <a href="{{ url('/blog') }}" class="btn btn-primary">Read the Blog</a>

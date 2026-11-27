@@ -38,6 +38,7 @@ use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\Admin\WordPressController;
 use App\Http\Controllers\Admin\WidgetController;
 use App\Http\Controllers\Admin\LanguageController;
+use App\Http\Controllers\Admin\TranslationStringController;
 use App\Http\Controllers\Admin\ReusableBlockController;
 use App\Http\Controllers\Admin\RevisionController;
 use App\Http\Controllers\InstallController;
@@ -369,6 +370,14 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::put('/{language}', [LanguageController::class, 'update'])->name('update');
         Route::post('/{language}/toggle', [LanguageController::class, 'toggle'])->name('toggle');
         Route::delete('/{language}', [LanguageController::class, 'destroy'])->name('destroy');
+    });
+
+    // Translation memory - Admin only
+    Route::prefix('admin/translations')->middleware('role:admin')->name('admin.translations.')->group(function () {
+        Route::get('/', [TranslationStringController::class, 'index'])->name('index');
+        Route::post('/', [TranslationStringController::class, 'store'])->name('store');
+        Route::put('/{string}', [TranslationStringController::class, 'update'])->name('update');
+        Route::delete('/{string}', [TranslationStringController::class, 'destroy'])->name('destroy');
     });
 
     // Theme management - Admin only

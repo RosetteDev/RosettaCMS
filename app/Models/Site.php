@@ -24,6 +24,7 @@ class Site extends Model
         'home_post_id',
         'theme',
         'theme_options',
+        'default_language_id',
     ];
 
     protected $casts = [
@@ -90,6 +91,23 @@ class Site extends Model
     public function homepage()
     {
         return $this->belongsTo(Post::class, 'home_post_id');
+    }
+
+    /**
+     * Get the language this site defaults to.
+     */
+    public function defaultLanguage()
+    {
+        return $this->belongsTo(Language::class, 'default_language_id');
+    }
+
+    /**
+     * The site's configured default language, falling back to the global
+     * default when the site has not set one.
+     */
+    public function resolvedDefaultLanguage(): ?Language
+    {
+        return $this->defaultLanguage()->first() ?? Language::defaultLanguage();
     }
 
     /**

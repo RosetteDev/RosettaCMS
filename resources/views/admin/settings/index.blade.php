@@ -80,6 +80,37 @@
                                 @enderror
                             </div>
 
+                            @if($translationLanguages->isNotEmpty())
+                                <div style="margin-bottom: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                                    <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-color); margin-bottom: 1rem;">Translated site name &amp; description</h3>
+                                    @foreach($translationLanguages as $lang)
+                                        @php
+                                            $translation = $existingTranslations->get($lang->id);
+                                            $meta = is_array($translation?->meta) ? $translation->meta : [];
+                                        @endphp
+                                        <div style="margin-bottom: 1.25rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                            <h4 style="font-size: 0.95rem; font-weight: 600; color: var(--text-color); margin-bottom: 0.75rem;">{{ $lang->flag }} {{ $lang->name }} <code style="font-size: 0.75rem; color: var(--text-color); opacity: 0.6;">{{ $lang->code }}</code></h4>
+                                            <div style="margin-bottom: 0.75rem;">
+                                                <label style="display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-color); margin-bottom: 0.25rem;" for="translation-title-{{ $lang->id }}">Site Name</label>
+                                                <input style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem;"
+                                                       id="translation-title-{{ $lang->id }}"
+                                                       type="text"
+                                                       name="translations[{{ $lang->id }}][title]"
+                                                       maxlength="255"
+                                                       value="{{ old('translations.' . $lang->id . '.title', $meta['title'] ?? '') }}">
+                                            </div>
+                                            <div>
+                                                <label style="display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-color); margin-bottom: 0.25rem;" for="translation-description-{{ $lang->id }}">Site Description</label>
+                                                <textarea style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; min-height: 60px;"
+                                                          id="translation-description-{{ $lang->id }}"
+                                                          name="translations[{{ $lang->id }}][description]"
+                                                          rows="2">{{ old('translations.' . $lang->id . '.description', $meta['description'] ?? '') }}</textarea>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
                             <div style="margin-bottom: 1.5rem;">
                                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="admin_email">
                                     Admin Email *

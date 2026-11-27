@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Language;
+use App\Models\LanguageContent;
 
 class SiteSetting extends Model
 {
@@ -85,6 +87,61 @@ class SiteSetting extends Model
     public function site()
     {
         return $this->belongsTo(Site::class);
+    }
+
+    /**
+     * The translated site title for the active language, falling back to the
+     * stored (default-language) site title.
+     */
+    public function getResolvedSiteTitleAttribute(): ?string
+    {
+        return $this->translatedSetting('title') ?: $this->site_title;
+    }
+
+    /**
+     * The translated site description for the active language, falling back to
+     * the stored (default-language) description.
+     */
+    public function getResolvedSiteDescriptionAttribute(): ?string
+    {
+        return $this->translatedSetting('description') ?: $this->site_description;
+    }
+
+    /**
+     * Look up a per-language translation for this site's settings.
+     *
+     * The translation is stored in the language_content table with
+     * content_type='site_setting' and content_id=site id; the `meta` column
+     * carries the per-field translations (title / description).
+     */
+    protected function translatedSetting(string $field): ?string
+    {
+        $language = request()->attributes->get('activeLanguage');
+
+        if (!$language || !$this->site_id) {
+            return null;
+        }
+
+        $default = Language::defaultLanguageFor($this->site);
+
+        if (!$default || $language->code === $default->code) {
+            return null;
+        }
+
+        $translation = LanguageContent::where('content_type', 'site_setting')
+            ->where('content_id', $this->site_id)
+            ->where('language_id', $language->id)
+            ->first();
+
+        $meta = $translation?->meta;
+
+        if (!is_array($meta)) {
+            return null;
+        }
+
+        $value = $meta[$field] ?? null;
+
+        return is_string($value) && trim($value) !== '' ? $value : null;
     }
 
     /**

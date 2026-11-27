@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Language;
 use App\Models\Site;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
@@ -26,7 +27,9 @@ class SiteController extends Controller
      */
     public function create()
     {
-        return view('admin.sites.create');
+        $languages = Language::where('is_active', true)->orderBy('sort_order')->get();
+
+        return view('admin.sites.create', compact('languages'));
     }
 
     /**
@@ -38,6 +41,7 @@ class SiteController extends Controller
             'name' => 'required|string|max:255',
             'domain' => 'nullable|string|max:255|unique:sites,domain',
             'description' => 'nullable|string',
+            'default_language_id' => 'nullable|exists:languages,id',
         ]);
 
         Site::create($validated);
@@ -59,7 +63,9 @@ class SiteController extends Controller
      */
     public function edit(Site $site)
     {
-        return view('admin.sites.edit', compact('site'));
+        $languages = Language::where('is_active', true)->orderBy('sort_order')->get();
+
+        return view('admin.sites.edit', compact('site', 'languages'));
     }
 
     /**
@@ -72,6 +78,7 @@ class SiteController extends Controller
             'domain' => 'nullable|string|max:255|unique:sites,domain,' . $site->id,
             'description' => 'nullable|string',
             'home_post_id' => 'nullable|exists:posts,id',
+            'default_language_id' => 'nullable|exists:languages,id',
         ]);
 
         $site->update($validated);

@@ -15,7 +15,7 @@
             <li class="{{ $children->isNotEmpty() ? 'menu-item-has-children' : '' }}">
                 <a href="{{ $item->resolved_url }}"
                    @if($item->target === '_blank') target="_blank" rel="noopener noreferrer" @endif>
-                    {{ $item->title }}
+                    {{ $item->resolved_title }}
                 </a>
 
                 @if($children->isNotEmpty())
@@ -24,7 +24,7 @@
                             <li>
                                 <a href="{{ $child->resolved_url }}"
                                    @if($child->target === '_blank') target="_blank" rel="noopener noreferrer" @endif>
-                                    {{ $child->title }}
+                                    {{ $child->resolved_title }}
                                 </a>
                             </li>
                         @endforeach

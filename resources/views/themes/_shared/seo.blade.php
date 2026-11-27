@@ -1,6 +1,6 @@
 @php
     $seo = $seo ?? [];
-    $siteName = $seo['site_name'] ?? ($settings->site_title ?? ($site->name ?? 'Rosetta CMS'));
+    $siteName = $seo['site_name'] ?? ($settings->resolved_site_title ?? ($site->name ?? 'Rosetta CMS'));
     $seoTitle = $seo['title'] ?? ($title ?? $siteName);
     $seoDescription = $seo['description'] ?? ($description ?? '');
     $canonical = $seo['canonical'] ?? url()->current();

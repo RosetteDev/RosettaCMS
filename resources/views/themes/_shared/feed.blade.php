@@ -1,9 +1,9 @@
 {!! '<'. '?xml version="1.0" encoding="UTF-8"?'. '>' !!}
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-        <title>{{ $settings->site_title ?? ($site->name ?? 'Rosetta CMS') }}</title>
+        <title>{{ $settings->resolved_site_title ?? ($site->name ?? 'Rosetta CMS') }}</title>
         <link>{{ url('/') }}</link>
-        <description>{{ $settings->site_description ?? ($site->description ?? '') }}</description>
+        <description>{{ $settings->resolved_site_description ?? ($site->description ?? '') }}</description>
         <language>{{ app()->getLocale() }}</language>
         <lastBuildDate>{{ now()->toRssString() }}</lastBuildDate>
         <atom:link href="{{ url('/feed') }}" rel="self" type="application/rss+xml" />

@@ -33,6 +33,9 @@
                 <dt style="font-weight: 600;">Locale</dt>
                 <dd>{{ $site->locale ?: '—' }}</dd>
 
+                <dt style="font-weight: 600;">Default Language</dt>
+                <dd>{{ $site->defaultLanguage ? ($site->defaultLanguage->flag . ' ' . $site->defaultLanguage->name) : 'Global default' }}</dd>
+
                 <dt style="font-weight: 600;">Timezone</dt>
                 <dd>{{ $site->timezone ?: '—' }}</dd>
 

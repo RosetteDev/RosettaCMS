@@ -17,6 +17,27 @@
         <div class="form-text">The text visitors see in the menu.</div>
     </div>
 
+    @php
+        $translationLanguages = \App\Models\Language::where('is_active', true)->where('is_default', false)->orderBy('sort_order')->get();
+        $existingTranslations = $item
+            ? \App\Models\LanguageContent::where('content_type', 'menu_item')->where('content_id', $item->id)->get()->keyBy('language_id')
+            : collect();
+    @endphp
+    @if($translationLanguages->isNotEmpty())
+        <div class="mb-3">
+            <label class="form-label">Translated labels</label>
+            @foreach($translationLanguages as $lang)
+                @php $translation = $existingTranslations->get($lang->id); @endphp
+                <div class="mb-2">
+                    <label class="form-label small text-muted" for="menu-translation-title-{{ $lang->id }}">{{ $lang->flag }} {{ $lang->name }}</label>
+                    <input type="text" name="translations[{{ $lang->id }}][title]" id="menu-translation-title-{{ $lang->id }}" class="form-control form-control-sm"
+                           maxlength="255"
+                           value="{{ old('translations.' . $lang->id . '.title', $translation->title ?? '') }}">
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     <div class="mb-3">
         <label class="form-label">Link type</label>
         <select name="type" class="form-select" data-menu-type>
