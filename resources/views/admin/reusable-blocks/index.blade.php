@@ -42,7 +42,7 @@
                 <p class="mb-0">No reusable blocks yet. Open the page builder, add a block, then click <strong>Save as reusable</strong>.</p>
             </div>
         @else
-            <table class="table table-hover mb-0">
+            <div class="table-responsive"><table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -81,7 +81,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         @endif
     </div>
 @endsection

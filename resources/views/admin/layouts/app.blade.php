@@ -480,6 +480,81 @@
         .bg-gradient {
             background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
         }
+
+        /* --- Responsive: sidebar drawer, table scroll, layout collapse --- */
+        .sidebar-toggle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 1.15rem;
+        }
+        .sidebar-toggle:hover { background-color: rgba(255, 255, 255, 0.12); }
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1150;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 8px;
+        }
+        .table-responsive table { width: 100%; }
+
+        @media (max-width: 991px) {
+            .admin-container {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 0 12px;
+            }
+            .admin-container > .sidebar {
+                flex: none;
+                width: 280px;
+                max-width: 85vw;
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                background-color: var(--light-color);
+                z-index: 1200;
+                transform: translateX(-105%);
+                transition: transform 0.25s ease;
+                overflow-y: auto;
+                box-shadow: 0 0 40px rgba(0, 0, 0, 0.25);
+                padding: 1rem 0.75rem;
+            }
+            .admin-container > .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: inline-flex; }
+            .sidebar-backdrop { display: block; }
+            .sidebar-backdrop.show { opacity: 1; pointer-events: auto; }
+            .admin-container > .main-content {
+                flex: none;
+                order: 2;
+                width: 100%;
+                min-width: 0;
+            }
+            .table-responsive table { min-width: 640px; }
+            header nav ul { gap: 0.25rem; }
+            header nav a { padding: 0.5rem 0.6rem; font-size: 0.85rem; }
+        }
+
+        @media (max-width: 640px) {
+            .admin-search { display: none; }
+            .header-content { gap: 0.5rem; }
+            .logo { font-size: 1.1rem; }
+            main .table-responsive table { min-width: 560px; }
+        }
     </style>
     
     @yield('styles')
@@ -488,6 +563,9 @@
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <header>
         <div class="container header-content">
+            <button type="button" id="sidebarToggle" class="sidebar-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="adminSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="logo">
                 @if($settings->logo_url ?? null)
                     <a href="{{ url('/') }}">
@@ -531,8 +609,10 @@
         </div>
     </header>
 
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
     <div class="admin-container">
-        <div class="sidebar">
+        <div class="sidebar" id="adminSidebar">
             @php($currentUser = auth()->user())
             <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') || request()->is('admin') ? 'active' : '' }}">Dashboard</a>
             <a href="{{ url('/profile') }}" class="{{ request()->is('profile') ? 'active' : '' }}">Profile</a>
@@ -602,6 +682,35 @@
             document.querySelectorAll('.sidebar a.active, nav a.active').forEach(function(a) {
                 a.setAttribute('aria-current', 'page');
             });
+
+            // --- Mobile sidebar drawer ---
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('adminSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            function setSidebarOpen(open) {
+                if (!sidebar || !backdrop) return;
+                sidebar.classList.toggle('open', open);
+                backdrop.classList.toggle('show', open);
+                if (sidebarToggle) {
+                    sidebarToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    sidebarToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+                }
+                document.body.style.overflow = open ? 'hidden' : '';
+            }
+
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    setSidebarOpen(!sidebar.classList.contains('open'));
+                });
+                backdrop.addEventListener('click', function() { setSidebarOpen(false); });
+                sidebar.addEventListener('click', function(e) {
+                    if (e.target.closest('a')) setSidebarOpen(false);
+                });
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && sidebar.classList.contains('open')) setSidebarOpen(false);
+                });
+            }
 
             // --- Dark mode toggle (persisted per user) ---
             const darkModeToggle = document.getElementById('darkModeToggle');

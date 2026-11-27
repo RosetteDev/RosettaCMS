@@ -39,7 +39,7 @@
                 <p class="mb-0">No languages yet. Add one to enable translations.</p>
             </div>
         @else
-            <table class="table table-hover mb-0">
+            <div class="table-responsive"><table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>Language</th>
@@ -101,7 +101,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         @endif
     </div>
 @endsection

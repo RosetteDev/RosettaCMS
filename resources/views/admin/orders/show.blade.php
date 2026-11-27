@@ -21,7 +21,7 @@
         <div class="col-lg-7">
             <div style="background-color: var(--light-color); border-radius: 8px; padding: 1.25rem;">
                 <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">Items</h2>
-                <table class="table mb-0">
+                <div class="table-responsive"><table class="table mb-0">
                     <thead>
                         <tr><th>Product</th><th>SKU</th><th>Qty</th><th>Unit</th><th>Line</th></tr>
                     </thead>
@@ -36,7 +36,7 @@
                             </tr>
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
                 <div style="border-top: 1px solid var(--border-color); margin-top: 1rem; padding-top: 1rem;">
                     <div class="d-flex justify-content-between"><span>Subtotal</span><strong>${{ number_format((float) $order->subtotal, 2) }}</strong></div>
                     <div class="d-flex justify-content-between"><span>Discount{{ $order->coupon_code ? ' (' . $order->coupon_code . ')' : '' }}</span><strong>-${{ number_format((float) $order->discount, 2) }}</strong></div>

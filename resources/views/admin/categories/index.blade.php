@@ -19,7 +19,7 @@
     <!-- Categories Table -->
     <div style="background-color: var(--light-color); border-radius: 8px; overflow: hidden;">
         @if(count($categories) > 0)
-            <table style="width: 100%; border-collapse: collapse;">
+            <div class="table-responsive"><table style="width: 100%; border-collapse: collapse;">
                 <thead style="background-color: var(--dark-color); color: white;">
                     <tr>
                         <th style="padding: 1rem; text-align: left;">Name</th>
@@ -61,7 +61,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         @else
             <div style="padding: 3rem; text-align: center; color: var(--text-color);">
                 <p>No categories found. <a href="{{ url('/admin/categories/create') }}" style="color: var(--primary-color);">Create one</a>!</p>

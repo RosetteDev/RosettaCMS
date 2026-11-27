@@ -81,7 +81,7 @@
                     <p class="text-muted small">No strings stored for this language yet.</p>
                 @else
                     <div style="background-color: var(--light-color); border-radius: 8px; overflow: hidden;">
-                        <table class="table table-sm mb-0">
+                        <div class="table-responsive"><table class="table table-sm mb-0">
                             <thead>
                                 <tr>
                                     <th>Key</th>
@@ -105,7 +105,7 @@
                                     </tr>
                                 @endforeach
                             </tbody>
-                        </table>
+                        </table></div>
                     </div>
                 @endif
             </div>

@@ -31,7 +31,7 @@
     <!-- Comments Table -->
     <div style="background-color: var(--light-color); border-radius: 8px; overflow: hidden;">
         @if(count($comments) > 0)
-            <table style="width: 100%; border-collapse: collapse;">
+            <div class="table-responsive"><table style="width: 100%; border-collapse: collapse;">
                 <thead style="background-color: var(--dark-color); color: white;">
                     <tr>
                         <th style="padding: 1rem; text-align: left;">Author</th>
@@ -92,7 +92,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         @else
             <div style="padding: 3rem; text-align: center; color: var(--text-color);">
                 <p>No pending comments. <a href="{{ url('/admin/comments') }}" style="color: var(--primary-color);">View all comments</a>.</p>

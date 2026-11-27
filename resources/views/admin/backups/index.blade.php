@@ -84,7 +84,7 @@
                 <p class="mb-0">No backups yet. Click <strong>Create Backup Now</strong> to take your first one.</p>
             </div>
         @else
-            <table class="table table-hover mb-0">
+            <div class="table-responsive"><table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -124,7 +124,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         @endif
     </div>
 

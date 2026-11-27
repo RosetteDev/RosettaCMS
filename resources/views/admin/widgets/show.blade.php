@@ -15,7 +15,7 @@
                 <div style="background-color: var(--light-color); border-radius: 8px; padding: 2rem;">
                     <div style="margin-bottom: 2rem;">
                         <h3>Widget Information</h3>
-                        <table style="width: 100%; margin-top: 1rem;">
+                        <div class="table-responsive"><table style="width: 100%; margin-top: 1rem;">
                             <tr>
                                 <td style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);"><strong>Name:</strong></td>
                                 <td style="padding: 0.75rem; border-bottom: 1px solid var(--border-color); color: var(--text-color);">{{ $widget->name }}</td>
@@ -78,7 +78,7 @@
                                     {{ $widget->updated_at->format('M d, Y H:i:s') }}
                                 </td>
                             </tr>
-                        </table>
+                        </table></div>
                     </div>
 
                     <div style="margin-bottom: 2rem;">

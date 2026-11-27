@@ -60,7 +60,7 @@
         <div class="card">
             <div class="card-body">
                 <h2 class="h5 mb-3">Broken internal links ({{ count($brokenLinks['broken']) }})</h2>
-                <table class="table table-sm">
+                <div class="table-responsive"><table class="table table-sm">
                     <thead>
                         <tr>
                             <th>Post / page</th>
@@ -77,7 +77,7 @@
                             </tr>
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </div>
     @endif

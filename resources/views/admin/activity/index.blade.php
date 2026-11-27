@@ -35,7 +35,7 @@
                 <p class="mb-0">No activity recorded yet.</p>
             </div>
         @else
-            <table class="table table-hover mb-0">
+            <div class="table-responsive"><table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>When</th>
@@ -56,7 +56,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
             <div style="padding: 0.75rem 1rem; border-top: 1px solid var(--border-color);">
                 {{ $logs->links() }}
             </div>

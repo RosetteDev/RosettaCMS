@@ -2,6 +2,21 @@
 
 @section('title', 'Settings')
 
+@push('styles')
+<style>
+    .settings-layout { display: flex; gap: 2rem; }
+    .settings-nav { width: 250px; flex-shrink: 0; }
+
+    @media (max-width: 991px) {
+        .settings-container { padding: 1rem !important; }
+        .settings-layout { flex-direction: column; gap: 1rem; }
+        .settings-nav { width: 100%; flex-shrink: 1; }
+        .settings-nav nav { flex-direction: row !important; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 0.5rem !important; padding-bottom: 0.5rem; }
+        .settings-nav a { white-space: nowrap; }
+    }
+</style>
+@endpush
+
 @section('content')
     <!-- Admin Header -->
     <div class="hero">
@@ -17,10 +32,10 @@
         </div>
     @endif
 
-    <div class="container" style="max-width: 1200px; padding: 2rem;">
-        <div style="display: flex; gap: 2rem;">
+    <div class="container settings-container" style="max-width: 1200px; padding: 2rem;">
+        <div class="settings-layout">
             <!-- Sidebar Navigation -->
-            <div style="width: 250px; flex-shrink: 0;">
+            <div class="settings-nav">
                 <div style="background-color: var(--light-color); border-radius: 8px; padding: 1rem;">
                     <h3 style="font-size: 0.85rem; font-weight: bold; color: var(--text-color); text-transform: uppercase; margin-bottom: 1rem;">Settings Navigation</h3>
                     <nav style="display: flex; flex-direction: column; gap: 0.25rem;">
@@ -240,7 +255,7 @@
 
                             <div id="custom-form-fields-list" style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
                                 @foreach(($settings->custom_form_fields ?? []) as $field)
-                                    <div class="cff-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.5rem; align-items: end; background-color: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.75rem;">
+                                    <div class="cff-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; align-items: end; background-color: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.75rem;">
                                         <div>
                                             <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Name</label>
                                             <input type="text" class="cff-name form-control form-control-sm" value="{{ $field['name'] ?? '' }}" placeholder="field_name" required>
@@ -259,7 +274,7 @@
                                             </select>
                                         </div>
                                         <button type="button" class="cff-remove btn btn-danger btn-sm" title="Remove field" style="padding: 0.4rem 0.7rem;">✕</button>
-                                        <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; align-items: end;">
+                                        <div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; align-items: end;">
                                             <div>
                                                 <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Placeholder (optional)</label>
                                                 <input type="text" class="cff-placeholder form-control form-control-sm" value="{{ $field['placeholder'] ?? '' }}" placeholder="Placeholder text">
@@ -1020,7 +1035,7 @@
         const cffForm = document.querySelector('form[action="{{ route('admin.settings.update') }}"]');
 
         const cffRowTemplate = (name = '', label = '', type = 'text', placeholder = '', required = false) => `
-            <div class="cff-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.5rem; align-items: end; background-color: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.75rem;">
+            <div class="cff-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; align-items: end; background-color: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.75rem;">
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Name</label>
                     <input type="text" class="cff-name form-control form-control-sm" value="${name.replace(/"/g, '&quot;')}" placeholder="field_name" required>
@@ -1039,7 +1054,7 @@
                     </select>
                 </div>
                 <button type="button" class="cff-remove btn btn-danger btn-sm" title="Remove field" style="padding: 0.4rem 0.7rem;">✕</button>
-                <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; align-items: end;">
+                <div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; align-items: end;">
                     <div>
                         <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Placeholder (optional)</label>
                         <input type="text" class="cff-placeholder form-control form-control-sm" value="${placeholder.replace(/"/g, '&quot;')}" placeholder="Placeholder text">

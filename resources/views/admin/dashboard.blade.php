@@ -7,7 +7,7 @@
 <style>
     .widget-area {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
@@ -167,7 +167,7 @@
             <div class="col">
                 <div class="card h-100 border-0 shadow-sm text-center">
                     <div class="card-body py-4">
-                        <div class="mb-2" style="font-size: 2.25rem; line-height: 1%;">{{ $card['icon'] }}</div>
+                        <div class="mb-2" style="font-size: 2.25rem; line-height: 1.2;">{{ $card['icon'] }}</div>
                         <h3 class="mb-1 fw-bold" style="color: {{ $card['color'] }};">
                             {{ $stats[$card['key']] ?? 0 }}
                         </h3>
@@ -307,7 +307,7 @@
                             <div class="col-6 col-md-4 col-lg-2">
                                 <div class="media-card" style="position: relative; border-radius: 8px; overflow: hidden;">
                                     @if(str_starts_with($media->mime_type, 'image/'))
-                                        <img src="{{ $media->url }}" alt="{{ $media->alt_text }}" style="width: 100%; height: 80px; object-fit: cover;">
+                                        <img src="{{ $media->url }}" alt="{{ $media->alt_text }}" loading="lazy" decoding="async" style="width: 100%; height: 80px; object-fit: cover;">
                                     @else
                                         <div class="d-flex align-items-center justify-content-center" style="width: 100%; height: 80px; background-color: var(--light-color);">
                                             <i class="fas fa-file fa-2x text-muted"></i>
@@ -380,6 +380,11 @@
             }
         });
 
+        // --- Keep the inline `order` style in sync with the DOM ---
+        function syncOrder() {
+            sections().forEach((s, i) => { s.style.order = i; });
+        }
+
         // --- HTML5 drag & drop ---
         let dragSource = null;
         sections().forEach(section => {
@@ -408,6 +413,7 @@
                     container.insertBefore(dragSource, section);
                 }
                 section.classList.remove('drag-over');
+                syncOrder();
             });
         });
 
@@ -416,10 +422,12 @@
             section.querySelector('.section-move-up')?.addEventListener('click', function() {
                 const prev = section.previousElementSibling;
                 if (prev) container.insertBefore(section, prev);
+                syncOrder();
             });
             section.querySelector('.section-move-down')?.addEventListener('click', function() {
                 const next = section.nextElementSibling;
                 if (next) container.insertBefore(next, section);
+                syncOrder();
             });
         });
     });

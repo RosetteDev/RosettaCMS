@@ -2,6 +2,14 @@
 
 @section('title', $site->name)
 
+@push('styles')
+<style>
+    @media (max-width: 640px) {
+        .dl-grid { grid-template-columns: 1fr !important; }
+    }
+</style>
+@endpush
+
 @section('content')
     <div class="hero">
         <div class="container">
@@ -17,7 +25,7 @@
                 <a href="{{ url('/admin/sites') }}" class="btn btn-outline">Back to sites</a>
             </div>
 
-            <dl style="display: grid; grid-template-columns: 180px 1fr; gap: 0.75rem 1rem; color: var(--text-color);">
+            <dl class="dl-grid" style="display: grid; grid-template-columns: 180px 1fr; gap: 0.75rem 1rem; color: var(--text-color);">
                 <dt style="font-weight: 600;">Name</dt>
                 <dd>{{ $site->name }}</dd>
 

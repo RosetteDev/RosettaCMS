@@ -53,7 +53,7 @@
                 <p class="mb-0">No webhooks yet. Create one to start receiving content notifications.</p>
             </div>
         @else
-            <table class="table table-hover mb-0">
+            <div class="table-responsive"><table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>URL</th>
@@ -121,7 +121,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         @endif
     </div>
 

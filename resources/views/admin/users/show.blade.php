@@ -31,7 +31,7 @@
 
     <!-- User Information -->
     <div style="background-color: var(--light-color); border-radius: 8px; overflow: hidden;">
-        <table style="width: 100%;">
+        <div class="table-responsive"><table style="width: 100%;">
             <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 1.5rem; width: 200px; font-weight: 500; color: var(--secondary-color);">User ID</td>
                 <td style="padding: 1.5rem; font-family: monospace;">{{ $user->id }}</td>
@@ -54,7 +54,7 @@
                 <td style="padding: 1.5rem; font-weight: 500; color: var(--secondary-color);">Last Updated</td>
                 <td style="padding: 1.5rem;">{{ $user->updated_at->format('M d, Y H:i') }}</td>
             </tr>
-        </table>
+        </table></div>
     </div>
 
     <!-- Roles Section -->

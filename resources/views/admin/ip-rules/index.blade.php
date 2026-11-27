@@ -64,7 +64,7 @@
                     <p class="mb-0">No IP rules yet. Add one above to restrict this site.</p>
                 </div>
             @else
-                <table class="table table-hover mb-0">
+                <div class="table-responsive"><table class="table table-hover mb-0">
                     <thead>
                         <tr>
                             <th>Type</th>
@@ -97,7 +97,7 @@
                             </tr>
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
             @endif
         </div>
     @endif

@@ -33,7 +33,7 @@
                 <p class="mb-0">No API keys yet. Create one to start using the public API.</p>
             </div>
         @else
-            <table class="table table-hover mb-0">
+            <div class="table-responsive"><table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -84,7 +84,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         @endif
     </div>
 @endsection

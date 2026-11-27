@@ -18,7 +18,7 @@
     @endif
 
     <div class="overflow-x-auto">
-        <table class="min-w-full bg-white rounded-lg shadow">
+        <div class="table-responsive"><table class="min-w-full bg-white rounded-lg shadow">
             <thead class="bg-gray-100">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
@@ -80,7 +80,7 @@
                     </tr>
                 @endforelse
             </tbody>
-        </table>
+        </table></div>
     </div>
 
     <div class="mt-6">

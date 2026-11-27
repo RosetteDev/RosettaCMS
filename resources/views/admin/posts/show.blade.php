@@ -2,6 +2,14 @@
 
 @section('title', $post->title)
 
+@push('styles')
+<style>
+    @media (max-width: 640px) {
+        .dl-grid { grid-template-columns: 1fr !important; }
+    }
+</style>
+@endpush
+
 @section('content')
     <div class="hero">
         <div class="container">
@@ -31,7 +39,7 @@
                 <a href="{{ url($post->post_type === 'page' ? '/admin/pages' : '/admin/posts') }}" class="btn btn-outline">Back to list</a>
             </div>
 
-            <dl style="display: grid; grid-template-columns: 160px 1fr; gap: 0.75rem 1rem; margin-bottom: 2rem; color: var(--text-color);">
+            <dl class="dl-grid" style="display: grid; grid-template-columns: 160px 1fr; gap: 0.75rem 1rem; margin-bottom: 2rem; color: var(--text-color);">
                 <dt style="font-weight: 600;">Slug</dt>
                 <dd><code>{{ $post->slug }}</code></dd>
 

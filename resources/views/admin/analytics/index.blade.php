@@ -70,7 +70,7 @@
                 @if($topPosts->isEmpty())
                     <div class="empty-note">No post traffic yet.</div>
                 @else
-                    <table>
+                    <div class="table-responsive"><table>
                         <thead><tr><th>Post</th><th>Views</th></tr></thead>
                         <tbody>
                             @foreach($topPosts as $row)
@@ -80,7 +80,7 @@
                                 </tr>
                             @endforeach
                         </tbody>
-                    </table>
+                    </table></div>
                 @endif
             </div>
 
@@ -89,14 +89,14 @@
                 @if($topPaths->isEmpty())
                     <div class="empty-note">No page traffic yet.</div>
                 @else
-                    <table>
+                    <div class="table-responsive"><table>
                         <thead><tr><th>Path</th><th>Views</th></tr></thead>
                         <tbody>
                             @foreach($topPaths as $row)
                                 <tr><td><code>/{{ $row['path'] }}</code></td><td><strong>{{ number_format($row['views']) }}</strong></td></tr>
                             @endforeach
                         </tbody>
-                    </table>
+                    </table></div>
                 @endif
             </div>
         </div>
@@ -107,14 +107,14 @@
                 @if($topReferrers->isEmpty())
                     <div class="empty-note">No referrers yet.</div>
                 @else
-                    <table>
+                    <div class="table-responsive"><table>
                         <thead><tr><th>Host</th><th>Views</th></tr></thead>
                         <tbody>
                             @foreach($topReferrers as $row)
                                 <tr><td>{{ e($row['referrer']) }}</td><td><strong>{{ number_format($row['views']) }}</strong></td></tr>
                             @endforeach
                         </tbody>
-                    </table>
+                    </table></div>
                 @endif
             </div>
 
@@ -123,14 +123,14 @@
                 @if($deviceBreakdown->isEmpty())
                     <div class="empty-note">No device data yet.</div>
                 @else
-                    <table>
+                    <div class="table-responsive"><table>
                         <thead><tr><th>Device</th><th>Views</th></tr></thead>
                         <tbody>
                             @foreach($deviceBreakdown as $row)
                                 <tr><td>{{ ucfirst($row['device']) }}</td><td><strong>{{ number_format($row['views']) }}</strong></td></tr>
                             @endforeach
                         </tbody>
-                    </table>
+                    </table></div>
                 @endif
             </div>
 
@@ -139,14 +139,14 @@
                 @if($browserBreakdown->isEmpty())
                     <div class="empty-note">No browser data yet.</div>
                 @else
-                    <table>
+                    <div class="table-responsive"><table>
                         <thead><tr><th>Browser</th><th>Views</th></tr></thead>
                         <tbody>
                             @foreach($browserBreakdown as $row)
                                 <tr><td>{{ e($row['browser']) }}</td><td><strong>{{ number_format($row['views']) }}</strong></td></tr>
                             @endforeach
                         </tbody>
-                    </table>
+                    </table></div>
                 @endif
             </div>
         </div>

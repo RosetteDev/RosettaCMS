@@ -18,7 +18,7 @@
         </div>
 
         <div style="background-color: var(--light-color); border-radius: 8px; overflow: hidden;">
-            <table class="table table-hover mb-0">
+            <div class="table-responsive"><table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>Check</th>
@@ -41,7 +41,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         </div>
     </div>
 @endsection

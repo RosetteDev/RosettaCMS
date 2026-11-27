@@ -49,7 +49,7 @@
         @if($redirects->isEmpty())
             <p class="text-muted mb-0">No redirects yet.</p>
         @else
-            <table class="table table-sm">
+            <div class="table-responsive"><table class="table table-sm">
                 <thead>
                     <tr>
                         <th>From</th>
@@ -91,7 +91,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         @endif
     </div>
 </div>
