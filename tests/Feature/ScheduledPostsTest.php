@@ -99,7 +99,7 @@ class ScheduledPostsTest extends TestCase
 
     public function test_save_post_with_future_date_forces_pending_status(): void
     {
-        $role = Role::create(['name' => 'Editor', 'slug' => 'editor', 'permissions' => []]);
+        $role = Role::create(['name' => 'Editor', 'slug' => 'editor', 'permissions' => ['posts' => true]]);
         $this->user->roles()->attach($role);
         $this->actingAs($this->user);
 

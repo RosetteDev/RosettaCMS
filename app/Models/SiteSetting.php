@@ -69,6 +69,11 @@ class SiteSetting extends Model
         'disable_file_editor',
         'max_upload_size',
         'enable_user_registration',
+        'enable_social_login_google',
+        'enable_social_login_github',
+        'enable_welcome_email',
+        'enable_booking_form',
+        'enable_chat_widget',
     ];
 
     protected $casts = [
@@ -84,6 +89,11 @@ class SiteSetting extends Model
         'enable_debug_mode' => 'boolean',
         'disable_file_editor' => 'boolean',
         'enable_user_registration' => 'boolean',
+        'enable_social_login_google' => 'boolean',
+        'enable_social_login_github' => 'boolean',
+        'enable_welcome_email' => 'boolean',
+        'enable_booking_form' => 'boolean',
+        'enable_chat_widget' => 'boolean',
         'post_per_page' => 'integer',
         'tax_rate' => 'decimal:2',
         'rate_limit_per_minute' => 'integer',

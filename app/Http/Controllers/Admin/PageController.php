@@ -104,6 +104,13 @@ class PageController extends PostController
                 ->with('error', 'This is not a page.');
         }
 
+        $lock = \App\Support\EditorLock::conflictingLock($page, auth()->user());
+        if ($lock) {
+            return redirect()->route('admin.pages.edit', $page->id)
+                ->withInput()
+                ->with('error', 'This page is being edited by ' . $lock->user->name . '. Your changes were not saved — please wait for them to finish, then try again.');
+        }
+
         $this->savePost($request, $page, 'page');
 
         return redirect()->route('admin.pages.edit', $page->id)

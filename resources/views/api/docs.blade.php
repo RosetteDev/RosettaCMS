@@ -77,7 +77,8 @@
     </div>
 
     <div class="actions">
-        <a class="btn" href="{{ route('api.openapi') }}" target="_blank" rel="noopener">Download OpenAPI JSON</a>
+        <a class="btn" href="{{ route('api.swagger') }}">Open Swagger UI</a>
+        <a class="btn btn-outline" href="{{ route('api.openapi') }}" target="_blank" rel="noopener">Download OpenAPI JSON</a>
         <a class="btn btn-outline" href="{{ route('api.index') }}" target="_blank" rel="noopener">API discovery document</a>
     </div>
 

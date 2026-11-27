@@ -469,6 +469,8 @@
         @include('themes._shared.footer')
     </footer>
     
+    @include('themes._shared.chat-widget')
+
     @if(!empty($settings->custom_js))
         <script id="site-custom-js">{!! $settings->custom_js !!}</script>
     @endif

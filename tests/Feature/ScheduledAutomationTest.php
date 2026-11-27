@@ -182,7 +182,7 @@ class ScheduledAutomationTest extends TestCase
 
     public function test_admin_form_saves_expiry_and_repeat_fields(): void
     {
-        $role = Role::create(['name' => 'Editor', 'slug' => 'editor', 'permissions' => []]);
+        $role = Role::create(['name' => 'Editor', 'slug' => 'editor', 'permissions' => ['posts' => true]]);
         $this->user->roles()->attach($role);
         $this->actingAs($this->user);
 

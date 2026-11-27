@@ -90,6 +90,11 @@ class SettingsController extends Controller
             'disable_file_editor' => 'nullable|boolean',
             'max_upload_size' => 'nullable|integer|min:1|max:1000',
             'enable_user_registration' => 'nullable|boolean',
+            'enable_welcome_email' => 'nullable|boolean',
+            'enable_booking_form' => 'nullable|boolean',
+            'enable_chat_widget' => 'nullable|boolean',
+            'enable_social_login_google' => 'nullable|boolean',
+            'enable_social_login_github' => 'nullable|boolean',
 
             // Comments
             'disable_comments' => 'nullable|boolean',

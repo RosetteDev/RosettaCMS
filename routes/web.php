@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\RedirectController;
 use App\Http\Controllers\Admin\SeoHealthController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\PageController;
+use App\Http\Controllers\Admin\CalendarController;
+use App\Http\Controllers\Admin\CustomPostTypeController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\SiteController;
 use App\Http\Controllers\Admin\SettingsController;
@@ -22,11 +24,16 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\CommentController;
 use App\Http\Controllers\Admin\ContactSubmissionController;
+use App\Http\Controllers\Admin\BookingController;
+use App\Http\Controllers\Admin\ChatController;
+use App\Http\Controllers\Admin\EditorLockController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Models\Site;
 use App\Models\Category;
 use App\Models\Tag;
@@ -72,7 +79,18 @@ Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
 Route::post('/contact', [FrontendController::class, 'submitContact'])
     ->middleware('throttle:5,1')
     ->name('contact.submit');
+Route::post('/chat/messages', [FrontendController::class, 'storeChatMessage'])
+    ->middleware('throttle:10,1')
+    ->name('chat.store');
+Route::get('/chat/messages/poll', [FrontendController::class, 'pollChatMessages'])
+    ->middleware('throttle:30,1')
+    ->name('chat.poll');
+Route::get('/book', [FrontendController::class, 'booking'])->name('booking');
+Route::post('/book', [FrontendController::class, 'storeBooking'])
+    ->middleware('throttle:5,1')
+    ->name('booking.submit');
 Route::get('/blog', [FrontendController::class, 'blog'])->name('blog');
+Route::get('/events', [FrontendController::class, 'events'])->name('events');
 Route::get('/posts/{slug}', [FrontendController::class, 'post'])->name('post.show');
 Route::post('/posts/{slug}/comments', [FrontendController::class, 'storeComment'])
     ->middleware('throttle:5,1')
@@ -181,6 +199,11 @@ Route::middleware('guest')->group(function () {
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store')
         ->middleware('throttle:3,1');
+
+    // Social sign-in (Google / GitHub) — enabled via settings
+    Route::get('/auth/social/{provider}', [SocialLoginController::class, 'redirect'])->name('social.redirect')
+        ->middleware('throttle:10,1');
+    Route::get('/auth/social/{provider}/callback', [SocialLoginController::class, 'callback'])->name('social.callback');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -213,7 +236,28 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
         
         // Bulk actions
         Route::post('/bulk', [PostController::class, 'bulk'])->name('bulk');
+
+        // Editor presence / locking
+        Route::post('/{post}/lock', [EditorLockController::class, 'acquire'])->name('lock.acquire');
+        Route::get('/{post}/lock', [EditorLockController::class, 'show'])->name('lock.show');
+        Route::delete('/{post}/lock', [EditorLockController::class, 'release'])->name('lock.release');
     });
+
+    // Event calendar (admin)
+    Route::get('admin/event/calendar', [CalendarController::class, 'index'])->name('admin.event.calendar');
+
+    // Custom post types (portfolio, testimonial, event, …)
+    Route::prefix('admin/{type}')
+        ->where(['type' => 'portfolio|testimonial|event'])
+        ->name('admin.custom-posts.')
+        ->group(function () {
+            Route::get('/', [CustomPostTypeController::class, 'index'])->name('index');
+            Route::get('/create', [CustomPostTypeController::class, 'create'])->name('create');
+            Route::post('/', [CustomPostTypeController::class, 'store'])->name('store');
+            Route::get('/{post}/edit', [CustomPostTypeController::class, 'edit'])->name('edit');
+            Route::put('/{post}', [CustomPostTypeController::class, 'update'])->name('update');
+            Route::delete('/{post}', [CustomPostTypeController::class, 'destroy'])->name('destroy');
+        });
 
     // Media management
     Route::prefix('admin/media')->name('admin.media.')->group(function () {
@@ -316,6 +360,20 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
         Route::delete('/{submission}', [ContactSubmissionController::class, 'destroy'])->whereNumber('submission')->name('destroy');
     });
 
+    // Bookings inbox - Contact submissions style
+    Route::prefix('admin/bookings')->name('admin.bookings.')->group(function () {
+        Route::get('/', [BookingController::class, 'index'])->name('index');
+        Route::post('/{booking}/status', [BookingController::class, 'updateStatus'])->whereNumber('booking')->name('status');
+        Route::delete('/{booking}', [BookingController::class, 'destroy'])->whereNumber('booking')->name('destroy');
+    });
+
+    // Chat conversations inbox
+    Route::prefix('admin/chat')->name('admin.chat.')->group(function () {
+        Route::get('/', [ChatController::class, 'index'])->name('index');
+        Route::get('/{session}', [ChatController::class, 'show'])->where('session', '[A-Za-z0-9_-]+')->name('show');
+        Route::post('/{session}/reply', [ChatController::class, 'reply'])->where('session', '[A-Za-z0-9_-]+')->name('reply');
+    });
+
     // Backups management - Admin only
     Route::prefix('admin/backups')->middleware('role:admin')->name('admin.backups.')->group(function () {
         Route::get('/', [BackupController::class, 'index'])->name('index');
@@ -380,6 +438,16 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
         // Additional actions
         Route::post('/{user}/verify', [UserController::class, 'verify'])->whereNumber('user')->name('verify');
         Route::post('/{user}/deactivate', [UserController::class, 'deactivate'])->whereNumber('user')->name('deactivate');
+    });
+
+    // Roles management - Admin only
+    Route::prefix('admin/roles')->middleware('role:admin')->name('admin.roles.')->group(function () {
+        Route::get('/', [RoleController::class, 'index'])->name('index');
+        Route::get('/create', [RoleController::class, 'create'])->name('create');
+        Route::post('/', [RoleController::class, 'store'])->name('store');
+        Route::get('/{role}/edit', [RoleController::class, 'edit'])->whereNumber('role')->name('edit');
+        Route::put('/{role}', [RoleController::class, 'update'])->whereNumber('role')->name('update');
+        Route::delete('/{role}', [RoleController::class, 'destroy'])->whereNumber('role')->name('destroy');
     });
 
     // Reusable blocks - Admin only

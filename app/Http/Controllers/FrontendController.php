@@ -13,6 +13,7 @@ use App\Models\SiteSetting;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 
@@ -196,7 +197,7 @@ class FrontendController extends Controller
 
         $requiresApproval = (bool) ($this->settings()->enable_comment_approval ?? true);
 
-        Comment::create([
+        $comment = Comment::create([
             'post_id' => $post->id,
             'user_id' => auth()->id(),
             'parent_id' => $parentId,
@@ -209,11 +210,38 @@ class FrontendController extends Controller
             'user_agent' => substr((string) $request->userAgent(), 0, 255),
         ]);
 
+        $this->notifyCommentAuthor($comment, $post);
+
         $message = $requiresApproval
             ? 'Thanks! Your comment is awaiting moderation.'
             : 'Thanks! Your comment has been posted.';
 
         return redirect()->to($post->public_url . '#comments')->with('success', $message);
+    }
+
+    /**
+     * Notify the post author about a new comment. Never blocks the visitor.
+     */
+    protected function notifyCommentAuthor(Comment $comment, Post $post): void
+    {
+        try {
+            $settings = $this->settings();
+            $authorEmail = $post->user?->email;
+
+            if (!$authorEmail) {
+                return;
+            }
+
+            Mail::to($authorEmail)->send(new \App\Mail\CommentNotificationMail(
+                commentAuthor: $comment->author_name,
+                postTitle: $post->title,
+                postUrl: $post->public_url ?? url('/posts/' . $post->slug),
+                commentBody: $comment->content,
+                siteName: $settings->site_title ?? 'Rosetta CMS',
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /**
@@ -424,6 +452,174 @@ class FrontendController extends Controller
     }
 
     /**
+     * Public booking form.
+     */
+    public function booking()
+    {
+        $settings = $this->settings();
+
+        abort_unless($settings->enable_booking_form ?? true, 404);
+
+        return $this->render('booking', [
+            'seo' => $this->seo([
+                'title' => 'Book an Appointment',
+                'description' => $settings->site_description,
+                'canonical' => url('/book'),
+            ]),
+        ]);
+    }
+
+    /**
+     * Store a public booking request.
+     */
+    public function storeBooking(Request $request)
+    {
+        $settings = $this->settings();
+
+        abort_unless($settings->enable_booking_form ?? true, 404);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'service' => ['nullable', 'string', 'max:255'],
+            'date' => ['required', 'date', 'after_or_equal:today'],
+            'time' => ['nullable', 'date_format:H:i'],
+            'notes' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        // Silently accept bots that fill the hidden honeypot field.
+        $honeypot = $request->filled('website');
+
+        $spam = $honeypot
+            ? ['score' => 100, 'reason' => 'honeypot']
+            : app(\App\Services\SpamFilter::class)->analyze([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'subject' => $validated['service'] ?? null,
+                'message' => $validated['notes'] ?? null,
+            ]);
+
+        $isSpam = $spam['score'] >= 50;
+
+        if (!$isSpam) {
+            try {
+                \App\Models\Booking::create([
+                    'site_id' => $this->site()?->id,
+                    'service' => $validated['service'] ?? null,
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'phone' => $validated['phone'] ?? null,
+                    'date' => $validated['date'],
+                    'time' => $validated['time'] ?? null,
+                    'notes' => $validated['notes'] ?? null,
+                    'status' => 'pending',
+                    'ip_hash' => $request->ip() ? hash('sha256', $request->ip() . '|' . $request->userAgent()) : null,
+                    'user_agent' => substr((string) $request->userAgent(), 0, 255),
+                ]);
+            } catch (\Throwable $e) {
+                // Never block the visitor because of bookkeeping.
+                report($e);
+            }
+        }
+
+        if ($honeypot || $isSpam) {
+            return back()->with('status', 'Thanks! Your booking request has been received.');
+        }
+
+        $recipient = $settings->admin_email ?: config('mail.from.address');
+
+        if ($recipient) {
+            try {
+                Mail::to($recipient)->send(new \App\Mail\BookingNotification(
+                    bookingName: $validated['name'],
+                    bookingEmail: $validated['email'],
+                    bookingPhone: $validated['phone'] ?? null,
+                    service: $validated['service'] ?? '(not specified)',
+                    date: $validated['date'],
+                    time: $validated['time'] ?? null,
+                    notes: $validated['notes'] ?? null,
+                    siteName: $settings->site_title ?? $this->site()?->name ?? 'your website',
+                ));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return back()->with('status', 'Thanks! Your booking request has been received.');
+    }
+
+    /**
+     * Ensure a chat session id exists in the visitor session.
+     */
+    protected function chatSessionId(Request $request): string
+    {
+        if (!$request->session()->has('chat_session_id')) {
+            $request->session()->put('chat_session_id', (string) Str::uuid());
+        }
+
+        return $request->session()->get('chat_session_id');
+    }
+
+    /**
+     * Public chat widget: store a visitor message.
+     */
+    public function storeChatMessage(Request $request)
+    {
+        $settings = $this->settings();
+
+        abort_unless($settings->enable_chat_widget ?? true, 404);
+
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $sessionId = $this->chatSessionId($request);
+
+        $message = \App\Models\ChatMessage::create([
+            'site_id' => $this->site()?->id,
+            'session_id' => $sessionId,
+            'sender' => 'visitor',
+            'message' => $validated['message'],
+        ]);
+
+        return response()->json([
+            'id' => $message->id,
+            'sender' => 'visitor',
+            'message' => $message->message,
+            'created_at' => $message->created_at->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * Public chat widget: poll for new admin replies.
+     */
+    public function pollChatMessages(Request $request)
+    {
+        $settings = $this->settings();
+
+        abort_unless($settings->enable_chat_widget ?? true, 404);
+
+        $sessionId = $this->chatSessionId($request);
+        $since = (int) $request->query('since', 0);
+
+        $messages = \App\Models\ChatMessage::where('session_id', $sessionId)
+            ->where('sender', 'admin')
+            ->where('id', '>', $since)
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'messages' => $messages->map(fn ($m) => [
+                'id' => $m->id,
+                'sender' => 'admin',
+                'message' => $m->message,
+                'created_at' => $m->created_at->toIso8601String(),
+            ])->values(),
+        ]);
+    }
+
+    /**
      * Normalized custom form fields from site settings.
      */
     protected function customFormFields(?\App\Models\SiteSetting $settings): array
@@ -519,6 +715,45 @@ class FrontendController extends Controller
                 'title' => 'Blog',
                 'description' => $settings->site_description,
                 'canonical' => $this->pagedUrl('/blog', $posts),
+            ]),
+        ]);
+    }
+
+    /**
+     * Public events listing — upcoming and past events.
+     *
+     * Events use their published_at as the event date. Upcoming events are
+     * published or scheduled (future published_at); past events are published
+     * with a published_at in the past.
+     */
+    public function events()
+    {
+        $settings = $this->settings();
+
+        $events = $this->scoped(Post::query())
+            ->where('post_type', 'event')
+            ->whereNotIn('status', ['trash', 'draft'])
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->with(['author', 'categories'])
+            ->orderBy('published_at')
+            ->get();
+
+        $upcoming = $events->filter(fn ($event) => $event->published_at === null || $event->published_at->isFuture())
+            ->sortBy(fn ($event) => $event->published_at ?? now());
+        $past = $events->filter(fn ($event) => $event->published_at !== null && $event->published_at->isPast())
+            ->sortByDesc('published_at')
+            ->take(12);
+
+        return $this->render('events', [
+            'upcoming' => $upcoming,
+            'past' => $past,
+            'seo' => $this->seo([
+                'title' => 'Events',
+                'description' => $settings->site_description,
+                'canonical' => url('/events'),
             ]),
         ]);
     }

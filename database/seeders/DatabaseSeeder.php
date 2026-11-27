@@ -41,6 +41,12 @@ class DatabaseSeeder extends Seeder
         );
 
         // Create (or reuse) the default roles
+        $adminPerms = [];
+        foreach (array_keys(\App\Support\PostTypes::all()) as $type) {
+            $adminPerms[$type] = ['view' => true, 'create' => true, 'edit' => true, 'delete' => true, 'publish' => true];
+        }
+        $adminPerms['page'] = ['view' => true, 'create' => true, 'edit' => true, 'delete' => true, 'publish' => true];
+
         $adminRole = Role::firstOrCreate(
             ['slug' => 'admin'],
             [
@@ -58,8 +64,15 @@ class DatabaseSeeder extends Seeder
                     'seo' => true,
                     'multi_site' => true,
                 ],
+                'post_type_permissions' => $adminPerms,
             ]
         );
+
+        $editorPerms = [];
+        foreach (array_keys(\App\Support\PostTypes::all()) as $type) {
+            $editorPerms[$type] = ['view' => true, 'create' => true, 'edit' => true, 'delete' => false, 'publish' => true];
+        }
+        $editorPerms['page'] = ['view' => true, 'create' => true, 'edit' => true, 'delete' => false, 'publish' => true];
 
         $editorRole = Role::firstOrCreate(
             ['slug' => 'editor'],
@@ -73,8 +86,14 @@ class DatabaseSeeder extends Seeder
                     'media' => true,
                     'seo' => true,
                 ],
+                'post_type_permissions' => $editorPerms,
             ]
         );
+
+        $authorPerms = [];
+        foreach (['post', 'portfolio', 'testimonial', 'event'] as $type) {
+            $authorPerms[$type] = ['view' => true, 'create' => true, 'edit' => true, 'delete' => false, 'publish' => false];
+        }
 
         $authorRole = Role::firstOrCreate(
             ['slug' => 'author'],
@@ -85,6 +104,13 @@ class DatabaseSeeder extends Seeder
                     'dashboard' => true,
                     'posts' => true,
                     'media' => true,
+                ],
+                'post_type_permissions' => $authorPerms,
+                'field_permissions' => [
+                    'post' => ['title', 'slug', 'content', 'excerpt', 'featured_image'],
+                    'portfolio' => ['title', 'slug', 'content', 'excerpt', 'featured_image'],
+                    'testimonial' => ['title', 'slug', 'content', 'excerpt'],
+                    'event' => ['title', 'slug', 'content', 'excerpt', 'featured_image'],
                 ],
             ]
         );

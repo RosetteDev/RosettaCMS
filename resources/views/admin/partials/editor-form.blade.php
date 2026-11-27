@@ -1,10 +1,16 @@
 @php
     $isEdit = $post->exists;
-    $base = $postType === 'page' ? '/admin/pages' : '/admin/posts';
+    $postTypeDef = \App\Support\PostTypes::get($postType);
+    $isCustom = $postTypeDef !== null && empty($postTypeDef['dedicated_controller']);
+    $base = $postType === 'page' ? '/admin/pages' : ($isCustom ? '/admin/' . $postType : '/admin/posts');
     $formAction = $isEdit ? url($base . '/' . $post->id) : url($base);
     $indexUrl = url($base);
     $meta = $post->meta ?? [];
-    $label = $postType === 'page' ? 'Page' : 'Post';
+    $label = $postTypeDef['label'] ?? ($postType === 'page' ? 'Page' : 'Post');
+    $supportsCategories = $postType === 'post' || ($postTypeDef && in_array('categories', $postTypeDef['supports'] ?? []));
+    $supportsTags = $postType === 'post' || ($postTypeDef && in_array('tags', $postTypeDef['supports'] ?? []));
+    $editableFields = $editableFields ?? array_keys(\App\Models\Role::editableFields());
+    $fieldLocked = fn ($field) => !in_array($field, $editableFields, true);
 @endphp
 
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
@@ -12,8 +18,15 @@
         <h1 class="h3 mb-1">{{ $action }} {{ $label }}</h1>
         <p class="text-muted mb-0">{{ $isEdit ? 'Update your content and settings' : 'Create new ' . strtolower($label) . ' content' }}</p>
     </div>
-    <div class="mt-3 mt-sm-0">
-        <a href="{{ $indexUrl }}" class="btn btn-outline-secondary">Back to {{ $label }}s</a>
+    <div class="mt-3 mt-sm-0 d-flex align-items-center gap-2">
+        @if($isEdit)
+            <span id="editor-presence" class="editor-presence d-none" role="status" aria-live="polite">
+                <i class="fas fa-circle-notch fa-spin me-1" aria-hidden="true"></i>
+                <span id="presence-text"></span>
+                <button type="button" id="editor-release-lock" class="btn btn-outline-secondary btn-sm ms-2 d-none">Release lock</button>
+            </span>
+        @endif
+        <a href="{{ $indexUrl }}" class="btn btn-outline-secondary">Back to {{ $postTypeDef['plural'] ?? ($label . 's') }}</a>
     </div>
 </div>
 
@@ -43,7 +56,11 @@
                         <label for="title" class="form-label fw-semibold">Title</label>
                         <input type="text" name="title" id="title" class="form-control form-control-lg"
                                value="{{ old('title', $post->title) }}" required maxlength="255"
+                               {{ $fieldLocked('title') ? 'disabled' : '' }}
                                placeholder="Add a title...">
+                        @if($fieldLocked('title'))
+                            <div class="form-text text-muted"><i class="fas fa-lock me-1"></i>You do not have permission to edit the title.</div>
+                        @endif
                     </div>
 
                     <div class="mb-3">
@@ -51,7 +68,7 @@
                         <div class="input-group">
                             <span class="input-group-text">{{ url('/') }}/</span>
                             <input type="text" name="slug" id="slug" class="form-control"
-                                   value="{{ old('slug', $post->slug) }}" placeholder="auto-generated-from-title">
+                                   value="{{ old('slug', $post->slug) }}" {{ $fieldLocked('slug') ? 'disabled' : '' }} placeholder="auto-generated-from-title">
                         </div>
                         <div class="form-text">Leave blank to generate from the title.</div>
                     </div>
@@ -59,7 +76,10 @@
                     <div class="mb-2">
                         <label class="form-label fw-semibold">Content</label>
                         <div id="quill-editor"></div>
-                        <textarea name="content" id="content" style="display: none;">{{ old('content', $post->content) }}</textarea>
+                        <textarea name="content" id="content" style="display: none;" {{ $fieldLocked('content') ? 'disabled' : '' }}>{{ old('content', $post->content) }}</textarea>
+                        @if($fieldLocked('content'))
+                            <div class="form-text text-muted"><i class="fas fa-lock me-1"></i>You do not have permission to edit the content.</div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -70,6 +90,7 @@
                 </div>
                 <div class="card-body">
                     <textarea name="excerpt" id="excerpt" class="form-control" rows="3"
+                              {{ $fieldLocked('excerpt') ? 'disabled' : '' }}
                               placeholder="A short summary used in listings and search results...">{{ old('excerpt', $post->excerpt) }}</textarea>
                 </div>
             </div>
@@ -97,12 +118,14 @@
                         <label for="seo_title" class="form-label">SEO title</label>
                         <input type="text" name="seo_title" id="seo_title" class="form-control" maxlength="255"
                                value="{{ old('seo_title', $meta['seo_title'] ?? '') }}"
+                               {{ $fieldLocked('seo_title') ? 'disabled' : '' }}
                                placeholder="Defaults to the post title">
                     </div>
 
                     <div class="mb-3">
                         <label for="seo_description" class="form-label">Meta description</label>
                         <textarea name="seo_description" id="seo_description" class="form-control" rows="3" maxlength="500"
+                                  {{ $fieldLocked('seo_description') ? 'disabled' : '' }}
                                   placeholder="Defaults to the excerpt">{{ old('seo_description', $meta['seo_description'] ?? '') }}</textarea>
                         <div class="form-text"><span id="seo-desc-count">0</span>/500 characters (aim for 150–160).</div>
                     </div>
@@ -287,7 +310,7 @@
                 </div>
             </div>
 
-            @if($postType === 'post')
+            @if($supportsCategories)
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-transparent"><h2 class="h5 mb-0">Categories</h2></div>
                     <div class="card-body" style="max-height:220px;overflow:auto;">
@@ -303,7 +326,9 @@
                         @endforelse
                     </div>
                 </div>
+            @endif
 
+            @if($supportsTags)
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-transparent"><h2 class="h5 mb-0">Tags</h2></div>
                     <div class="card-body" style="max-height:220px;overflow:auto;">
@@ -368,6 +393,14 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css">
 <style>
+    .editor-presence {
+        display: inline-flex; align-items: center; gap: .35rem;
+        padding: .4rem .75rem; border-radius: .5rem;
+        background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;
+        font-size: .85rem;
+    }
+</style>
+<style>
     #quill-editor { min-height: 420px; background: #fff; }
     .ql-toolbar.ql-snow {
         border: 1px solid #d1d5db; border-bottom: none;
@@ -394,8 +427,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let pickerTarget = 'featured';
     let pickerIndex = 0;
 
+    const contentLocked = {{ $fieldLocked('content') ? 'true' : 'false' }};
     const quill = new Quill('#quill-editor', {
         theme: 'snow',
+        readOnly: contentLocked,
         modules: {
             toolbar: {
                 container: [
@@ -651,6 +686,62 @@ document.addEventListener('DOMContentLoaded', function () {
                 bootstrap.Modal.getOrCreateInstance(pickerModal).hide();
             }
         });
+    }
+
+    // Presence: acquire/refresh the editor lock and show who else is editing.
+    const presence = document.getElementById('editor-presence');
+    const releaseBtn = document.getElementById('editor-release-lock');
+    const lockPostId = @json($isEdit ? $post->id : null);
+    if (presence && lockPostId) {
+        const lockUrl = '/admin/posts/' + lockPostId + '/lock';
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const currentUserId = @json(auth()->id());
+
+        const renderPresence = (data) => {
+            const holder = data.holder;
+            const text = presence.querySelector('#presence-text');
+            if (holder && holder.id !== currentUserId) {
+                if (text) text.textContent = 'Being edited by ' + holder.name + ' — your changes may be blocked.';
+                presence.classList.remove('d-none');
+                if (releaseBtn) releaseBtn.classList.add('d-none');
+            } else if (holder && holder.id === currentUserId) {
+                if (text) text.textContent = 'You are editing.';
+                presence.classList.remove('d-none');
+                if (releaseBtn) releaseBtn.classList.remove('d-none');
+            } else {
+                presence.classList.add('d-none');
+                if (releaseBtn) releaseBtn.classList.add('d-none');
+            }
+        };
+
+        const refreshLock = () => {
+            fetch(lockUrl, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            })
+                .then(r => r.ok ? r.json() : null)
+                .then(data => data && renderPresence(data))
+                .catch(() => {});
+        };
+
+        refreshLock();
+        const lockTimer = setInterval(refreshLock, 5000);
+        window.addEventListener('beforeunload', () => clearInterval(lockTimer));
+
+        if (releaseBtn) {
+            releaseBtn.addEventListener('click', () => {
+                fetch(lockUrl, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    credentials: 'same-origin'
+                }).finally(() => {
+                    presence.classList.add('d-none');
+                    releaseBtn.classList.add('d-none');
+                    clearInterval(lockTimer);
+                });
+            });
+        }
     }
 });
 </script>

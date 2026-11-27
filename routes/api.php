@@ -11,6 +11,7 @@ Route::middleware('throttle:120,1')->group(function () {
         Route::get('/', [ContentController::class, 'index'])->name('api.index');
         Route::get('/openapi.json', [DocsController::class, 'spec'])->name('api.openapi');
         Route::get('/docs', [DocsController::class, 'docs'])->name('api.docs');
+        Route::get('/swagger', [DocsController::class, 'swagger'])->name('api.swagger');
 
         Route::get('/posts', [ContentController::class, 'posts'])->name('api.posts.index');
         Route::get('/posts/{slug}', [ContentController::class, 'post'])->name('api.posts.show');

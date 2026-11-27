@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -141,6 +142,63 @@ class User extends Authenticatable
     }
 
     /**
+     * Determine whether the user can perform an action on a post type.
+     *
+     * Admins are unrestricted; other roles consult their per-post-type
+     * permission map (falling back to legacy flat permissions).
+     */
+    public function canPerform(string $type, string $action): bool
+    {
+        if ($this->hasRole('admin')) {
+            return true;
+        }
+
+        foreach ($this->roles as $role) {
+            if ($role->canPerform($type, $action)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine whether the user may edit a single field on a post type.
+     */
+    public function canEditField(string $type, string $field): bool
+    {
+        if ($this->hasRole('admin')) {
+            return true;
+        }
+
+        foreach ($this->roles as $role) {
+            if ($role->canEditField($type, $field)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * List the fields the user may edit for a post type.
+     */
+    public function editableFieldsFor(string $type): array
+    {
+        if ($this->hasRole('admin')) {
+            return array_keys(\App\Models\Role::editableFields());
+        }
+
+        $allowed = [];
+
+        foreach ($this->roles as $role) {
+            $allowed = array_merge($allowed, $role->editableFieldsFor($type));
+        }
+
+        return array_values(array_unique($allowed));
+    }
+
+    /**
      * Determine whether the user can reach the administration area.
      */
     public function isStaff(): bool
@@ -178,5 +236,16 @@ class User extends Authenticatable
     public function scopePending($query)
     {
         return $query->whereNull('email_verified_at');
+    }
+
+    /**
+     * Send the password reset notification (custom template).
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

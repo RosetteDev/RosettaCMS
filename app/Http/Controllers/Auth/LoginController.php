@@ -19,14 +19,24 @@ class LoginController extends Controller
     public function showLoginForm()
     {
         $registrationEnabled = false;
+        $socialProviders = [];
 
         try {
-            $registrationEnabled = (bool) (SiteSetting::forSite()->enable_user_registration ?? true);
+            $settings = SiteSetting::forSite();
+            $registrationEnabled = (bool) ($settings->enable_user_registration ?? true);
+
+            if ($settings->enable_social_login_google ?? false) {
+                $socialProviders[] = 'google';
+            }
+
+            if ($settings->enable_social_login_github ?? false) {
+                $socialProviders[] = 'github';
+            }
         } catch (\Throwable $e) {
-            // Fall back to hiding the link if settings are unavailable.
+            // Fall back to hiding the links if settings are unavailable.
         }
 
-        return view('auth.login', compact('registrationEnabled'));
+        return view('auth.login', compact('registrationEnabled', 'socialProviders'));
     }
 
     /**

@@ -916,6 +916,61 @@
                                     </div>
                                 </label>
                             </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="enable_welcome_email" value="0">
+                                    <input type="checkbox" name="enable_welcome_email" value="1" {{ old('enable_welcome_email', $settings->enable_welcome_email ?? 1) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <div>
+                                        <span style="color: var(--text-color);">Send Welcome E-mail</span>
+                                        <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.25rem;">Send a transactional welcome email to newly registered users.</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="enable_social_login_google" value="0">
+                                    <input type="checkbox" name="enable_social_login_google" value="1" {{ old('enable_social_login_google', $settings->enable_social_login_google ?? 0) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <div>
+                                        <span style="color: var(--text-color);">Google Sign-In</span>
+                                        <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.25rem;">Allow users to sign in with a Google account (requires GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET).</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="enable_social_login_github" value="0">
+                                    <input type="checkbox" name="enable_social_login_github" value="1" {{ old('enable_social_login_github', $settings->enable_social_login_github ?? 0) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <div>
+                                        <span style="color: var(--text-color);">GitHub Sign-In</span>
+                                        <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.25rem;">Allow users to sign in with a GitHub account (requires GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET).</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="enable_chat_widget" value="0">
+                                    <input type="checkbox" name="enable_chat_widget" value="1" {{ old('enable_chat_widget', $settings->enable_chat_widget ?? 1) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <div>
+                                        <span style="color: var(--text-color);">Public Chat Widget</span>
+                                        <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.25rem;">Show the floating support chat button on the public site.</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="hidden" name="enable_booking_form" value="0">
+                                    <input type="checkbox" name="enable_booking_form" value="1" {{ old('enable_booking_form', $settings->enable_booking_form ?? 1) ? 'checked' : '' }} style="margin-right: 0.75rem; width: 18px; height: 18px;">
+                                    <div>
+                                        <span style="color: var(--text-color);">Public Booking Form</span>
+                                        <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.25rem;">Show the public booking form at <code>/book</code> for appointment requests.</p>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
 
                         <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">

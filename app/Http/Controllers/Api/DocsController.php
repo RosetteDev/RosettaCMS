@@ -28,4 +28,14 @@ class DocsController extends Controller
             'spec' => OpenApi::spec(),
         ]);
     }
+
+    /**
+     * Serve the in-app Swagger UI documentation page.
+     */
+    public function swagger(): Response
+    {
+        return response()->view('api.swagger', [
+            'spec' => OpenApi::spec(),
+        ]);
+    }
 }

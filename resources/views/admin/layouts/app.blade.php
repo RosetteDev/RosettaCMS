@@ -617,6 +617,7 @@
             <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') || request()->is('admin') ? 'active' : '' }}">Dashboard</a>
             <a href="{{ url('/profile') }}" class="{{ request()->is('profile') ? 'active' : '' }}">Profile</a>
             <a href="{{ url('/admin/api-keys') }}" class="{{ request()->is('admin/api-keys*') ? 'active' : '' }}">API Keys</a>
+            <a href="{{ url('/api/v1/swagger') }}" target="_blank" rel="noopener" class="{{ request()->is('api/v1/swagger*') ? 'active' : '' }}">API Docs</a>
 
             @if($currentUser?->isStaff())
             <div class="sidebar-group">
@@ -634,6 +635,14 @@
             <a href="{{ url('/admin/media') }}" class="{{ request()->is('admin/media*') ? 'active' : '' }}">Media</a>
             <a href="{{ url('/admin/menus') }}" class="{{ request()->is('admin/menus*') ? 'active' : '' }}">Menus</a>
             <a href="{{ url('/admin/forms') }}" class="{{ request()->is('admin/forms*') ? 'active' : '' }}">Forms</a>
+            <a href="{{ url('/admin/bookings') }}" class="{{ request()->is('admin/bookings*') ? 'active' : '' }}">Bookings</a>
+            @php($chatUnread = \App\Models\ChatMessage::where('sender', 'visitor')->whereNull('read_at')->count())
+            <a href="{{ url('/admin/chat') }}" class="{{ request()->is('admin/chat*') ? 'active' : '' }}">Chat @if($chatUnread > 0) <span style="display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 0.35rem; border-radius: 999px; background-color: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; text-align: center;">{{ $chatUnread > 99 ? '99+' : $chatUnread }}</span>@endif</a>
+
+            @foreach(\App\Support\PostTypes::generic() as $typeSlug => $typeDef)
+                <a href="{{ url('/admin/' . $typeSlug) }}" class="{{ request()->is('admin/' . $typeSlug . '*') && !request()->is('admin/event/calendar*') ? 'active' : '' }}">{{ $typeDef['menu'] }}</a>
+            @endforeach
+            <a href="{{ url('/admin/event/calendar') }}" class="{{ request()->is('admin/event/calendar*') ? 'active' : '' }}">Event Calendar</a>
 
             @if($currentUser?->hasRole('admin'))
             <a href="{{ url('/admin/languages') }}" class="{{ request()->is('admin/languages*') ? 'active' : '' }}">Languages</a>
@@ -642,6 +651,7 @@
 
             @if($currentUser?->hasRole('admin'))
             <a href="{{ url('/admin/users') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}">Users</a>
+            <a href="{{ url('/admin/roles') }}" class="{{ request()->is('admin/roles*') ? 'active' : '' }}">Roles</a>
             <a href="{{ url('/admin/sites') }}" class="{{ request()->is('admin/sites*') ? 'active' : '' }}">Sites</a>
             <a href="{{ url('/admin/themes') }}" class="{{ request()->is('admin/themes*') ? 'active' : '' }}">Themes</a>
             <a href="{{ url('/admin/plugins') }}" class="{{ request()->is('admin/plugins*') ? 'active' : '' }}">Plugins</a>

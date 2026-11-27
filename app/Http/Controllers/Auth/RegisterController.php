@@ -8,6 +8,7 @@ use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -53,7 +54,31 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
+        $this->sendWelcomeMail($user);
+
         return redirect(route('dashboard'));
+    }
+
+    /**
+     * Send the transactional welcome email. Never blocks registration.
+     */
+    protected function sendWelcomeMail(User $user): void
+    {
+        try {
+            $settings = SiteSetting::forSite();
+
+            if (!(bool) ($settings->enable_welcome_email ?? true)) {
+                return;
+            }
+
+            Mail::to($user->email)->send(new \App\Mail\WelcomeMail(
+                userName: $user->name,
+                siteName: $settings->site_title ?? 'Rosetta CMS',
+                loginUrl: url('/login'),
+            ));
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     /**
