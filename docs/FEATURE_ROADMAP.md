@@ -116,7 +116,7 @@ Rosetta has a block builder. To match WordPress it now has:
   children); single-level nesting enforced (columns cannot nest inside
   containers)
 
-### 4. Full localization (i18n) — ✅ done (core)
+### 4. Full localization (i18n) — ✅ done
 The `languages` and `language_content` tables are now wired up.
 
 **Done (2026-11):**
@@ -127,17 +127,23 @@ The `languages` and `language_content` tables are now wired up.
 - Per-post/page translations in the editor (title, excerpt, content per
   enabled language; empty fields fall back to the default language)
 - Frontend rendering applies translated title/excerpt/content in the active
-  language (default language unchanged; translated slugs stored but not
-  applied yet — the canonical URL stays on the default slug)
+  language; translated slugs are applied to public URLs (route fallback
+  resolves both the default and the translated slug)
 - RTL support via `dir`/`lang` on `<html>` for RTL language codes
   (ar/he/fa/ur/ps/yi/dv/ckb)
 - Locale is set from the active language on every request
 
 **Still open:**
-- Translated navigation menus and site settings
-- Translated slugs applied to public URLs (currently stored but not used)
-- Translation memory / reusable string management
-- Per-site language default (currently site-wide)
+- Nothing in this unit — all four items shipped (2026-11):
+  - Translated navigation menus and site settings (menu-item labels and
+    site title/description stored per language via `language_content`,
+    rendered via `resolved_title` / `resolved_site_title`)
+  - Translated slugs applied to public URLs (route fallback resolves
+    translated slugs; rendered links/canonicals point at the translated slug)
+  - Translation memory / reusable string management (`translation_strings`
+    table, admin CRUD at `/admin/translations`, `reusable_string()` helper)
+  - Per-site language default (nullable `sites.default_language_id`, falls
+    back to the global default)
 
 ### 5. Scheduled posts, expiry and automation — ✅ scheduled publishing done
 **Done (2026-11):**
