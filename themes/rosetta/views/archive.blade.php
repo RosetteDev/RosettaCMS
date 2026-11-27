@@ -1,4 +1,4 @@
-@extends('themes.rosetta.layouts.app')
+@extends('themes.rosetta::layouts.app')
 
 @section('content')
 <div class="container">
@@ -45,7 +45,7 @@
         </div>
 
         <div class="col-md-4">
-            @include('themes.rosetta.partials.sidebar')
+            @include('themes.rosetta::partials.sidebar')
         </div>
     </div>
 </div>

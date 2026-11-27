@@ -32,6 +32,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Register custom paths
         $this->registerPluginPaths();
+
+        // Register per-theme view namespaces (themes with a views/ directory)
+        $this->registerThemeViews();
     }
 
     /**
@@ -61,5 +64,31 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register plugin assets path
         $this->app['view']->addNamespace('plugins', app_path('Plugins'));
+    }
+
+    /**
+     * Register a view namespace for each theme that ships its own views/
+     * directory. This makes `themes.{slug}::{view}` resolve to the theme's
+     * own templates (e.g. `themes.elegant::layouts.app`).
+     */
+    protected function registerThemeViews(): void
+    {
+        $themesDir = base_path('themes');
+
+        if (! is_dir($themesDir)) {
+            return;
+        }
+
+        foreach (glob($themesDir . '/*', GLOB_ONLYDIR) ?: [] as $themeDir) {
+            $viewsDir = $themeDir . '/views';
+
+            if (! is_dir($viewsDir)) {
+                continue;
+            }
+
+            $slug = basename($themeDir);
+
+            $this->app['view']->addNamespace('themes.' . $slug, $viewsDir);
+        }
     }
 }

@@ -1,4 +1,4 @@
-@extends('themes.rosetta.views.layouts.app')
+@extends('themes.rosetta::layouts.app')
 
 @section('content')
 <!-- Hero Section -->

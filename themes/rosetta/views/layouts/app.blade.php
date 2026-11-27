@@ -6,7 +6,7 @@
     @include('themes._shared.seo')
     
     <!-- Styles -->
-    <link rel="stylesheet" href="{{ asset('themes/rosetta/css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/' . ($theme_slug ?? 'rosetta') . '/css/style.css') }}">
     @stack('styles')
     
     <style>

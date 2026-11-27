@@ -72,7 +72,8 @@ class FrontendController extends Controller
             && preg_match('/^[A-Za-z0-9_-]+$/', $preview)
             && auth()->check()
             && auth()->user()->hasRole('admin')
-            && file_exists(public_path('themes/' . $preview . '/css/style.css'))) {
+            && (file_exists(public_path('themes/' . $preview . '/css/style.css'))
+                || file_exists(base_path('themes/' . $preview . '/css/style.css')))) {
             return $preview;
         }
 
@@ -1106,10 +1107,15 @@ class FrontendController extends Controller
     {
         $data = $this->localizeData($data);
         $themeSlug = $this->themeSlug();
-        $candidates = [
-            "themes.{$themeSlug}.{$view}",
-            "themes.rosetta.{$view}",
-        ];
+        $candidates = [];
+
+        // New-style themes ship their own views/ directory; prefer those.
+        if (is_dir(base_path("themes/{$themeSlug}/views"))) {
+            $candidates[] = "themes.{$themeSlug}::{$view}";
+        }
+
+        $candidates[] = "themes.{$themeSlug}.{$view}";
+        $candidates[] = "themes.rosetta.{$view}";
 
         $resolved = null;
         foreach ($candidates as $candidate) {
@@ -1132,6 +1138,21 @@ class FrontendController extends Controller
             'theme_options' => $this->themeOptions(),
             'headerMenu' => Menu::forLocation('header', $site),
             'footerMenu' => Menu::forLocation('footer', $site),
+            'categories' => $this->scoped(Category::query())
+                ->withCount('posts')
+                ->orderBy('name')
+                ->limit(10)
+                ->get(),
+            'recentPosts' => $this->scoped(Post::query())
+                ->published()
+                ->where('post_type', 'post')
+                ->orderByDesc('published_at')
+                ->limit(5)
+                ->get(),
+            'tags' => $this->scoped(Tag::query())
+                ->orderBy('name')
+                ->limit(15)
+                ->get(),
         ];
 
         if (!empty($data['post']) && app()->bound('wordpress.compat')) {
