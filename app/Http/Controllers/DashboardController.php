@@ -42,6 +42,20 @@ class DashboardController extends Controller
         // Get recent media
         $recentMedia = \App\Models\Media::orderBy('created_at', 'desc')->limit(5)->get();
 
-        return view('admin.dashboard', compact('stats', 'recentPosts', 'recentMedia', 'settings'));
+        // Dashboard layout (user-customized section order)
+        $user = $request->user();
+        $defaultLayout = ['recent-content', 'quick-actions', 'recent-media'];
+        $savedLayout = $user->dashboard_layout ?? [];
+        $layout = array_values(array_unique(array_merge($savedLayout, $defaultLayout)));
+
+        // Active widgets from user preferences or session
+        $defaultWidgets = [
+            'stats_overview' => ['status' => 'enabled', 'priority' => 'high'],
+            'quick_actions' => ['status' => 'enabled', 'priority' => 'high'],
+        ];
+        $savedWidgets = $user->dashboard_widgets ?? $request->session()->get('dashboard_widgets', []);
+        $widgets = array_merge($defaultWidgets, $savedWidgets);
+
+        return view('admin.dashboard', compact('stats', 'recentPosts', 'recentMedia', 'settings', 'layout', 'widgets'));
     }
 }

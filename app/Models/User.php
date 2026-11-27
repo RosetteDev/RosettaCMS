@@ -26,6 +26,7 @@ class User extends Authenticatable
         'admin_theme',
         'show_welcome_tour',
         'dashboard_widgets',
+        'dashboard_layout',
         'two_factor_enabled_at',
         'failed_login_attempts',
         'locked_until',
@@ -53,6 +54,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'dashboard_widgets' => 'array',
+            'dashboard_layout' => 'array',
             'two_factor_enabled_at' => 'datetime',
             'locked_until' => 'datetime',
         ];

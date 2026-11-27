@@ -91,12 +91,15 @@
                 <template x-for="block in blocks" :key="block.tempId">
                     <div class="block-item card mb-3 border-0 shadow-sm"
                          draggable="true"
+                         tabindex="0"
+                         :aria-label="'Block: ' + getBlockTypeLabel(block.type) + (selectedBlockId === block.tempId ? ' (selected)' : '')"
                          :data-temp-id="block.tempId"
                          :class="{ 'border-primary': selectedBlockId === block.tempId }"
                          @dragstart="onDragStart($event)"
                          @dragover="onDragOver($event)"
                          @drop="onDrop($event)"
-                         @dragend="onDragEnd()">
+                         @dragend="onDragEnd()"
+                         @keydown.enter.prevent="selectBlock(block.tempId); focusSelectedBlock()">
                         <div class="card-header bg-light py-2">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center">
@@ -104,7 +107,7 @@
                                     <span class="text-muted small" x-text="getBlockTypeLabel(block.type)"></span>
                                     <span class="badge bg-secondary ms-2" x-text="block.id ? 'Saved' : 'New'"></span>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" @click="toggleBlockMenu(block.tempId)">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @click="toggleBlockMenu(block.tempId)" :aria-label="'Block options for ' + getBlockTypeLabel(block.type)">
                                     <i class="fas fa-ellipsis-v"></i>
                                 </button>
                             </div>
@@ -746,7 +749,39 @@ document.addEventListener('alpine:init', () => {
             } else if (event.key === 'y' && (event.ctrlKey || event.metaKey) && !inField) {
                 event.preventDefault();
                 this.redo();
+            } else if (this.selectedBlockId && !inField && !event.target.closest('button, a, .block-menu')) {
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    this.navigateSelection(event.key === 'ArrowDown' ? 1 : -1);
+                } else if (event.key === 'Delete' || event.key === 'Backspace') {
+                    event.preventDefault();
+                    this.deleteBlock(this.selectedBlockId);
+                }
             }
+        },
+
+        navigateSelection(delta) {
+            const ids = this.blocks.map(b => b.tempId);
+            const index = ids.indexOf(this.selectedBlockId);
+            const next = index + delta;
+            if (next < 0 || next >= ids.length) return;
+            this.selectedBlockId = ids[next];
+            this.$nextTick(() => {
+                const el = document.querySelector('[data-temp-id="' + CSS.escape(ids[next]) + '"]');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+        },
+
+        focusSelectedBlock() {
+            const id = this.selectedBlockId;
+            this.$nextTick(() => {
+                const el = document.querySelector(
+                    '[data-temp-id="' + CSS.escape(id) + '"] .block-edit-form input, ' +
+                    '[data-temp-id="' + CSS.escape(id) + '"] .block-edit-form textarea, ' +
+                    '[data-temp-id="' + CSS.escape(id) + '"] .block-edit-form select'
+                );
+                if (el) el.focus();
+            });
         },
 
         // ----- block operations -----

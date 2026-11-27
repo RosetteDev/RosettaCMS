@@ -7,6 +7,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\SearchController;
+use App\Http\Controllers\Admin\PreferencesController;
 use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\IpRulesController;
 use App\Http\Controllers\Admin\RedirectController;
@@ -450,6 +452,14 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
         Route::post('/{id}/deactivate', [PluginController::class, 'deactivate'])->name('deactivate');
         Route::post('/{slug}/permissions/{permission}/approve', [PluginController::class, 'approve'])->name('permissions.approve');
         Route::post('/{slug}/permissions/{permission}/revoke', [PluginController::class, 'revoke'])->name('permissions.revoke');
+    });
+
+    // Admin search + notifications center
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/search', [SearchController::class, 'search'])->name('search');
+        Route::get('/notifications', [SearchController::class, 'notifications'])->name('notifications.index');
+        Route::post('/preferences/theme', [PreferencesController::class, 'updateTheme'])->name('preferences.theme');
+        Route::post('/dashboard/layout', [PreferencesController::class, 'updateLayout'])->name('dashboard.layout');
     });
 
     // Menu management

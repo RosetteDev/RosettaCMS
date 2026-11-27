@@ -44,6 +44,12 @@ class DashboardController extends Controller
 
         // Active widgets from user preferences or session
         $user = auth()->user();
+
+        // Dashboard layout (user-customized section order)
+        $defaultLayout = ['recent-content', 'quick-actions', 'recent-media'];
+        $savedLayout = $user->dashboard_layout ?? [];
+        $layout = array_values(array_unique(array_merge($savedLayout, $defaultLayout)));
+
         $defaultWidgets = [
             'stats_overview' => ['status' => 'enabled', 'priority' => 'high'],
             'quick_actions' => ['status' => 'enabled', 'priority' => 'high'],
@@ -52,7 +58,7 @@ class DashboardController extends Controller
         $savedWidgets = $user->dashboard_widgets ?? $request->session()->get('dashboard_widgets', []);
         $widgets = array_merge($defaultWidgets, $savedWidgets);
 
-        return view('admin.dashboard', compact('settings', 'stats', 'recentPosts', 'recentMedia', 'widgets'));
+        return view('admin.dashboard', compact('settings', 'stats', 'recentPosts', 'recentMedia', 'widgets', 'layout'));
     }
 
     /**

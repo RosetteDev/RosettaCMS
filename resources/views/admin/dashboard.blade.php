@@ -45,6 +45,45 @@
         padding: 0.25rem 0.5rem;
         font-size: 0.75rem;
     }
+
+    /* --- Dashboard layout editor --- */
+    .dashboard-sections {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+        margin-bottom: 1.5rem;
+    }
+    .dashboard-section { min-width: 0; }
+    .section-recent-content { grid-column: span 8; }
+    .section-quick-actions { grid-column: span 4; }
+    .section-recent-media { grid-column: span 12; }
+
+    @media (max-width: 991px) {
+        .section-recent-content, .section-quick-actions, .section-recent-media { grid-column: span 12; }
+    }
+
+    body.layout-editing .dashboard-section {
+        border: 2px dashed #93c5fd;
+        border-radius: 10px;
+        padding: 0.35rem;
+        transition: box-shadow 0.15s;
+    }
+    body.layout-editing .dashboard-section:hover {
+        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.18);
+    }
+    .section-drag-handle {
+        display: none;
+        color: #6b7280;
+        cursor: grab;
+        font-size: 1rem;
+        line-height: 1;
+    }
+    body.layout-editing .section-drag-handle { display: inline-block; }
+    .section-move { display: none; padding: 0.2rem 0.45rem; font-size: 0.75rem; }
+    body.layout-editing .section-move { display: inline-block; }
+    .dashboard-section.drag-over { box-shadow: 0 0 0 3px #3b82f6; }
+    .dashboard-section.dragging { opacity: 0.4; }
 </style>
 @endpush
 
@@ -55,7 +94,13 @@
             <h1 class="h3 mb-1">Dashboard</h1>
             <p class="text-muted mb-0">Welcome back! Here's what's happening with your content.</p>
         </div>
-        <div class="mt-3 mt-sm-0">
+        <div class="d-flex gap-2 align-items-center mt-3 mt-sm-0">
+            <button type="button" id="customizeLayoutBtn" class="btn btn-outline-secondary btn-sm" aria-pressed="false">
+                <i class="fas fa-arrows-alt me-1"></i>Customize layout
+            </button>
+            <button type="button" id="saveLayoutBtn" class="btn btn-primary btn-sm" hidden>
+                <i class="fas fa-check me-1"></i>Save layout
+            </button>
             <a href="{{ url('/admin/posts/create') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>New Post
             </a>
@@ -133,13 +178,20 @@
         @endforeach
     </div>
 
-    <div class="row g-4">
-        {{-- Recent posts --}}
-        <div class="col-lg-8">
+    @php
+        $layoutIndex = array_flip($layout);
+    @endphp
+    <div id="dashboardSections" class="dashboard-sections">
+        <section class="dashboard-section section-recent-content" data-section="recent-content" style="order: {{ $layoutIndex['recent-content'] ?? 0 }}">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                     <h2 class="h5 mb-0">Recent Content</h2>
-                    <a href="{{ url('/admin/posts') }}" class="btn btn-sm btn-outline-primary">View all</a>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="section-drag-handle" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>
+                        <button type="button" class="section-move btn btn-sm btn-outline-secondary section-move-up" aria-label="Move Recent Content up"><i class="fas fa-arrow-up"></i></button>
+                        <button type="button" class="section-move btn btn-sm btn-outline-secondary section-move-down" aria-label="Move Recent Content down"><i class="fas fa-arrow-down"></i></button>
+                        <a href="{{ url('/admin/posts') }}" class="btn btn-sm btn-outline-primary">View all</a>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     @if(count($recentPosts) > 0)
@@ -174,13 +226,17 @@
                     @endif
                 </div>
             </div>
-        </div>
+        </section>
 
-        {{-- Quick actions --}}
-        <div class="col-lg-4">
+        <section class="dashboard-section section-quick-actions" data-section="quick-actions" style="order: {{ $layoutIndex['quick-actions'] ?? 1 }}">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-transparent">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                     <h2 class="h5 mb-0">Quick Actions</h2>
+                    <div class="section-controls">
+                        <span class="section-drag-handle" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>
+                        <button type="button" class="section-move btn btn-sm btn-outline-secondary section-move-up" aria-label="Move Quick Actions up"><i class="fas fa-arrow-up"></i></button>
+                        <button type="button" class="section-move btn btn-sm btn-outline-secondary section-move-down" aria-label="Move Quick Actions down"><i class="fas fa-arrow-down"></i></button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
@@ -207,17 +263,18 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="row g-4">
-        {{-- Recent media --}}
-        @if(count($recentMedia) > 0)
-        <div class="col-lg-12">
+        </section>
+
+        <section class="dashboard-section section-recent-media" data-section="recent-media" style="order: {{ $layoutIndex['recent-media'] ?? 2 }}">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                     <h2 class="h5 mb-0">Recent Media</h2>
-                    <a href="{{ url('/admin/media') }}" class="btn btn-sm btn-outline-primary">View all</a>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="section-drag-handle" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>
+                        <button type="button" class="section-move btn btn-sm btn-outline-secondary section-move-up" aria-label="Move Recent Media up"><i class="fas fa-arrow-up"></i></button>
+                        <button type="button" class="section-move btn btn-sm btn-outline-secondary section-move-down" aria-label="Move Recent Media down"><i class="fas fa-arrow-down"></i></button>
+                        <a href="{{ url('/admin/media') }}" class="btn btn-sm btn-outline-primary">View all</a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -239,26 +296,105 @@
                             </div>
                         @endforeach
                     </div>
+                    @if(count($recentMedia) === 0)
+                        <p class="text-muted text-center py-3 mb-0">No media yet. <a href="{{ url('/admin/media') }}" style="color: var(--primary-color);">Upload a file</a>.</p>
+                    @endif
                 </div>
             </div>
-        </div>
-        @endif
+        </section>
     </div>
 @endsection
 
 @push('scripts')
 <script>
-    // Widget management
     document.addEventListener('DOMContentLoaded', function() {
-        // Add widget drag-and-drop functionality
-        const widgets = document.querySelectorAll('.widget');
-        
-        widgets.forEach(widget => {
-            widget.addEventListener('click', function(e) {
-                if (e.target.closest('.widget-actions')) return;
-                
-                // Widget click handler
-                console.log('Widget clicked:', widget.dataset.widgetId);
+        const container = document.getElementById('dashboardSections');
+        if (!container) return;
+
+        const customizeBtn = document.getElementById('customizeLayoutBtn');
+        const saveBtn = document.getElementById('saveLayoutBtn');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const sections = () => Array.from(container.querySelectorAll('.dashboard-section'));
+
+        // --- Customize toggle ---
+        customizeBtn.addEventListener('click', function() {
+            const editing = document.body.classList.toggle('layout-editing');
+            customizeBtn.setAttribute('aria-pressed', editing ? 'true' : 'false');
+            customizeBtn.innerHTML = editing
+                ? '<i class="fas fa-times me-1"></i>Cancel'
+                : '<i class="fas fa-arrows-alt me-1"></i>Customize layout';
+            saveBtn.hidden = !editing;
+            sections().forEach(s => s.draggable = editing);
+        });
+
+        // --- Save layout ---
+        saveBtn.addEventListener('click', async function() {
+            const order = sections().map(s => s.dataset.section);
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving…';
+            try {
+                const response = await fetch('{{ route('admin.dashboard.layout') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ order: order }),
+                });
+                if (!response.ok) throw new Error('Save failed');
+                document.body.classList.remove('layout-editing');
+                customizeBtn.setAttribute('aria-pressed', 'false');
+                customizeBtn.innerHTML = '<i class="fas fa-arrows-alt me-1"></i>Customize layout';
+                saveBtn.hidden = true;
+                sections().forEach(s => s.draggable = false);
+            } catch (e) {
+                alert('Could not save the dashboard layout. Please try again.');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-check me-1"></i>Save layout';
+            }
+        });
+
+        // --- HTML5 drag & drop ---
+        let dragSource = null;
+        sections().forEach(section => {
+            section.addEventListener('dragstart', function() {
+                dragSource = section;
+                section.classList.add('dragging');
+            });
+            section.addEventListener('dragend', function() {
+                dragSource = null;
+                section.classList.remove('dragging');
+                sections().forEach(s => s.classList.remove('drag-over'));
+            });
+            section.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                sections().forEach(s => s.classList.remove('drag-over'));
+                if (section !== dragSource) section.classList.add('drag-over');
+            });
+            section.addEventListener('drop', function(e) {
+                e.preventDefault();
+                if (!dragSource || section === dragSource) return;
+                const target = sections().indexOf(section);
+                const source = sections().indexOf(dragSource);
+                if (target > source) {
+                    container.insertBefore(dragSource, section.nextElementSibling);
+                } else {
+                    container.insertBefore(dragSource, section);
+                }
+                section.classList.remove('drag-over');
+            });
+        });
+
+        // --- Keyboard move (up/down buttons) ---
+        sections().forEach(section => {
+            section.querySelector('.section-move-up')?.addEventListener('click', function() {
+                const prev = section.previousElementSibling;
+                if (prev) container.insertBefore(section, prev);
+            });
+            section.querySelector('.section-move-down')?.addEventListener('click', function() {
+                const next = section.nextElementSibling;
+                if (next) container.insertBefore(next, section);
             });
         });
     });

@@ -21,6 +21,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script>
+        // Apply the saved theme before first paint to avoid a flash of the wrong theme.
+        (function() {
+            var saved = null;
+            try { saved = localStorage.getItem('admin_theme'); } catch (e) {}
+            if (!saved) saved = '{{ auth()->user()?->admin_theme ?? "light" }}';
+            if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+    </script>
     <title>{{ $pageTitle }} - Rosetta CMS</title>
     <meta name="description" content="{{ $description ?? '' }}">
     
@@ -58,6 +67,63 @@
             --border-color: {{ $settings->border_color ?? '#e5e7eb' }};
         }
         
+        [data-theme="dark"] {
+            --bg-color: #141b2d;
+            --text-color: #e6e9f0;
+            --light-color: #1e2a45;
+            --border-color: #2c3a5c;
+            --dark-color: #0f172a;
+            color-scheme: dark;
+        }
+        [data-theme="dark"] body {
+            background-color: #141b2d;
+            color: #e6e9f0;
+        }
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .widget,
+        [data-theme="dark"] .list-group-item,
+        [data-theme="dark"] .modal-content,
+        [data-theme="dark"] .dropdown-menu,
+        [data-theme="dark"] .alert,
+        [data-theme="dark"] .table,
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background-color: #1e2a45;
+            color: #e6e9f0;
+            border-color: #2c3a5c;
+        }
+        [data-theme="dark"] .table th,
+        [data-theme="dark"] .table thead th {
+            background-color: #24304e;
+            border-color: #2c3a5c;
+            color: #c7cfdc;
+        }
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select,
+        [data-theme="dark"] .input-group-text,
+        [data-theme="dark"] textarea,
+        [data-theme="dark"] input[type="text"],
+        [data-theme="dark"] input[type="search"],
+        [data-theme="dark"] input[type="email"],
+        [data-theme="dark"] input[type="password"],
+        [data-theme="dark"] input[type="number"] {
+            background-color: #141b2d;
+            border-color: #2c3a5c;
+            color: #e6e9f0;
+        }
+        [data-theme="dark"] .form-control::placeholder { color: #8a94a8; }
+        [data-theme="dark"] .text-muted,
+        [data-theme="dark"] .small.text-muted { color: #9aa5b8 !important; }
+        [data-theme="dark"] .bg-light,
+        [data-theme="dark"] .card-header.bg-transparent { background-color: #24304e; }
+        [data-theme="dark"] .admin-search-results { background: #1e2a45; border-color: #2c3a5c; color: #e6e9f0; }
+        [data-theme="dark"] .admin-search-results a { color: #e6e9f0; border-color: #2c3a5c; }
+        [data-theme="dark"] .admin-search-results a:hover { background: #24304e; }
+        [data-theme="dark"] .admin-search-results .result-type { background: #24304e; color: #9aa5b8; }
+        [data-theme="dark"] .admin-search-results .no-results { color: #9aa5b8; }
+        [data-theme="dark"] .hero,
+        [data-theme="dark"] .hero * { color: #fff; }
+        [data-theme="dark"] .skip-link { background: #e6e9f0; color: #141b2d; }
+
         * {
             margin: 0;
             padding: 0;
@@ -72,6 +138,28 @@
             overflow-x: hidden;
         }
         
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            left: 1rem;
+            z-index: 10000;
+            background: #111;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 0 0 6px 6px;
+            text-decoration: none;
+            transition: top 0.2s;
+        }
+        .skip-link:focus {
+            top: 0;
+            outline: 2px solid #fff;
+        }
+
+        :focus-visible {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
         /* Admin Layout Container - avoid Bootstrap .container conflict */
         .admin-container {
             max-width: 1200px;
@@ -104,7 +192,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
+
+        nav { display: flex; align-items: center; gap: 1rem; }
         
         .logo {
             font-size: 1.5rem;
@@ -116,6 +208,71 @@
             text-decoration: none;
         }
         
+        .admin-search { position: relative; display: flex; align-items: center; }
+        .admin-search-input {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: #fff;
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.85rem;
+            width: 260px;
+            max-width: 34vw;
+        }
+        .admin-search-input::placeholder { color: rgba(255,255,255,0.6); }
+        .admin-search-input:focus { outline: 2px solid #60a5fa; border-color: #60a5fa; }
+        .admin-search-results {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            width: 340px;
+            max-width: 88vw;
+            background: #fff;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+            z-index: 2000;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+        .admin-search-results a {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            padding: 0.6rem 0.9rem;
+            color: #1f2937;
+            text-decoration: none;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.85rem;
+        }
+        .admin-search-results a:last-child { border-bottom: none; }
+        .admin-search-results a:hover { background: #f8fafc; }
+        .admin-search-results .result-type {
+            flex-shrink: 0;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
+            background: #eef2f7;
+            border-radius: 4px;
+            padding: 0.1rem 0.35rem;
+        }
+        .admin-search-results .no-results { padding: 0.8rem 0.9rem; color: #6b7280; font-size: 0.85rem; }
+        .notification-badge {
+            position: absolute;
+            top: 2px;
+            right: 6px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            border-radius: 999px;
+            min-width: 18px;
+            text-align: center;
+            padding: 0 4px;
+            line-height: 1.5;
+        }
         nav ul {
             display: flex;
             list-style: none;
@@ -328,6 +485,7 @@
     @yield('styles')
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <header>
         <div class="container header-content">
             <div class="logo">
@@ -340,9 +498,23 @@
                 @endif
             </div>
             <nav>
+                <div class="admin-search">
+                    <label for="adminSearchInput" class="visually-hidden">Search the admin</label>
+                    <input type="search" id="adminSearchInput" class="admin-search-input" placeholder="Search posts, pages, media, users…" autocomplete="off" aria-label="Search the admin">
+                    <div id="adminSearchResults" class="admin-search-results" hidden></div>
+                </div>
                 <ul>
                     <li><a href="{{ url('/') }}">Public Site</a></li>
                     <li><a href="{{ url('/dashboard') }}">Dashboard</a></li>
+                    <li>
+                        <a href="{{ route('admin.notifications.index') }}" id="notificationsBell" title="Notifications" aria-label="Notifications">
+                            <i class="fas fa-bell"></i>
+                            @php($notifCount = \App\Models\Comment::where('status', 'pending')->count() + \App\Models\Post::where('status', 'pending')->where('post_type', 'post')->count())
+                            @if($notifCount > 0)
+                                <span class="notification-badge">{{ $notifCount }}</span>
+                            @endif
+                        </a>
+                    </li>
                     <li>
                         <form action="{{ route('logout') }}" method="POST" style="display: inline;">
                             @csrf
@@ -350,9 +522,9 @@
                         </form>
                     </li>
                     <li>
-                        <a href="#" id="darkModeToggle" style="color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; transition: background-color 0.2s;">
-                            <i class="fas fa-moon" id="darkModeIcon"></i>
-                        </a>
+                        <button type="button" id="darkModeToggle" aria-pressed="false" aria-label="Toggle dark mode" style="background: none; border: none; color: white; cursor: pointer; font-family: inherit; padding: 0.5rem 1rem; border-radius: 4px; transition: background-color 0.2s;">
+                            <i class="fas fa-moon" id="darkModeIcon" aria-hidden="true"></i>
+                        </button>
                     </li>
                 </ul>
             </nav>
@@ -408,9 +580,9 @@
             @endif
         </div>
         
-        <div class="main-content">
+        <main class="main-content" id="main-content" tabindex="-1">
             @yield('content')
-        </div>
+        </main>
     </div>
     
     <div class="clearfix"></div>
@@ -424,54 +596,131 @@
     @stack('scripts')
     
     <script>
-        // Dark mode toggle
         document.addEventListener('DOMContentLoaded', function() {
+            // --- Accessibility: mark the current page in the sidebar/nav ---
+            document.querySelectorAll('.sidebar a.active, nav a.active').forEach(function(a) {
+                a.setAttribute('aria-current', 'page');
+            });
+
+            // --- Dark mode toggle (persisted per user) ---
             const darkModeToggle = document.getElementById('darkModeToggle');
             const darkModeIcon = document.getElementById('darkModeIcon');
             const htmlElement = document.documentElement;
-            
-            // Check for saved user preference
-            const savedTheme = localStorage.getItem('admin_theme') || '{{ auth()->user()?->admin_theme ?? "light" }}';
-            
-            if (savedTheme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                darkModeIcon.classList.remove('fa-moon');
-                darkModeIcon.classList.add('fa-sun');
-            }
-            
-            darkModeToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('admin_theme', newTheme);
-                
-                // Update icon
-                if (newTheme === 'dark') {
+
+            function renderTheme(theme) {
+                if (theme === 'dark') {
+                    htmlElement.setAttribute('data-theme', 'dark');
                     darkModeIcon.classList.remove('fa-moon');
                     darkModeIcon.classList.add('fa-sun');
+                    darkModeToggle.setAttribute('aria-pressed', 'true');
+                    darkModeToggle.setAttribute('aria-label', 'Switch to light mode');
                 } else {
+                    htmlElement.removeAttribute('data-theme');
                     darkModeIcon.classList.remove('fa-sun');
                     darkModeIcon.classList.add('fa-moon');
+                    darkModeToggle.setAttribute('aria-pressed', 'false');
+                    darkModeToggle.setAttribute('aria-label', 'Switch to dark mode');
                 }
+            }
+
+            const currentTheme = htmlElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            renderTheme(currentTheme);
+
+            darkModeToggle.addEventListener('click', function() {
+                const next = htmlElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                renderTheme(next);
+                try { localStorage.setItem('admin_theme', next); } catch (e) {}
+
+                fetch('{{ route('admin.preferences.theme') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                    },
+                    body: JSON.stringify({ theme: next }),
+                }).catch(function() {});
             });
-        });
-    </script>
-    
-    <script>
-        // Update CSS variables for dark mode
-        document.addEventListener('DOMContentLoaded', function() {
-            const htmlElement = document.documentElement;
-            const isDark = htmlElement.getAttribute('data-theme') === 'dark';
-            
-            if (isDark) {
-                htmlElement.style.setProperty('--bg-color', '#1a1a2e');
-                htmlElement.style.setProperty('--text-color', '#eaeaea');
-                htmlElement.style.setProperty('--light-color', '#16213e');
-                htmlElement.style.setProperty('--border-color', '#0f3460');
-                htmlElement.style.setProperty('--dark-color', '#0f3460');
+
+            // --- Admin global search ---
+            const searchInput = document.getElementById('adminSearchInput');
+            const searchResults = document.getElementById('adminSearchResults');
+            if (searchInput && searchResults) {
+                let activeIndex = -1;
+                let debounce = null;
+
+                function closeResults() {
+                    searchResults.hidden = true;
+                    searchResults.innerHTML = '';
+                    activeIndex = -1;
+                }
+
+                function renderResults(items) {
+                    searchResults.textContent = '';
+                    if (!items || items.length === 0) {
+                        const empty = document.createElement('div');
+                        empty.className = 'no-results';
+                        empty.textContent = 'No results found.';
+                        searchResults.appendChild(empty);
+                    } else {
+                        items.forEach(function(item, i) {
+                            const a = document.createElement('a');
+                            a.href = item.url;
+                            a.setAttribute('role', 'option');
+                            a.setAttribute('data-index', String(i));
+                            const type = document.createElement('span');
+                            type.className = 'result-type';
+                            type.textContent = item.type;
+                            const label = document.createElement('span');
+                            label.textContent = item.label;
+                            a.appendChild(type);
+                            a.appendChild(label);
+                            searchResults.appendChild(a);
+                        });
+                    }
+                    searchResults.hidden = false;
+                    activeIndex = -1;
+                }
+
+                function moveActive(delta) {
+                    const links = searchResults.querySelectorAll('a[role="option"]');
+                    if (links.length === 0) return;
+                    activeIndex = (activeIndex + delta + links.length) % links.length;
+                    links.forEach(function(l, i) { l.style.background = i === activeIndex ? '#eef2ff' : ''; });
+                    links[activeIndex].scrollIntoView({ block: 'nearest' });
+                }
+
+                function currentActiveLink() {
+                    return searchResults.querySelectorAll('a[role="option"]')[activeIndex];
+                }
+
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(debounce);
+                    const q = searchInput.value.trim();
+                    if (q.length < 2) { closeResults(); return; }
+                    debounce = setTimeout(function() {
+                        fetch('{{ route('admin.search') }}?q=' + encodeURIComponent(q))
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { renderResults(data.results || []); })
+                            .catch(closeResults);
+                    }, 200);
+                });
+
+                searchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'ArrowDown') { e.preventDefault(); moveActive(1); }
+                    else if (e.key === 'ArrowUp') { e.preventDefault(); moveActive(-1); }
+                    else if (e.key === 'Enter') {
+                        const link = currentActiveLink();
+                        if (link) { e.preventDefault(); window.location = link.href; }
+                    } else if (e.key === 'Escape') { closeResults(); searchInput.blur(); }
+                });
+
+                searchInput.addEventListener('focus', function() {
+                    if (searchResults.innerHTML.trim()) searchResults.hidden = false;
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.admin-search')) closeResults();
+                });
             }
         });
     </script>
