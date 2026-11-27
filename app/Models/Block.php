@@ -87,9 +87,16 @@ class Block extends Model
      * Several block types have no instantiable renderer (they are view-only),
      * so any failure to render falls back to a safe text representation of the
      * content instead of fataling the whole page.
+     *
+     * @param int $depth Recursion depth guard for nested container blocks
+     * @return string
      */
-    public function render(): string
+    public function render(int $depth = 0): string
     {
+        if ($depth > 12) {
+            return '';
+        }
+
         try {
             $rendererClass = $this->getRendererClass();
 
@@ -99,6 +106,10 @@ class Block extends Model
 
             $renderer = new $rendererClass();
             $renderer->setAttributes($this->content ?? []);
+            // Only query child blocks for persisted models; unsaved (in-memory)
+            // blocks render standalone to avoid a null-id lazy query.
+            $children = $this->exists ? $this->childBlocks->all() : [];
+            $renderer->setChildren($children, $depth);
 
             return $renderer->render();
         } catch (\Throwable $e) {

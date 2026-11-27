@@ -77,6 +77,16 @@ class VisualEditorService
                 'icon' => 'fas fa-arrows-alt-v',
                 'class' => \RosettaCMS\Plugins\VisualEditor\Blocks\SpacerBlock::class,
             ],
+            'callout' => [
+                'name' => 'Callout Box',
+                'icon' => 'fas fa-exclamation-circle',
+                'class' => \RosettaCMS\Plugins\VisualEditor\Blocks\CalloutBlock::class,
+            ],
+            'quote' => [
+                'name' => 'Quote',
+                'icon' => 'fas fa-quote-left',
+                'class' => \RosettaCMS\Plugins\VisualEditor\Blocks\QuoteBlock::class,
+            ],
         ];
     }
 

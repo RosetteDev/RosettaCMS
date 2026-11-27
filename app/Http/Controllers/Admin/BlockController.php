@@ -41,6 +41,7 @@ class BlockController extends Controller
         ]);
 
         $validated['post_id'] = $post->id;
+        $validated['site_id'] = $post->site_id ?? optional(\App\Models\Site::first())->id;
         $validated['parent_block_id'] = $validated['parent_id'] ?? null;
         unset($validated['parent_id']);
         $validated['order'] = $validated['order'] ?? (Block::where('post_id', $post->id)->max('order') + 1);
@@ -115,12 +116,12 @@ class BlockController extends Controller
     public function reorder(Request $request, Post $post)
     {
         $validated = $request->validate([
-            'order' => 'required|array',
+            'order' => 'nullable|array',
             'order.*' => 'required|exists:blocks,id',
         ]);
 
         // Reorder all blocks for the post
-        foreach ($validated['order'] as $index => $blockId) {
+        foreach ($validated['order'] ?? [] as $index => $blockId) {
             Block::where('id', $blockId)
                 ->where('post_id', $post->id)
                 ->update(['order' => $index + 1]);

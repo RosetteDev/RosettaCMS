@@ -40,6 +40,16 @@ class PreviewController extends Controller
 
     /**
      * Preview post with changes.
+     *
+     * Two payload shapes are supported:
+     *  - Legacy "changes": an array of {id, content} entries. Changes are
+     *    merged into the persisted blocks and every block of the post is
+     *    rendered (blocks not listed remain unchanged).
+     *  - Full editor state: an array of {id?, type, content, settings, order}
+     *    entries describing the complete current state of the editor,
+     *    including unsaved new blocks. Blocks absent from the payload are
+     *    treated as deleted. In-memory (unsaved) blocks are rendered
+     *    standalone — they are never written to the database.
      */
     public function preview(Post $post, Request $request)
     {
@@ -51,15 +61,51 @@ class PreviewController extends Controller
         // Load blocks with latest changes
         $post->load('blocks');
 
-        // Apply any pending changes from request
-        if ($request->has('blocks')) {
-            $changes = $request->json('blocks');
+        $payload = $request->json('blocks');
 
-            foreach ($changes as $change) {
-                $block = $post->blocks->firstWhere('id', $change['id'] ?? null);
+        if (is_array($payload) && !empty($payload)) {
+            $isFullState = collect($payload)->contains(function ($change) {
+                return is_array($change) && isset($change['type']);
+            });
 
-                if ($block && isset($change['content']) && is_array($change['content'])) {
-                    $block->content = array_merge($block->content ?? [], $change['content']);
+            if ($isFullState) {
+                $merged = collect();
+
+                foreach ($payload as $change) {
+                    if (!is_array($change)) {
+                        continue;
+                    }
+
+                    $existing = !empty($change['id'])
+                        ? $post->blocks->firstWhere('id', $change['id'])
+                        : null;
+
+                    if ($existing) {
+                        $existing->content = array_merge($existing->content ?? [], $change['content'] ?? []);
+                        $existing->settings = $change['settings'] ?? $existing->settings;
+                        $existing->order = $change['order'] ?? $existing->order;
+                        $merged->push($existing);
+                    } else {
+                        $merged->push(new \App\Models\Block([
+                            'post_id' => $post->id,
+                            'site_id' => $post->site_id ?? null,
+                            'type' => $change['type'] ?? 'text',
+                            'content' => $change['content'] ?? [],
+                            'settings' => $change['settings'] ?? [],
+                            'order' => $change['order'] ?? 0,
+                            'parent_block_id' => $change['parent_block_id'] ?? null,
+                        ]));
+                    }
+                }
+
+                $post->setRelation('blocks', $merged->sortBy('order')->values());
+            } else {
+                foreach ($payload as $change) {
+                    $block = $post->blocks->firstWhere('id', $change['id'] ?? null);
+
+                    if ($block && isset($change['content']) && is_array($change['content'])) {
+                        $block->content = array_merge($block->content ?? [], $change['content']);
+                    }
                 }
             }
         }

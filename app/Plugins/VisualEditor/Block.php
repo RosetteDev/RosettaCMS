@@ -40,6 +40,20 @@ abstract class Block
     protected $attributes = [];
 
     /**
+     * Child blocks (for container blocks such as columns).
+     *
+     * @var array
+     */
+    protected $children = [];
+
+    /**
+     * Recursion depth, set by the parent renderer.
+     *
+     * @var int
+     */
+    protected $depth = 0;
+
+    /**
      * Create a new block instance.
      */
     public function __construct()
@@ -122,6 +136,30 @@ abstract class Block
     {
         $this->attributes[$key] = $value;
         return $this;
+    }
+
+    /**
+     * Set the child blocks (container blocks only) and the recursion depth.
+     *
+     * @param array $children Child Block models
+     * @param int $depth Current recursion depth
+     * @return $this
+     */
+    public function setChildren(array $children, int $depth = 0): self
+    {
+        $this->children = $children;
+        $this->depth = $depth;
+        return $this;
+    }
+
+    /**
+     * Get the child blocks.
+     *
+     * @return array
+     */
+    public function getChildren(): array
+    {
+        return $this->children;
     }
 
     /**
