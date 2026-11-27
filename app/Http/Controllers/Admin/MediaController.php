@@ -118,11 +118,23 @@ class MediaController extends Controller
                 'max:' . ($maxUploadMb * 1024),
                 'mimes:jpeg,jpg,png,gif,pdf,mp4,mov,webm,webp,mp3,wav,ogg',
             ],
-            'alt_text' => 'nullable|string|max:255',
+            'alt_text' => ['nullable', 'string', 'max:255'],
             'caption' => 'nullable|string',
             'folder' => 'nullable|string|max:255|regex:/^([A-Za-z0-9_\-]+\/)*[A-Za-z0-9_\-]*$/',
             'site_id' => 'nullable|exists:sites,id',
         ]);
+
+        // Images require alt text for accessibility and SEO.
+        if ($request->hasFile('file')) {
+            $mime = $request->file('file')->getMimeType();
+            if (str_starts_with($mime, 'image/') && blank($validated['alt_text'] ?? null)) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Alt text is required for images.'], 422);
+                }
+
+                return back()->withErrors(['alt_text' => 'Alt text is required for images.'])->withInput();
+            }
+        }
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
@@ -198,6 +210,10 @@ class MediaController extends Controller
                 'alt_text' => $validated['alt_text'] ?? null,
                 'caption' => $validated['caption'] ?? null,
             ]);
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Media uploaded successfully.']);
+            }
 
             return redirect()->route('admin.media.index')
                 ->with('success', 'Media uploaded successfully.');
@@ -338,6 +354,16 @@ class MediaController extends Controller
             'alt_text' => 'nullable|string|max:255',
             'caption' => 'nullable|string',
         ]);
+
+        // Images require alt text — refuse to clear it.
+        if (str_starts_with((string) $media->mime_type, 'image/')) {
+            if (blank($validated['alt_text'] ?? null)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Alt text is required for images.',
+                ], 422);
+            }
+        }
 
         $media->update($validated);
         

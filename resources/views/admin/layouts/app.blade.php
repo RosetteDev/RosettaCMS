@@ -397,6 +397,8 @@
             <a href="{{ url('/admin/activity') }}" class="{{ request()->is('admin/activity*') ? 'active' : '' }}">Activity Log</a>
             <a href="{{ url('/admin/health') }}" class="{{ request()->is('admin/health*') ? 'active' : '' }}">Health</a>
             <a href="{{ url('/admin/ip-rules') }}" class="{{ request()->is('admin/ip-rules*') ? 'active' : '' }}">IP Rules</a>
+            <a href="{{ url('/admin/redirects') }}" class="{{ request()->is('admin/redirects*') ? 'active' : '' }}">Redirects</a>
+            <a href="{{ url('/admin/seo-health') }}" class="{{ request()->is('admin/seo-health*') ? 'active' : '' }}">SEO Health</a>
             <a href="{{ url('/admin/products') }}" class="{{ request()->is('admin/products*') ? 'active' : '' }}">Products</a>
             <a href="{{ url('/admin/orders') }}" class="{{ request()->is('admin/orders*') ? 'active' : '' }}">Orders</a>
             <a href="{{ url('/admin/coupons') }}" class="{{ request()->is('admin/coupons*') ? 'active' : '' }}">Coupons</a>

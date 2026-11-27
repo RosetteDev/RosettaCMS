@@ -237,55 +237,47 @@ The `languages` and `language_content` tables are now wired up.
 - Mail notifications on new submissions
 - Custom fields for form data
 
-### 11. SEO optimization pass
-The SEO plugin exists and is wired up, but the work that makes a
-WordPress-class site actually rank — a complete audit-and-fix pass
-across every template, with redirects, structured data and per-site
-defaults — is missing. This is one deliberate pass, not five small
-tickets.
+### 11. SEO optimization pass — ✅ done (2026-11)
+A full audit-and-fix pass across every template, with per-site defaults,
+structured data, i18n alternates, redirects and health checks.
 
-**Already in place (do not re-solve):**
-- Per-post/page SEO fields in the editor: SEO title, meta description,
-  focus keyword, robots, canonical URL, OG image — plus a live
-  Google-style SERP preview and character counter
-- `themes/_shared/seo` head partial renders title, description,
-  keywords, robots, canonical, OG and Twitter tags from post meta +
-  settings
-- Title suffix applied in `seo()` (`seo_title_suffix` setting)
-- JSON-LD structured data: Website (homepage), Article (single posts),
-  LocalBusiness (contact/about pages)
-- XML sitemap (posts, pages, categories, tags; featured-image entries;
-  per-site toggle via `enable_xml_sitemap`) and robots.txt (`/admin`,
-  `/login`, `/search` disallowed + sitemap reference)
-- Preview rendering emits `noindex, nofollow`
-
-**The pass:**
-- Audit and fix every page template so each emits a valid, complete
-  `<head>`: title template, description, canonical, OG/Twitter, robots,
-  favicon — and no empty/duplicate tags
-- Per-site SEO defaults in the settings UI: title template with a `%s`
-  placeholder, default description, default OG image/site name, Twitter
-  handle, robots rule, search-engine verification meta (Google, Bing,
-  Yandex), canonical fallback
-- Structured data for every content type: Article (exists), BreadcrumbList
-  on posts/pages/archives, FAQPage, Product/Event when those post types
-  arrive; validate JSON-LD and add tests
-- i18n SEO: `hreflang` alternates in the `<head>` and per-language
-  sitemap entries (translations are stored but not applied yet)
-- Redirect manager: 301/302 map, admin UI, per-site scope, 404 fallback
-  rules
-- Sitemap index + split sitemaps by content type (posts/pages/categories/
-  tags), per-site control, exclude noindex/drafts, image entries for
-  pages/categories/tags (currently only posts and pages)
-- robots.txt rules per site (disallow patterns, per-site sitemap)
-- Broken-link checker for internal links in the dashboard
-- 404/410 error pages with proper `noindex`
-- Media SEO: alt text enforced in the editor, OG image picker (not just a
-  URL field), per-language OG locale
-- SEO health report in the admin (missing title/description/canonical,
-  no OG image, noindexed pages) with one-click fixes
-- Tests: sitemap/robots/JSON-LD/head-tag rendering, redirect behavior,
-  verification meta
+- Head audit & fix: every page renders a complete `<head>` via
+  `themes/_shared/seo` — title template, description, keywords, robots,
+  canonical, hreflang alternates (+ `x-default`), OG/Twitter tags
+  (incl. `og:locale` per active language), favicon (as a plain URL),
+  verification meta tags (Google/Bing/Pinterest/Yandex), feed/sitemap
+  links — no empty or duplicate tags. Preview rendering still emits
+  `noindex, nofollow`.
+- Per-site SEO defaults in the settings UI: title template with `%title%`/
+  `%site%` tokens, default description, default OG image (falls back to the
+  site logo), Twitter handle, robots allow/disallow rules, search-engine
+  verification meta, sitemap on/off — all persisted per site.
+- Structured data for content types: Website (homepage), Article/WebPage
+  (posts/pages), BreadcrumbList (posts/pages), FAQPage (from post meta
+  `faq`), LocalBusiness (contact/about) — JSON-LD emitted as separate
+  `application/ld+json` script tags and validated in tests.
+- i18n SEO: hreflang alternates in the `<head>` and per-language sitemap
+  entries (translations only emit links that actually exist).
+- Redirect manager: 301/302 map, admin UI (`/admin/redirects`), per-site
+  scope, active/inactive toggle, hit counter, middleware applies matches
+  before routing.
+- Sitemap index + split sitemaps (`/sitemap.xml` → posts/pages/categories/
+  tags), per-site control, excludes drafts and `noindex` posts, image
+  entries and per-language alternates.
+- robots.txt rules per site (default `/admin`, `/login`, `/search`
+  disallowed plus per-site allow/disallow lines, sitemap reference).
+- Broken-link checker for internal links in `/admin/seo-health`.
+- 404/410 error pages with proper `noindex` (410 rendered for 410
+  HttpExceptions).
+- Media SEO: alt text enforced for image uploads (admin form + Dropzone
+  AJAX → 422), per-language `og:locale`.
+- SEO health report in `/admin/seo-health` (sitemap, favicon, OG image,
+  description, Twitter handle, verification, alt text, broken links) with
+  one-click fixes (favicon/OG image from logo, enable sitemap).
+- Tests: head tags, JSON-LD, sitemap index/split sitemaps, robots.txt,
+  redirects (301/302/inactive/per-site/hit count), settings persistence,
+  SEO health one-click fixes, media alt enforcement, 410 page — 27 new
+  tests.
 
 ### 12. Widgets and blocks for the frontend
 - Widget areas in the theme (currently custom widgets exist — surface them

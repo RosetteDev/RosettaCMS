@@ -67,7 +67,16 @@ class SettingsController extends Controller
 
             // SEO
             'seo_title_suffix' => 'nullable|string|max:255',
+            'seo_title_template' => 'nullable|string|max:255',
             'seo_default_keywords' => 'nullable|string',
+            'og_image' => 'nullable|url|max:2048',
+            'twitter_handle' => 'nullable|string|max:255',
+            'verification_google' => 'nullable|string|max:255',
+            'verification_bing' => 'nullable|string|max:255',
+            'verification_pinterest' => 'nullable|string|max:255',
+            'verification_yandex' => 'nullable|string|max:255',
+            'robots_disallow' => 'nullable|string|max:10000',
+            'robots_allow' => 'nullable|string|max:10000',
             'enable_xml_sitemap' => 'nullable|boolean',
 
             // Site code and maintenance
@@ -121,7 +130,27 @@ class SettingsController extends Controller
         $settingsData = $validated;
         $settingsData['site_title'] = $validated['site_name'];
         $settingsData['post_per_page'] = $validated['posts_per_page'] ?? 10;
-        unset($settingsData['site_name'], $settingsData['posts_per_page'], $settingsData['home_post_id'], $settingsData['theme']);
+
+        // Flatten the verification meta fields into the JSON map.
+        $verification = array_filter([
+            'google' => trim((string) ($validated['verification_google'] ?? '')),
+            'bing' => trim((string) ($validated['verification_bing'] ?? '')),
+            'pinterest' => trim((string) ($validated['verification_pinterest'] ?? '')),
+            'yandex' => trim((string) ($validated['verification_yandex'] ?? '')),
+        ], fn ($value) => $value !== '');
+
+        $settingsData['verification_meta'] = $verification ?: null;
+
+        unset(
+            $settingsData['site_name'],
+            $settingsData['posts_per_page'],
+            $settingsData['home_post_id'],
+            $settingsData['theme'],
+            $settingsData['verification_google'],
+            $settingsData['verification_bing'],
+            $settingsData['verification_pinterest'],
+            $settingsData['verification_yandex']
+        );
 
         $settings->fill($settingsData);
         $settings->site_id = $site->id;

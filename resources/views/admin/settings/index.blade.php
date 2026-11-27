@@ -597,6 +597,60 @@
                             </div>
 
                             <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="seo_title_template">
+                                    Title Template
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;"
+                                       id="seo_title_template"
+                                       type="text"
+                                       name="seo_title_template"
+                                       value="{{ old('seo_title_template', $settings->seo_title_template ?? '') }}"
+                                       placeholder="%title% | %site%">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">
+                                    Use <code>%title%</code> and <code>%site%</code> as placeholders. Leave empty to use the suffix below.
+                                </p>
+                                @error('seo_title_template')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="og_image">
+                                    Default Open Graph Image
+                                </label>
+                                <div class="input-group">
+                                    <input style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;"
+                                           id="og_image"
+                                           type="url"
+                                           name="og_image"
+                                           value="{{ old('og_image', $settings->og_image ?? '') }}"
+                                           placeholder="https://example.com/og.png">
+                                    <button type="button" class="btn btn-outline-secondary" id="og-image-choose"
+                                            data-bs-toggle="modal" data-bs-target="#ogImagePickerModal">Choose</button>
+                                </div>
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Pick from the library or paste a URL. Used when a page/post does not set its own image. Falls back to the site logo.</p>
+                                @error('og_image')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="twitter_handle">
+                                    Twitter Handle
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;"
+                                       id="twitter_handle"
+                                       type="text"
+                                       name="twitter_handle"
+                                       value="{{ old('twitter_handle', $settings->twitter_handle ?? '') }}"
+                                       placeholder="@yourhandle">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Emitted as <code>twitter:site</code>.</p>
+                                @error('twitter_handle')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
                                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="seo_default_keywords">
                                     Default SEO Keywords
                                 </label>
@@ -607,6 +661,73 @@
                                 <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Comma-separated list of default keywords for your site.</p>
 
                                 @error('seo_default_keywords')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="verification_google">
+                                    Search Console Verification
+                                </label>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem;">
+                                    <div>
+                                        <input style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;"
+                                               id="verification_google" name="verification_google" type="text"
+                                               value="{{ old('verification_google', $settings->verification_meta['google'] ?? '') }}"
+                                               placeholder="Google">
+                                        @error('verification_google')<p style="color: var(--error-color); font-size: 0.75rem; margin-top: 0.25rem;">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div>
+                                        <input style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;"
+                                               id="verification_bing" name="verification_bing" type="text"
+                                               value="{{ old('verification_bing', $settings->verification_meta['bing'] ?? '') }}"
+                                               placeholder="Bing">
+                                        @error('verification_bing')<p style="color: var(--error-color); font-size: 0.75rem; margin-top: 0.25rem;">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div>
+                                        <input style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;"
+                                               id="verification_pinterest" name="verification_pinterest" type="text"
+                                               value="{{ old('verification_pinterest', $settings->verification_meta['pinterest'] ?? '') }}"
+                                               placeholder="Pinterest">
+                                        @error('verification_pinterest')<p style="color: var(--error-color); font-size: 0.75rem; margin-top: 0.25rem;">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div>
+                                        <input style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;"
+                                               id="verification_yandex" name="verification_yandex" type="text"
+                                               value="{{ old('verification_yandex', $settings->verification_meta['yandex'] ?? '') }}"
+                                               placeholder="Yandex">
+                                        @error('verification_yandex')<p style="color: var(--error-color); font-size: 0.75rem; margin-top: 0.25rem;">{{ $message }}</p>@enderror
+                                    </div>
+                                </div>
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Emitted as <code>*-site-verification</code> meta tags.</p>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="robots_allow">
+                                    robots.txt — Allow rules
+                                </label>
+                                <textarea style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; min-height: 90px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;"
+                                          id="robots_allow"
+                                          name="robots_allow"
+                                          placeholder="/blog
+/pages/about">{{ old('robots_allow', $settings->robots_allow ?? '') }}</textarea>
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">One path per line. These are emitted as <code>Allow:</code> rules.</p>
+                                @error('robots_allow')
+                                    <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="robots_disallow">
+                                    robots.txt — Disallow rules
+                                </label>
+                                <textarea style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; min-height: 90px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;"
+                                          id="robots_disallow"
+                                          name="robots_disallow"
+                                          placeholder="/private/
+/search">{{ old('robots_disallow', $settings->robots_disallow ?? '') }}</textarea>
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">One path per line. Appended after the default disallows (<code>/admin</code>, <code>/login</code>, <code>/search</code>).</p>
+                                @error('robots_disallow')
                                     <p style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -747,8 +868,105 @@
         </div>
     </div>
 
+    <div class="modal fade" id="ogImagePickerModal" tabindex="-1" aria-labelledby="ogImagePickerLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ogImagePickerLabel">Choose an OG image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="search" id="og-image-picker-search" class="form-control mb-3" placeholder="Search images by name or alt text">
+                    <div id="og-image-picker-grid" class="row g-3">
+                        <div class="col-12 text-muted small">Loading images…</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ url('/admin/media') }}" class="btn btn-link me-auto">Manage media</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
     <script>
+        // OG image picker
+        const ogPickerModal = document.getElementById('ogImagePickerModal');
+        const ogPickerGrid = document.getElementById('og-image-picker-grid');
+        const ogPickerSearch = document.getElementById('og-image-picker-search');
+        const ogImageInput = document.getElementById('og_image');
+        let ogPickerLoaded = false;
+        let ogPickerTimer = null;
+
+        const renderOgPicker = (items) => {
+            if (!ogPickerGrid) return;
+
+            if (!items.length) {
+                ogPickerGrid.innerHTML = '<div class="col-12 text-muted small">No images found. <a href="{{ url('/admin/media') }}">Upload one</a>.</div>';
+                return;
+            }
+
+            ogPickerGrid.innerHTML = items.map((item) => `
+                <div class="col-6 col-md-4">
+                    <button type="button" class="btn p-0 border rounded w-100 og-image-pick"
+                            data-url="${item.url.replace(/"/g, '&quot;')}"
+                            data-path="${item.path.replace(/"/g, '&quot;')}"
+                            data-alt="${(item.alt || '').replace(/"/g, '&quot;')}">
+                        <img src="${item.url}" alt="${(item.alt || item.name).replace(/"/g, '&quot;')}"
+                             class="img-fluid rounded-top" style="height:110px;width:100%;object-fit:cover;">
+                        <span class="d-block small text-truncate px-2 py-1">${item.name}</span>
+                    </button>
+                </div>
+            `).join('');
+        };
+
+        const loadOgPicker = (search = '') => {
+            if (!ogPickerGrid) return;
+
+            ogPickerGrid.innerHTML = '<div class="col-12 text-muted small">Loading images…</div>';
+
+            fetch(`{{ route('admin.media.picker') }}?search=${encodeURIComponent(search)}`, {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            })
+                .then((response) => response.ok ? response.json() : [])
+                .then(renderOgPicker)
+                .catch(() => renderOgPicker([]));
+        };
+
+        if (ogPickerModal) {
+            ogPickerModal.addEventListener('show.bs.modal', () => {
+                if (!ogPickerLoaded) {
+                    ogPickerLoaded = true;
+                    loadOgPicker();
+                }
+            });
+        }
+
+        if (ogPickerSearch) {
+            ogPickerSearch.addEventListener('input', () => {
+                clearTimeout(ogPickerTimer);
+                ogPickerTimer = setTimeout(() => loadOgPicker(ogPickerSearch.value.trim()), 250);
+            });
+        }
+
+        if (ogPickerGrid) {
+            ogPickerGrid.addEventListener('click', (event) => {
+                const button = event.target.closest('.og-image-pick');
+                if (!button) return;
+
+                if (ogImageInput) {
+                    // Store the full URL — OG tags must be absolute.
+                    ogImageInput.value = button.dataset.url || button.dataset.path || '';
+                }
+
+                if (window.bootstrap && ogPickerModal) {
+                    bootstrap.Modal.getOrCreateInstance(ogPickerModal).hide();
+                }
+            });
+        }
+
         // Smooth scrolling for anchor links
         document.querySelectorAll('.settings-nav-item').forEach(anchor => {
             anchor.addEventListener('click', function (e) {

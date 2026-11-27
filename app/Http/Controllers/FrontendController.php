@@ -478,69 +478,141 @@ class FrontendController extends Controller
     }
 
     /**
-     * XML sitemap for posts, pages, categories and tags.
+     * Sitemap index.
      */
     public function sitemap()
     {
         $settings = $this->settings();
         abort_unless((bool) ($settings->enable_xml_sitemap ?? true), 404);
 
-        $site = $this->site();
+        $sitemap = [
+            'posts' => url('/sitemap-posts.xml'),
+            'pages' => url('/sitemap-pages.xml'),
+            'categories' => url('/sitemap-categories.xml'),
+            'tags' => url('/sitemap-tags.xml'),
+        ];
+
+        return response()
+            ->view('themes._shared.sitemap-index', ['sitemaps' => $sitemap])
+            ->header('Content-Type', 'application/xml; charset=UTF-8');
+    }
+
+    /**
+     * Sitemap of published posts (with per-language alternates and images).
+     */
+    public function sitemapPosts()
+    {
+        return $this->sitemapContent('post');
+    }
+
+    /**
+     * Sitemap of published pages.
+     */
+    public function sitemapPages()
+    {
+        return $this->sitemapContent('page');
+    }
+
+    /**
+     * Sitemap of categories.
+     */
+    public function sitemapCategories()
+    {
+        $settings = $this->settings();
+        abort_unless((bool) ($settings->enable_xml_sitemap ?? true), 404);
+
+        $urls = collect();
+
+        foreach ($this->scoped(Category::query())->orderBy('name')->get() as $category) {
+            $urls->push([
+                'loc' => route('category.show', $category->slug),
+                'lastmod' => $category->updated_at,
+            ]);
+        }
+
+        return $this->sitemapResponse($urls);
+    }
+
+    /**
+     * Sitemap of tags.
+     */
+    public function sitemapTags()
+    {
+        $settings = $this->settings();
+        abort_unless((bool) ($settings->enable_xml_sitemap ?? true), 404);
+
+        $urls = collect();
+
+        foreach ($this->scoped(Tag::query())->orderBy('name')->get() as $tag) {
+            $urls->push([
+                'loc' => route('tag.show', $tag->slug),
+                'lastmod' => $tag->updated_at,
+            ]);
+        }
+
+        return $this->sitemapResponse($urls);
+    }
+
+    /**
+     * Sitemap of posts or pages, honoring the per-language alternates and
+     * excluding drafts and noindex content.
+     */
+    protected function sitemapContent(string $postType)
+    {
+        $settings = $this->settings();
+        abort_unless((bool) ($settings->enable_xml_sitemap ?? true), 404);
+
+        $urls = collect();
 
         $posts = $this->scoped(Post::query())
             ->published()
-            ->where('post_type', 'post')
+            ->where('post_type', $postType)
             ->orderByDesc('updated_at')
-            ->with(['author', 'categories', 'tags'])
-            ->get(['slug', 'updated_at', 'featured_image']);
-
-        $pages = $this->scoped(Post::query())
-            ->published()
-            ->where('post_type', 'page')
-            ->orderByDesc('updated_at')
-            ->get(['slug', 'updated_at', 'featured_image']);
-
-        $urls = collect([
-            ['loc' => url('/'), 'lastmod' => $site?->updated_at],
-            ['loc' => url('/blog'), 'lastmod' => $site?->updated_at],
-            ['loc' => url('/about'), 'lastmod' => $site?->updated_at],
-            ['loc' => url('/contact'), 'lastmod' => $site?->updated_at],
-        ]);
+            ->get();
 
         foreach ($posts as $post) {
-            $postUrl = ['loc' => route('post.show', $post->slug), 'lastmod' => $post->updated_at];
-            
-            // Add featured image if exists
+            // Skip noindex content.
+            if ($this->isNoindex($post)) {
+                continue;
+            }
+
+            $url = [
+                'loc' => $this->canonicalUrlFor($post),
+                'lastmod' => $post->updated_at,
+                'alternates' => $this->hreflangAlternates($post),
+            ];
+
             if (!empty($post->featured_image)) {
-                $postUrl['images'] = [
-                    ['url' => $post->featured_image]
-                ];
+                $url['images'] = [['url' => $post->featured_image_url]];
             }
-            
-            $urls->push($postUrl);
+
+            $urls->push($url);
         }
 
-        foreach ($pages as $page) {
-            $pageUrl = ['loc' => route('page.show', $page->slug), 'lastmod' => $page->updated_at];
-            
-            // Add featured image if exists
-            if (!empty($page->featured_image)) {
-                $pageUrl['images'] = [
-                    ['url' => $page->featured_image]
-                ];
-            }
-            
-            $urls->push($pageUrl);
+        return $this->sitemapResponse($urls);
+    }
+
+    /**
+     * Whether the post carries a noindex robots directive.
+     */
+    protected function isNoindex(Post $post): bool
+    {
+        $meta = $post->meta;
+
+        if (!is_array($meta)) {
+            return false;
         }
 
-        foreach ($this->scoped(Category::query())->orderBy('name')->get(['slug', 'updated_at']) as $category) {
-            $urls->push(['loc' => route('category.show', $category->slug), 'lastmod' => $category->updated_at]);
-        }
+        $robots = $meta['robots'] ?? '';
 
-        foreach ($this->scoped(Tag::query())->orderBy('name')->get(['slug', 'updated_at']) as $tag) {
-            $urls->push(['loc' => route('tag.show', $tag->slug), 'lastmod' => $tag->updated_at]);
-        }
+        return is_string($robots) && str_contains($robots, 'noindex');
+    }
 
+    /**
+     * Render a urlset response.
+     */
+    protected function sitemapResponse($urls)
+    {
         return response()
             ->view('themes._shared.sitemap', ['urls' => $urls])
             ->header('Content-Type', 'application/xml; charset=UTF-8');
@@ -576,12 +648,24 @@ class FrontendController extends Controller
     public function robots()
     {
         $settings = $this->settings();
-        $lines = [
-            'User-agent: *',
-            'Disallow: /admin',
-            'Disallow: /login',
-            'Disallow: /search',
-        ];
+
+        // Default disallows always apply; per-site rules are appended on top.
+        $disallow = array_merge(
+            ['/admin', '/login', '/search'],
+            $settings->robotsLines('robots_disallow')
+        );
+
+        $allow = $settings->robotsLines('robots_allow');
+
+        $lines = ['User-agent: *'];
+
+        foreach ($allow as $path) {
+            $lines[] = 'Allow: ' . $path;
+        }
+
+        foreach ($disallow as $path) {
+            $lines[] = 'Disallow: ' . $path;
+        }
 
         if (($settings->enable_xml_sitemap ?? true)) {
             $lines[] = '';
@@ -875,14 +959,14 @@ class FrontendController extends Controller
             'title' => $meta['seo_title'] ?? $post->title,
             'description' => $meta['seo_description'] ?? \Illuminate\Support\Str::limit($post->plain_excerpt, 160),
             'keywords' => $meta['focus_keyword'] ?? $settings->seo_default_keywords ?? '',
-            'canonical' => $meta['canonical_url'] ?? url(
-                ($post->post_type === 'page' ? '/pages/' : '/posts/') . $post->slug
-            ),
+            'canonical' => $meta['canonical_url'] ?? $this->canonicalUrlFor($post),
             'robots' => $preview ? 'noindex, nofollow' : ($meta['robots'] ?? 'index'),
             'image' => $image,
             'type' => $post->post_type === 'post' ? 'article' : 'website',
             'published_time' => $post->published_at?->toIso8601String(),
             'modified_time' => $post->updated_at?->toIso8601String(),
+            'post' => $post,
+            'faq' => $meta['faq'] ?? null,
         ]);
     }
 
@@ -894,12 +978,9 @@ class FrontendController extends Controller
         $settings = $this->settings();
         $site = $this->site();
 
-        $title = $values['title'] ?? $settings->site_title ?? $site->name ?? 'Rosetta CMS';
-        $suffix = trim((string) $settings->seo_title_suffix);
-
-        if ($suffix !== '' && $title !== '' && !str_contains($title, $suffix)) {
-            $title .= ' ' . $suffix;
-        }
+        $siteName = $settings->site_title ?: ($site->name ?? 'Rosetta CMS');
+        $title = $values['title'] ?? $siteName;
+        $title = $settings->titleTemplate($title, $siteName);
 
         $robots = $values['robots'] ?? 'index';
         $robots = match ($robots) {
@@ -915,12 +996,105 @@ class FrontendController extends Controller
             'keywords' => $values['keywords'] ?? $settings->seo_default_keywords ?? '',
             'canonical' => $values['canonical'] ?? url()->current(),
             'robots' => $robots,
-            'image' => $values['image'] ?? null,
+            'image' => $values['image'] ?? $settings->defaultOgImage(),
             'type' => $values['type'] ?? 'website',
             'published_time' => $values['published_time'] ?? null,
             'modified_time' => $values['modified_time'] ?? null,
-            'site_name' => $settings->site_title ?: ($site->name ?? 'Rosetta CMS'),
+            'site_name' => $siteName,
+            'twitter_handle' => $settings->twitter_handle ?: null,
+            'verification_meta' => $settings->verificationMetas(),
+            'og_locale' => $this->ogLocale(),
+            'hreflang' => $values['hreflang'] ?? $this->hreflangAlternates($values['post'] ?? null),
+            'faq' => $values['faq'] ?? null,
+            'post' => $values['post'] ?? null,
         ];
+    }
+
+    /**
+     * The og:locale for the active language (e.g. "en_US").
+     */
+    protected function ogLocale(): string
+    {
+        $language = request()->attributes->get('activeLanguage');
+
+        if ($language?->code) {
+            return str_replace('-', '_', $language->code);
+        }
+
+        return str_replace('-', '_', app()->getLocale());
+    }
+
+    /**
+     * Hreflang alternates for the given post/page (or the current page).
+     * Returns [language_code => url].
+     */
+    protected function hreflangAlternates(?Post $post = null): array
+    {
+        $languages = Language::where('is_active', true)->orderBy('sort_order')->get();
+
+        if ($languages->count() < 2) {
+            return [];
+        }
+
+        $alternates = [];
+
+        foreach ($languages as $language) {
+            $url = $this->urlForLanguage($language, $post);
+
+            if ($url) {
+                $alternates[$language->code] = $url;
+            }
+        }
+
+        return $alternates;
+    }
+
+    /**
+     * Resolve the URL of the given post/page in the given language.
+     *
+     * Returns null when the content does not exist in that language —
+     * hreflang links must only point at pages that actually exist.
+     */
+    protected function urlForLanguage(Language $language, ?Post $post = null): ?string
+    {
+        $default = Language::defaultLanguageFor($this->site());
+
+        if (!$default) {
+            return null;
+        }
+
+        if ($language->code === $default->code) {
+            return $post ? $this->canonicalUrlFor($post) : url()->current();
+        }
+
+        if (!$post instanceof Post) {
+            // Non-post pages have no per-language URL yet.
+            return null;
+        }
+
+        $translation = LanguageContent::where('content_type', $post->post_type)
+            ->where('content_id', $post->id)
+            ->where('language_id', $language->id)
+            ->first();
+
+        if (!$translation) {
+            return null;
+        }
+
+        $slug = $translation->slug ?: $post->slug;
+
+        return $this->canonicalUrlFor($post, $slug);
+    }
+
+    /**
+     * Canonical URL for a post/page (default language), optionally with a
+     * translated slug.
+     */
+    protected function canonicalUrlFor(Post $post, ?string $slug = null): string
+    {
+        $slug = $slug ?: $post->slug;
+
+        return url(($post->post_type === 'page' ? '/pages/' : '/posts/') . $slug);
     }
 
     /**

@@ -55,7 +55,13 @@ class SiteSetting extends Model
         'custom_permalink',
         // SEO
         'seo_title_suffix',
+        'seo_title_template',
         'seo_default_keywords',
+        'og_image',
+        'twitter_handle',
+        'verification_meta',
+        'robots_disallow',
+        'robots_allow',
         'enable_xml_sitemap',
         // Security
         'enable_debug_mode',
@@ -65,6 +71,7 @@ class SiteSetting extends Model
     ];
 
     protected $casts = [
+        'verification_meta' => 'array',
         'maintenance_mode' => 'boolean',
         'disable_comments' => 'boolean',
         'enable_comment_approval' => 'boolean',
@@ -184,5 +191,81 @@ class SiteSetting extends Model
         }
 
         return $setting;
+    }
+
+    /**
+     * Normalized list of verification meta tags to emit in the head.
+     * Returns [engine => content] for engines that have a value.
+     */
+    public function verificationMetas(): array
+    {
+        $meta = $this->verification_meta;
+
+        if (!is_array($meta)) {
+            return [];
+        }
+
+        return collect($meta)
+            ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+            ->map(fn ($value) => trim($value))
+            ->toArray();
+    }
+
+    /**
+     * Lines from a robots text setting, one per line, trimmed and filtered.
+     */
+    public function robotsLines(string $field): array
+    {
+        $value = $this->{$field} ?? null;
+
+        if (!is_string($value) || trim($value) === '') {
+            return [];
+        }
+
+        return collect(preg_split('/\r?\n/', $value))
+            ->map(fn ($line) => trim($line))
+            ->filter(fn ($line) => $line !== '')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * The default OG image for this site (logo or configured image).
+     */
+    public function defaultOgImage(): ?string
+    {
+        return $this->og_image ?: ($this->logo_url ?: null);
+    }
+
+    /**
+     * Build a title for a given page title using the configured template.
+     *
+     * Template tokens: %title%, %site%. Falls back to "{title} | {site}".
+     */
+    public function titleTemplate(?string $pageTitle, ?string $siteName): string
+    {
+        $siteName = $siteName ?: ($this->site_title ?: 'Rosetta CMS');
+        $pageTitle = trim((string) $pageTitle);
+
+        $template = trim((string) $this->seo_title_template);
+
+        if ($template !== '') {
+            return strtr($template, [
+                '%title%' => $pageTitle,
+                '%site%' => $siteName,
+            ]);
+        }
+
+        $suffix = trim((string) $this->seo_title_suffix);
+
+        if ($suffix === '') {
+            return $pageTitle !== '' ? $pageTitle : $siteName;
+        }
+
+        if ($pageTitle === '') {
+            return $siteName;
+        }
+
+        return $pageTitle . ' ' . $suffix;
     }
 }

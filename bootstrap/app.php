@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\SetActiveLanguage::class);
         $middleware->append(\App\Http\Middleware\CurrentSite::class);
         $middleware->append(\App\Http\Middleware\CheckSiteIpRules::class);
+        $middleware->append(\App\Http\Middleware\RedirectMiddleware::class);
         $middleware->append(\App\Http\Middleware\CheckMaintenanceMode::class);
         $middleware->append(\App\Http\Middleware\InlineEdit::class);
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
@@ -42,5 +43,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Render a branded 410 page for gone resources.
+        $exceptions->renderable(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e, \Illuminate\Http\Request $request) {
+            if ($e->getStatusCode() === 410) {
+                return response()
+                    ->view('errors.410', ['status' => 410], 410)
+                    ->header('Content-Type', 'text/html; charset=UTF-8');
+            }
+
+            return null;
+        });
     })->create();

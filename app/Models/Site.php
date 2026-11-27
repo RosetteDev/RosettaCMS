@@ -53,6 +53,11 @@ class Site extends Model
         return $this->hasMany(SiteIpRule::class);
     }
 
+    public function redirects()
+    {
+        return $this->hasMany(Redirect::class);
+    }
+
     /**
      * Get the posts for the site.
      */

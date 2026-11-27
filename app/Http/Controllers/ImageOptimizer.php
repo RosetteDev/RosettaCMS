@@ -15,6 +15,10 @@ trait ImageOptimizer
      */
     protected function convertToWebP(string $filePath): ?string
     {
+        if (!$this->isImageOptimizationAvailable()) {
+            return null;
+        }
+
         if (!extension_loaded('gd') && !extension_loaded('imagick')) {
             return null;
         }
@@ -42,6 +46,10 @@ trait ImageOptimizer
      */
     protected function generateResponsiveImages(string $filePath, array $sizes = [1920, 1200, 800, 400]): array
     {
+        if (!$this->isImageOptimizationAvailable()) {
+            return [];
+        }
+
         $sources = [];
         $originalWidth = $this->getImageWidth($filePath);
 
@@ -74,6 +82,10 @@ trait ImageOptimizer
      */
     protected function generateResizedImage(string $filePath, int $maxWidth): ?string
     {
+        if (!$this->isImageOptimizationAvailable()) {
+            return null;
+        }
+
         try {
             $image = Image::make($filePath);
 
@@ -101,6 +113,10 @@ trait ImageOptimizer
      */
     protected function getImageWidth(string $filePath): ?int
     {
+        if (!$this->isImageOptimizationAvailable()) {
+            return null;
+        }
+
         try {
             $image = Image::make($filePath);
             return $image ? $image->width() : null;
@@ -114,6 +130,10 @@ trait ImageOptimizer
      */
     protected function getImageMime(string $filePath): ?string
     {
+        if (!$this->isImageOptimizationAvailable()) {
+            return null;
+        }
+
         try {
             $image = Image::make($filePath);
             return $image ? $image->mime() : null;

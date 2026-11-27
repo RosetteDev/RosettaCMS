@@ -699,6 +699,11 @@
                 <p class="text-sm">or <strong>click to browse</strong> from your computer</p>
                 <p class="text-xs text-gray-500 mt-2">Supported formats: JPG, PNG, GIF, MP4, PDF (Max 2MB)</p>
             </div>
+            <div class="form-group mt-3">
+                <label for="alt-text-batch" class="form-label">Alt text <span class="text-xs text-gray-500">(required for images — applied to the whole batch)</span></label>
+                <input type="text" name="alt_text" id="alt-text-batch" class="form-input" maxlength="255" placeholder="Describe the image…">
+                <p class="text-xs text-gray-500 mt-1">Alt text is required for image uploads for accessibility and SEO.</p>
+            </div>
         </form>
     </div>
 

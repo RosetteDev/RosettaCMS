@@ -8,6 +8,8 @@ use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\IpRulesController;
+use App\Http\Controllers\Admin\RedirectController;
+use App\Http\Controllers\Admin\SeoHealthController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\MediaController;
@@ -76,6 +78,10 @@ Route::get('/categories/{slug}', [FrontendController::class, 'category'])->name(
 Route::get('/tags/{slug}', [FrontendController::class, 'tag'])->name('tag.show');
 Route::get('/search', [FrontendController::class, 'search'])->name('search');
 Route::get('/sitemap.xml', [FrontendController::class, 'sitemap'])->name('sitemap');
+Route::get('/sitemap-posts.xml', [FrontendController::class, 'sitemapPosts'])->name('sitemap.posts');
+Route::get('/sitemap-pages.xml', [FrontendController::class, 'sitemapPages'])->name('sitemap.pages');
+Route::get('/sitemap-categories.xml', [FrontendController::class, 'sitemapCategories'])->name('sitemap.categories');
+Route::get('/sitemap-tags.xml', [FrontendController::class, 'sitemapTags'])->name('sitemap.tags');
 Route::get('/feed', [FrontendController::class, 'feed'])->name('feed');
 Route::get('/robots.txt', [FrontendController::class, 'robots'])->name('robots');
 Route::get('/language/{code}', function (string $code) {
@@ -388,6 +394,18 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
         Route::get('/', [IpRulesController::class, 'index'])->name('index');
         Route::post('/', [IpRulesController::class, 'store'])->name('store');
         Route::delete('/{rule}', [IpRulesController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('admin/seo-health')->middleware('role:admin')->name('admin.seo-health.')->group(function () {
+        Route::get('/', [SeoHealthController::class, 'index'])->name('index');
+        Route::post('/fix/{action}', [SeoHealthController::class, 'fix'])->name('fix');
+    });
+
+    Route::prefix('admin/redirects')->middleware('role:admin')->name('admin.redirects.')->group(function () {
+        Route::get('/', [RedirectController::class, 'index'])->name('index');
+        Route::post('/', [RedirectController::class, 'store'])->name('store');
+        Route::post('/{redirect}/toggle', [RedirectController::class, 'toggle'])->name('toggle');
+        Route::delete('/{redirect}', [RedirectController::class, 'destroy'])->name('destroy');
     });
 
     // Languages - Admin only
