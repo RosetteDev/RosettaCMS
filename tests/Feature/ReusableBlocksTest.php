@@ -190,6 +190,36 @@ class ReusableBlocksTest extends TestCase
         $response->assertSee('Quote Strip');
     }
 
+    public function test_index_open_page_builder_links_to_latest_page_edit(): void
+    {
+        $site = \App\Models\Site::create([
+            'name' => 'Builder Target Site',
+            'slug' => 'builder-target-site',
+            'domain' => 'builder-target.test',
+        ]);
+        $page = \App\Models\Post::create([
+            'site_id' => $site->id,
+            'user_id' => $this->admin->id,
+            'title' => 'Builder Target Page',
+            'slug' => 'builder-target-page',
+            'post_type' => 'page',
+            'status' => 'draft',
+        ]);
+
+        $response = $this->get(route('admin.reusable-blocks.index'));
+
+        $response->assertOk();
+        $response->assertSee(route('admin.pages.edit', $page->id), false);
+    }
+
+    public function test_index_open_page_builder_falls_back_to_create_without_pages(): void
+    {
+        $response = $this->get(route('admin.reusable-blocks.index'));
+
+        $response->assertOk();
+        $response->assertSee(route('admin.pages.create'), false);
+    }
+
     public function test_index_requires_authentication(): void
     {
         auth()->logout();

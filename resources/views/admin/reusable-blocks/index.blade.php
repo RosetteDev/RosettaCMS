@@ -19,9 +19,16 @@
 
     <div style="padding: 1rem 0; display: flex; justify-content: space-between; align-items: center;">
         <div>
-            <a href="{{ route('admin.pages.index') }}" class="btn btn-primary">
+            <a href="{{ $latestPage ? route('admin.pages.edit', $latestPage->id) : route('admin.pages.create') }}" class="btn btn-primary">
                 <i class="fas fa-pen-nib me-1"></i> Open Page Builder
             </a>
+            <div class="text-muted small mt-2">
+                @if($latestPage)
+                    Opens the page builder on "{{ Str::limit($latestPage->title, 60) }}" — add blocks with <strong>Add Block</strong>, then save this page.
+                @else
+                    No pages yet — creating a page leads into the page builder after saving.
+                @endif
+            </div>
         </div>
         <div class="text-muted small">
             Save a block as reusable from the page builder's toolbar.
@@ -32,7 +39,7 @@
         @if($reusableBlocks->isEmpty())
             <div class="text-center py-5 text-muted">
                 <i class="fas fa-copy fa-3x mb-3 opacity-50"></i>
-                <p class="mb-0">No reusable blocks yet. Select a block in the page builder and click <strong>Save as reusable</strong>.</p>
+                <p class="mb-0">No reusable blocks yet. Open the page builder, add a block, then click <strong>Save as reusable</strong>.</p>
             </div>
         @else
             <table class="table table-hover mb-0">

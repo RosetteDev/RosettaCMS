@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Post;
 use App\Models\ReusableBlock;
 use App\Models\Site;
 use Illuminate\Http\Request;
@@ -16,7 +17,13 @@ class ReusableBlockController extends Controller
     {
         $reusableBlocks = ReusableBlock::with('site')->latest()->get();
 
-        return view('admin.reusable-blocks.index', compact('reusableBlocks'));
+        // The page builder only lives on an existing page's edit screen. Point
+        // the "Open Page Builder" button at the most recent page so the button
+        // actually opens the builder; with no pages yet, fall back to the
+        // create form, which leads into the builder after saving.
+        $latestPage = Post::where('post_type', 'page')->latest()->first();
+
+        return view('admin.reusable-blocks.index', compact('reusableBlocks', 'latestPage'));
     }
 
     /**
