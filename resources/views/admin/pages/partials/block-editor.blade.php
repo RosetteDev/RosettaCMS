@@ -20,6 +20,7 @@
     $editorConfig = [
         'blocks' => $blocksPayload,
         'blockTypes' => $blockTypes,
+        'patterns' => \App\Support\BlockPatterns::all(),
         'reusableBlocks' => $reusableBlocksPayload,
         'urls' => [
             'store' => route('admin.pages.blocks.store', $post->id),
@@ -295,6 +296,23 @@
                                     </div>
                                 </template>
                             </div>
+                            <template x-if="patterns.length > 0">
+                                <div class="mt-4">
+                                    <div class="text-muted small text-uppercase fw-semibold mb-2">Patterns</div>
+                                    <div class="row g-2">
+                                        <template x-for="pattern in patterns" :key="pattern.id">
+                                            <div class="col-6 col-md-4">
+                                                <button type="button" class="btn btn-outline-secondary w-100 text-start p-3"
+                                                        @click="insertPattern(pattern)" data-bs-dismiss="modal">
+                                                    <i :class="'fas ' + pattern.icon + ' me-2 text-primary'"></i>
+                                                    <span x-text="pattern.name"></span>
+                                                    <div class="text-muted small fw-normal" x-text="pattern.blocks.length + ' block(s)'"></div>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
                             <template x-if="reusableBlocks.length > 0">
                                 <div class="mt-4">
                                     <div class="text-muted small text-uppercase fw-semibold mb-2">Reusable blocks</div>
@@ -470,6 +488,7 @@ document.addEventListener('alpine:init', () => {
         previewLoading: false,
         previewError: '',
         reusableBlocks: [],
+        patterns: [],
         reusableName: '',
         reusableDescription: '',
         reusableSaving: false,
@@ -488,6 +507,7 @@ document.addEventListener('alpine:init', () => {
 
         init() {
             this.blockTypes = this.cfg.blockTypes || {};
+            this.patterns = this.cfg.patterns || [];
             this.reusableBlocks = this.cfg.reusableBlocks || [];
             this.blocks = (this.cfg.blocks || []).map((block, index) => ({
                 id: block.id ?? null,
@@ -901,10 +921,10 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        insertReusableBlock(rb) {
+        insertTemplate(templateBlocks) {
             this.pushHistory();
             const maxOrder = this.blocks.reduce((max, b) => Math.max(max, b.order || 0), 0);
-            rb.blocks.forEach((templateBlock, index) => {
+            templateBlocks.forEach((templateBlock, index) => {
                 const content = JSON.parse(JSON.stringify(templateBlock.content ?? {}));
                 if (templateBlock.type === 'gallery' && Array.isArray(content.images)) {
                     content.imagesText = content.images.join('\n');
@@ -920,6 +940,16 @@ document.addEventListener('alpine:init', () => {
                 });
             });
             this.selectedBlockId = this.blocks[this.blocks.length - 1].tempId;
+            this.savedMessage = '';
+            this.saveError = '';
+        },
+
+        insertReusableBlock(rb) {
+            this.insertTemplate(rb.blocks);
+        },
+
+        insertPattern(pattern) {
+            this.insertTemplate(pattern.blocks);
         },
 
         // ----- live preview -----

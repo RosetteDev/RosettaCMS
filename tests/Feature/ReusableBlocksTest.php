@@ -139,6 +139,57 @@ class ReusableBlocksTest extends TestCase
         $response->assertSee('CTA Banner');
     }
 
+    public function test_block_patterns_are_valid(): void
+    {
+        $patterns = \App\Support\BlockPatterns::all();
+        $validTypes = array_keys(\App\Models\Block::getTypeOptions());
+
+        $this->assertNotEmpty($patterns);
+
+        foreach ($patterns as $pattern) {
+            $this->assertNotEmpty($pattern['id']);
+            $this->assertNotEmpty($pattern['name']);
+            $this->assertNotEmpty($pattern['blocks']);
+
+            foreach ($pattern['blocks'] as $block) {
+                $this->assertContains($block['type'], $validTypes);
+                $this->assertIsArray($block['content']);
+                $this->assertIsArray($block['settings']);
+            }
+        }
+    }
+
+    public function test_pattern_lookup_by_id(): void
+    {
+        $this->assertNotNull(\App\Support\BlockPatterns::find('hero-cta'));
+        $this->assertNull(\App\Support\BlockPatterns::find('does-not-exist'));
+    }
+
+    public function test_page_editor_lists_patterns_in_add_modal(): void
+    {
+        $site = \App\Models\Site::create([
+            'name' => 'Pattern Test Site',
+            'slug' => 'pattern-test-site',
+            'domain' => 'pattern-test.test',
+        ]);
+        $page = \App\Models\Post::create([
+            'site_id' => $site->id,
+            'user_id' => $this->admin->id,
+            'title' => 'Pattern Test Page',
+            'slug' => 'pattern-test-page',
+            'post_type' => 'page',
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
+
+        $response = $this->get(route('admin.pages.edit', $page->id));
+
+        $response->assertOk();
+        $response->assertSee('Patterns');
+        $response->assertSee('Hero + CTA');
+        $response->assertSee('Quote Strip');
+    }
+
     public function test_index_requires_authentication(): void
     {
         auth()->logout();
