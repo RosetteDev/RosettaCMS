@@ -197,6 +197,33 @@
                         <div class="form-text">Leave blank to publish immediately. Set a future date to schedule the post — it will go live automatically when the date arrives.</div>
                     </div>
 
+                    @if($postType !== 'page')
+                    <div class="mb-3">
+                        <label for="expires_at" class="form-label">Expires (optional)</label>
+                        <input type="datetime-local" name="expires_at" id="expires_at" class="form-control"
+                               value="{{ old('expires_at', $post->expires_at ? $post->expires_at->format('Y-m-d\\TH:i') : '') }}">
+                        <div class="form-text">Auto-unpublish this post after this date/time.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="repeat_frequency" class="form-label">Repeat (optional)</label>
+                        <select name="repeat_frequency" id="repeat_frequency" class="form-select">
+                            <option value="">— No repeat —</option>
+                            @foreach(['daily' => 'Daily', 'weekly' => 'Weekly', 'monthly' => 'Monthly'] as $val => $text)
+                                <option value="{{ $val }}" {{ old('repeat_frequency', $post->repeat_frequency ?? '') === $val ? 'selected' : '' }}>{{ $text }}</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">When this post publishes, it goes live again on the next occurrence.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="repeat_until" class="form-label">Repeat until (optional)</label>
+                        <input type="date" name="repeat_until" id="repeat_until" class="form-control"
+                               value="{{ old('repeat_until', $post->repeat_until ? $post->repeat_until->format('Y-m-d') : '') }}">
+                        <div class="form-text">Stop repeating after this date.</div>
+                    </div>
+
+                    @endif
                     <div class="mb-3">
                         <label for="comment_status" class="form-label">Comments</label>
                         <select name="comment_status" id="comment_status" class="form-select">

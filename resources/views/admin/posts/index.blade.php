@@ -151,6 +151,16 @@
                             </td>
                             <td style="padding: 1rem; color: var(--text-color);">
                                 {{ $post->published_at ? $post->published_at->diffForHumans() : 'Not published' }}
+                                @if($post->expires_at)
+                                    <div style="font-size: 0.8rem; color: var(--text-color); margin-top: 0.25rem;">
+                                        Expires {{ $post->expires_at->diffForHumans() }}
+                                    </div>
+                                @endif
+                                @if($post->isRecurring())
+                                    <div style="font-size: 0.8rem; color: var(--text-color); margin-top: 0.25rem;">
+                                        Repeats {{ $post->repeat_frequency }}@if($post->repeat_until) until {{ $post->repeat_until->toDateString() }}@endif
+                                    </div>
+                                @endif
                             </td>
                             <td style="padding: 1rem; text-align: right;">
                                 <a href="{{ url('/admin/posts/' . $post->id . '/edit') }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">Edit</a>

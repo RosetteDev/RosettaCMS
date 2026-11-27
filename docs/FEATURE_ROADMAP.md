@@ -145,7 +145,7 @@ The `languages` and `language_content` tables are now wired up.
   - Per-site language default (nullable `sites.default_language_id`, falls
     back to the global default)
 
-### 5. Scheduled posts, expiry and automation — ✅ scheduled publishing done
+### 5. Scheduled posts, expiry and automation — ✅ done (2026-11)
 **Done (2026-11):**
 - Future publish dates force `status=pending` in both the admin form and
   the API write endpoint
@@ -154,12 +154,17 @@ The `languages` and `language_content` tables are now wired up.
 - Admin posts/pages lists show a "Scheduled" badge; publish form explains
   the behavior
 - Public site hides scheduled posts (they stay pending until due)
-
-**Still open:**
-- Expiry dates (auto-unpublish after a date)
-- Recurring/repeat posts (daily/weekly/monthly)
-- Scheduled newsletters and digest emails
-- Cron-driven maintenance tasks beyond publish (expire, purge)
+- Expiry dates: `posts.expires_at`; `posts:expire` unpublishes expired posts
+  to draft (never back to pending — that would be re-published instantly);
+  runs every minute via `withSchedule`
+- Recurring/repeat posts (daily/weekly/monthly): `posts.repeat_frequency` /
+  `repeat_until`; a recurring post re-arms to pending with its next occurrence
+  after publishing; the recurrence window is honoured
+- Scheduled digest email: `posts:digest` emails the site admin a digest of
+  recently published posts (default 24h) via a proper `PostDigest` mailable;
+  runs daily at 08:00
+- Cron-driven maintenance: `posts:purge` permanently deletes trashed posts
+  older than 30 days (`--days` to override); runs daily at 04:00
 
 ### 6. Security and admin trust
 - 2FA/TOTP for admin accounts (WordPress needs plugins for this; core

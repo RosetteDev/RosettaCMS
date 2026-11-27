@@ -210,6 +210,9 @@ class PostController extends Controller
             'status' => 'nullable|in:draft,pending,published,private',
             'published_at' => 'nullable|date',
             'comment_status' => 'nullable|in:open,closed',
+            'expires_at' => 'nullable|date',
+            'repeat_frequency' => 'nullable|in:daily,weekly,monthly',
+            'repeat_until' => 'nullable|date',
             'site_id' => 'nullable|exists:sites,id',
             'categories' => 'nullable|array',
             'categories.*' => 'exists:categories,id',
@@ -275,6 +278,9 @@ class PostController extends Controller
             'status' => $status,
             'published_at' => $publishedAt,
             'comment_status' => $validated['comment_status'] ?? 'open',
+            'expires_at' => $validated['expires_at'] ?? null,
+            'repeat_frequency' => $validated['repeat_frequency'] ?? null,
+            'repeat_until' => $validated['repeat_until'] ?? null,
         ]);
 
         $post->save();

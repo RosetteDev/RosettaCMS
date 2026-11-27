@@ -23,11 +23,16 @@ class Post extends Model
         'status',
         'published_at',
         'comment_status',
+        'expires_at',
+        'repeat_frequency',
+        'repeat_until',
     ];
 
     protected $casts = [
         'meta' => 'array',
         'published_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'repeat_until' => 'date',
     ];
 
     /**
@@ -153,6 +158,48 @@ class Post extends Model
     }
 
     /**
+     * Whether the post has passed its expiry date and should be unpublished.
+     */
+    public function isExpired(): bool
+    {
+        return $this->expires_at !== null
+            && $this->expires_at->isPast();
+    }
+
+    /**
+     * Whether the post republishes itself on a cadence.
+     */
+    public function isRecurring(): bool
+    {
+        return in_array($this->repeat_frequency, ['daily', 'weekly', 'monthly'], true);
+    }
+
+    /**
+     * The date the post should go live next, when it is recurring.
+     *
+     * Returns null when the post is not recurring, or when its recurrence
+     * window has ended.
+     */
+    public function nextOccurrence(): ?\Illuminate\Support\Carbon
+    {
+        if (!$this->isRecurring()) {
+            return null;
+        }
+
+        $next = match ($this->repeat_frequency) {
+            'daily' => now()->addDay(),
+            'weekly' => now()->addWeek(),
+            'monthly' => now()->addMonth(),
+        };
+
+        if ($this->repeat_until && $next->greaterThan($this->repeat_until)) {
+            return null;
+        }
+
+        return $next;
+    }
+
+    /**
      * Scope a query to only include scheduled posts (pending publication).
      */
     public function scopeScheduled($query)
@@ -170,6 +217,10 @@ class Post extends Model
             ->where(function ($query) {
                 $query->whereNull('published_at')
                     ->orWhere('published_at', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
             });
     }
 

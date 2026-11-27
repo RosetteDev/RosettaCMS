@@ -13,8 +13,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withSchedule(function (Schedule $schedule) {
-        // Publish posts whose scheduled publish date has arrived.
+        // Publish posts whose scheduled publish date has arrived, and
+        // unpublish posts whose expiry date has arrived.
         $schedule->command('posts:publish-due')->everyMinute();
+        $schedule->command('posts:expire')->everyMinute();
+
+        // Email the site admin a digest of recently published posts.
+        $schedule->command('posts:digest')->dailyAt('08:00');
+
+        // Permanently delete trashed posts older than 30 days.
+        $schedule->command('posts:purge')->dailyAt('04:00');
 
         // Create a backup of the database and media library every day.
         $schedule->command('backups:create')->dailyAt('03:00');
