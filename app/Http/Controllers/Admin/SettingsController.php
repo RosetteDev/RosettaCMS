@@ -13,10 +13,61 @@ use Illuminate\Http\Request;
 class SettingsController extends Controller
 {
     /**
-     * Display settings page.
+     * Sections available in the settings area, keyed by route segment.
      */
-    public function index()
+    public const SECTIONS = [
+        'general' => 'General',
+        'seo' => 'Content & SEO',
+        'security' => 'Security & Trust',
+        'commerce' => 'Commerce',
+        'site-code' => 'Site Code',
+    ];
+
+    /**
+     * Field ownership per section. Only these fields are validated and persisted
+     * when the section is submitted; every other setting is left untouched.
+     */
+    protected const SECTION_FIELDS = [
+        'general' => [
+            'site_name', 'site_description', 'admin_email', 'home_post_id',
+            'posts_per_page', 'theme',
+            'font_family', 'container_width', 'body_font_size', 'line_height',
+            'block_gap', 'section_padding',
+            'logo_url', 'logo_text', 'favicon_url',
+            'primary_color', 'secondary_color', 'accent_color',
+            'text_color', 'bg_color', 'border_color',
+        ],
+        'seo' => [
+            'permalink_structure', 'custom_permalink',
+            'seo_title_suffix', 'seo_title_template', 'seo_default_keywords',
+            'og_image', 'twitter_handle',
+            'verification_google', 'verification_bing',
+            'verification_pinterest', 'verification_yandex',
+            'robots_disallow', 'robots_allow', 'enable_xml_sitemap',
+            'custom_form_fields',
+        ],
+        'security' => [
+            'disable_comments', 'enable_comment_approval',
+            'akismet_api_key', 'enable_akismet', 'spam_keywords',
+            'rate_limit_enabled', 'rate_limit_per_minute', 'captcha_enabled',
+            'enable_debug_mode', 'disable_file_editor', 'max_upload_size',
+            'enable_user_registration', 'enable_welcome_email',
+            'enable_booking_form', 'enable_chat_widget',
+            'enable_social_login_google', 'enable_social_login_github',
+        ],
+        'commerce' => ['tax_rate'],
+        'site-code' => ['analytics_code', 'custom_css', 'custom_js', 'maintenance_mode'],
+    ];
+
+    /**
+     * Display a single settings section.
+     */
+    public function edit(string $section)
     {
+        if (!array_key_exists($section, self::SECTIONS)) {
+            abort(404);
+        }
+
         $site = Site::first();
         $settings = SiteSetting::forSite($site);
 
@@ -37,15 +88,106 @@ class SettingsController extends Controller
                 ->keyBy('language_id')
             : collect();
 
-        return view('admin.settings.index', compact('settings', 'pages', 'site', 'translationLanguages', 'existingTranslations'));
+        return view('admin.settings.show', compact(
+            'settings', 'pages', 'site', 'translationLanguages', 'existingTranslations', 'section'
+        ))->with('sections', self::SECTIONS);
     }
 
     /**
-     * Update settings.
+     * Validate and persist only the fields owned by the given section.
      */
-    public function update(Request $request)
+    public function update(Request $request, string $section)
     {
-        $validated = $request->validate([
+        if (!array_key_exists($section, self::SECTIONS)) {
+            abort(404);
+        }
+
+        $validated = $request->validate($this->sectionRules($section));
+
+        $site = Site::firstOrFail();
+        $settings = SiteSetting::firstOrNew(['site_id' => $site->id]);
+
+        // Map form field names to the underlying schema where they differ.
+        $settingsData = $validated;
+
+        if (array_key_exists('site_name', $validated)) {
+            $settingsData['site_title'] = $validated['site_name'];
+            unset($settingsData['site_name']);
+        }
+
+        if (array_key_exists('posts_per_page', $validated)) {
+            $settingsData['post_per_page'] = $validated['posts_per_page'] ?? 10;
+            unset($settingsData['posts_per_page']);
+        }
+
+        // Flatten the verification meta fields into the JSON map.
+        $verificationKeys = ['verification_google', 'verification_bing', 'verification_pinterest', 'verification_yandex'];
+        if (array_intersect_key($validated, array_flip($verificationKeys))) {
+            $verification = array_filter([
+                'google' => trim((string) ($validated['verification_google'] ?? '')),
+                'bing' => trim((string) ($validated['verification_bing'] ?? '')),
+                'pinterest' => trim((string) ($validated['verification_pinterest'] ?? '')),
+                'yandex' => trim((string) ($validated['verification_yandex'] ?? '')),
+            ], fn ($value) => $value !== '');
+
+            $settingsData['verification_meta'] = $verification ?: null;
+
+            foreach ($verificationKeys as $key) {
+                unset($settingsData[$key]);
+            }
+        }
+
+        if (array_key_exists('custom_form_fields', $validated)) {
+            $customFields = $this->validateCustomFormFields($request->input('custom_form_fields'));
+            $settingsData['custom_form_fields'] = $customFields ?: null;
+        }
+
+        // Site-level fields are not stored on the settings row.
+        unset($settingsData['home_post_id'], $settingsData['theme']);
+
+        $settings->fill($settingsData);
+        $settings->site_id = $site->id;
+        $settings->save();
+
+        // Site-level theme settings and homepage (only when present).
+        if (array_key_exists('home_post_id', $validated)) {
+            $site->home_post_id = $validated['home_post_id'] ?? null;
+        }
+
+        if (!empty($validated['theme'])) {
+            $site->theme = $validated['theme'];
+        }
+
+        $themeKeys = [
+            'primary_color', 'secondary_color', 'accent_color', 'text_color',
+            'bg_color', 'border_color', 'font_family', 'container_width',
+            'body_font_size', 'line_height', 'block_gap', 'section_padding',
+        ];
+
+        $themePresent = array_intersect_key($validated, array_flip($themeKeys));
+
+        if (!empty($themePresent)) {
+            $existing = json_decode($site->theme_options ?? '{}', true) ?: [];
+            $site->theme_options = json_encode(array_merge($existing, $themePresent));
+        }
+
+        $site->save();
+
+        if ($request->has('translations')) {
+            $this->saveTranslations($request, $site);
+        }
+
+        \App\Services\ContentCache::bump();
+
+        return back()->with('success', 'Settings updated successfully.');
+    }
+
+    /**
+     * Validation rules for the fields owned by the given section.
+     */
+    protected function sectionRules(string $section): array
+    {
+        $all = [
             // Site information
             'site_name' => 'required|string|max:255',
             'site_description' => 'nullable|string',
@@ -127,74 +269,11 @@ class SettingsController extends Controller
 
             // Custom form fields (JSON-encoded array)
             'custom_form_fields' => 'nullable|string|max:20000',
-        ]);
+        ];
 
-        $customFields = $this->validateCustomFormFields($request->input('custom_form_fields'));
+        $fields = self::SECTION_FIELDS[$section] ?? [];
 
-        $site = Site::firstOrFail();
-
-        // Persist settings for this site
-        $settings = SiteSetting::firstOrNew(['site_id' => $site->id]);
-
-        // Map form field names to the underlying schema where they differ.
-        $settingsData = $validated;
-        $settingsData['site_title'] = $validated['site_name'];
-        $settingsData['post_per_page'] = $validated['posts_per_page'] ?? 10;
-
-        // Flatten the verification meta fields into the JSON map.
-        $verification = array_filter([
-            'google' => trim((string) ($validated['verification_google'] ?? '')),
-            'bing' => trim((string) ($validated['verification_bing'] ?? '')),
-            'pinterest' => trim((string) ($validated['verification_pinterest'] ?? '')),
-            'yandex' => trim((string) ($validated['verification_yandex'] ?? '')),
-        ], fn ($value) => $value !== '');
-
-        $settingsData['verification_meta'] = $verification ?: null;
-        $settingsData['custom_form_fields'] = $customFields ?: null;
-
-        unset(
-            $settingsData['site_name'],
-            $settingsData['posts_per_page'],
-            $settingsData['home_post_id'],
-            $settingsData['theme'],
-            $settingsData['verification_google'],
-            $settingsData['verification_bing'],
-            $settingsData['verification_pinterest'],
-            $settingsData['verification_yandex']
-        );
-
-        $settings->fill($settingsData);
-        $settings->site_id = $site->id;
-        $settings->save();
-
-        // Site-level theme settings and homepage
-        $site->home_post_id = $validated['home_post_id'] ?? null;
-
-        if (!empty($validated['theme'])) {
-            $site->theme = $validated['theme'];
-        }
-
-        $site->theme_options = json_encode([
-            'primary_color' => $validated['primary_color'] ?? '#3b82f6',
-            'secondary_color' => $validated['secondary_color'] ?? '#6b7280',
-            'accent_color' => $validated['accent_color'] ?? '#f59e0b',
-            'text_color' => $validated['text_color'] ?? '#1f2937',
-            'bg_color' => $validated['bg_color'] ?? '#ffffff',
-            'border_color' => $validated['border_color'] ?? '#e5e7eb',
-            'font_family' => $validated['font_family'] ?? 'system-ui, sans-serif',
-            'container_width' => $validated['container_width'] ?? ($settings->container_width ?? '1200px'),
-            'body_font_size' => $validated['body_font_size'] ?? ($settings->body_font_size ?? '16px'),
-            'line_height' => $validated['line_height'] ?? ($settings->line_height ?? '1.6'),
-            'block_gap' => $validated['block_gap'] ?? ($settings->block_gap ?? '2rem'),
-            'section_padding' => $validated['section_padding'] ?? ($settings->section_padding ?? '3rem'),
-        ]);
-        $site->save();
-
-        $this->saveTranslations($request, $site);
-
-        \App\Services\ContentCache::bump();
-
-        return back()->with('success', 'Settings updated successfully.');
+        return array_intersect_key($all, array_flip($fields));
     }
 
     /**

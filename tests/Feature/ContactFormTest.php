@@ -205,7 +205,7 @@ class ContactFormTest extends TestCase
 
     public function test_settings_update_saves_custom_form_fields(): void
     {
-        $this->actingAs($this->user)->post(route('admin.settings.update'), [
+        $this->actingAs($this->user)->post(route('admin.settings.update', ['section' => 'seo']), [
             'site_name' => 'Test Site',
             'site_description' => 'A test site',
             'admin_email' => 'admin@test.test',
@@ -223,13 +223,13 @@ class ContactFormTest extends TestCase
 
     public function test_settings_update_rejects_invalid_custom_form_fields(): void
     {
-        $this->actingAs($this->user)->post(route('admin.settings.update'), [
+        $this->actingAs($this->user)->post(route('admin.settings.update', ['section' => 'seo']), [
             'site_name' => 'Test Site',
             'admin_email' => 'admin@test.test',
             'custom_form_fields' => 'not-json',
         ])->assertSessionHasErrors('custom_form_fields');
 
-        $this->actingAs($this->user)->post(route('admin.settings.update'), [
+        $this->actingAs($this->user)->post(route('admin.settings.update', ['section' => 'seo']), [
             'site_name' => 'Test Site',
             'admin_email' => 'admin@test.test',
             'custom_form_fields' => json_encode([

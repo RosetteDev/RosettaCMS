@@ -522,7 +522,7 @@ class SEOPassTest extends TestCase
 
     public function test_settings_page_renders_og_image_picker(): void
     {
-        $response = $this->actingAs($this->user)->get('/admin/settings');
+        $response = $this->actingAs($this->user)->get('/admin/settings/seo');
 
         $response->assertOk();
         $response->assertSee('ogImagePickerModal');
@@ -533,7 +533,7 @@ class SEOPassTest extends TestCase
 
     public function test_settings_update_persists_new_seo_fields(): void
     {
-        $response = $this->actingAs($this->user)->post('/admin/settings', [
+        $response = $this->actingAs($this->user)->post('/admin/settings/seo', [
             'site_name' => 'SEO Test Site',
             'admin_email' => 'seo-admin@test.dev',
             'posts_per_page' => 10,

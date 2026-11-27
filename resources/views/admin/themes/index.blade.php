@@ -33,7 +33,7 @@
                     <i class="fas fa-upload me-1"></i>Install theme ZIP
                 </button>
             </form>
-            <a href="{{ route('admin.settings.index') }}" class="btn btn-primary">
+            <a href="{{ route('admin.settings.edit', ['section' => 'general']) }}" class="btn btn-primary">
                 <i class="fas fa-cog me-2"></i>Customize Theme
             </a>
         </div>

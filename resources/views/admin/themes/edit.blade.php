@@ -75,7 +75,7 @@
                         </div>
                         <p class="text-muted small mb-0 mt-3">
                             Palette values can be overridden per site in
-                            <a href="{{ route('admin.settings.index') }}">Settings</a>.
+                            <a href="{{ route('admin.settings.edit', ['section' => 'general']) }}">Settings</a>.
                         </p>
                     </div>
                 </div>

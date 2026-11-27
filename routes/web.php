@@ -457,10 +457,15 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
         Route::delete('/{reusableBlock}', [ReusableBlockController::class, 'destroy'])->name('destroy');
     });
 
-    // Settings - Admin only
+    // Settings - Admin only (split into focused sections)
     Route::prefix('admin/settings')->middleware('role:admin')->name('admin.settings.')->group(function () {
-        Route::get('/', [SettingsController::class, 'index'])->name('index');
-        Route::post('/', [SettingsController::class, 'update'])->name('update');
+        Route::get('/', fn () => redirect()->route('admin.settings.edit', ['section' => 'general']))->name('index');
+        Route::get('/{section}', [SettingsController::class, 'edit'])
+            ->whereIn('section', ['general', 'seo', 'security', 'commerce', 'site-code'])
+            ->name('edit');
+        Route::post('/{section}', [SettingsController::class, 'update'])
+            ->whereIn('section', ['general', 'seo', 'security', 'commerce', 'site-code'])
+            ->name('update');
     });
     
     // Security & trust - Admin only

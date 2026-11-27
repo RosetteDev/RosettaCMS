@@ -227,7 +227,7 @@ class EcommerceTest extends TestCase
 
     public function test_settings_page_shows_ecommerce_tax_section(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/settings');
+        $response = $this->actingAs($this->admin)->get('/admin/settings/commerce');
 
         $response->assertOk();
         $response->assertSee('tax_rate');
@@ -238,7 +238,7 @@ class EcommerceTest extends TestCase
     {
         SiteSetting::create(['site_id' => $this->site->id, 'tax_rate' => 5]);
 
-        $response = $this->actingAs($this->admin)->post('/admin/settings', [
+        $response = $this->actingAs($this->admin)->post('/admin/settings/commerce', [
             'site_name' => 'Store Test Site',
             'site_description' => '',
             'admin_email' => 'admin@store.test',

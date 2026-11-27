@@ -162,7 +162,7 @@
 
         /* Admin Layout Container - avoid Bootstrap .container conflict */
         .admin-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 20px;
             display: flex;
@@ -170,7 +170,7 @@
         }
         
         .admin-container > .sidebar {
-            flex: 0 0 250px;
+            flex: 0 0 220px;
             order: 1;
         }
         
@@ -294,51 +294,178 @@
         .sidebar {
             display: flex;
             flex-direction: column;
-            width: 250px;
-            position: relative;
+            gap: 0.25rem;
+            width: 220px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0.5rem 0 1.5rem;
             z-index: 1000;
+            scrollbar-width: thin;
         }
-        
-        .sidebar a {
-            display: block;
-            padding: 0.75rem 1rem;
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+        .side-link {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.55rem 0.75rem;
             color: var(--text-color);
             text-decoration: none;
             border-radius: 6px;
-            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
             transition: all 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
-        .sidebar a:hover {
+
+        .side-link i {
+            width: 1.1rem;
+            text-align: center;
+            flex: 0 0 1.1rem;
+            opacity: 0.75;
+            font-size: 0.95rem;
+        }
+
+        .side-link:hover {
             background-color: var(--light-color);
             color: var(--primary-color);
         }
-        
-        .sidebar a.active {
+
+        .side-link.active {
             background-color: var(--primary-color);
             color: white;
         }
-        
-        .sidebar-group {
-            margin-bottom: 1rem;
+        .side-link.active i { opacity: 1; }
+
+        .side-group {
+            margin-top: 0.35rem;
         }
-        
-        .sidebar-group > a {
-            font-weight: 600;
-            border-top: 1px solid var(--border-color);
-            padding-top: 1rem;
-            margin-top: 0.5rem;
+
+        .side-group-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            width: 100%;
+            padding: 0.55rem 0.75rem;
+            background: none;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            transition: all 0.2s;
         }
-        
-        .sidebar-submenu {
-            margin-left: 1rem;
-            margin-top: 0.5rem;
-        }
-        
-        .sidebar-submenu a {
+
+        .side-group-toggle i:first-child {
+            width: 1.1rem;
+            text-align: center;
+            flex: 0 0 1.1rem;
+            opacity: 0.75;
             font-size: 0.9rem;
-            padding: 0.5rem 0.75rem;
-            margin-bottom: 0.25rem;
+            text-transform: none;
+        }
+
+        .side-group-toggle:hover {
+            background-color: var(--light-color);
+            color: var(--primary-color);
+        }
+
+        .side-group-toggle .side-chevron {
+            margin-left: auto;
+            font-size: 0.7rem;
+            opacity: 0.6;
+            transition: transform 0.2s ease;
+        }
+
+        .side-group.open .side-group-toggle .side-chevron {
+            transform: rotate(180deg);
+        }
+
+        .side-group-body {
+            display: none;
+            flex-direction: column;
+            gap: 0.2rem;
+            margin: 0.25rem 0 0.35rem;
+            padding-left: 0.55rem;
+            border-left: 2px solid var(--border-color);
+        }
+
+        .side-group.open .side-group-body { display: flex; }
+
+        .side-sub {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.45rem 0.65rem;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .side-sub i {
+            width: 1.1rem;
+            text-align: center;
+            flex: 0 0 1.1rem;
+            opacity: 0.65;
+            font-size: 0.85rem;
+        }
+
+        .side-sub:hover {
+            background-color: var(--light-color);
+            color: var(--primary-color);
+        }
+
+        .side-sub.active {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+        .side-sub.active i { opacity: 1; }
+
+        .side-sub-sub {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            margin: -0.1rem 0 0.25rem 0.85rem;
+            padding-left: 0.65rem;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .side-sub-sub a {
+            padding: 0.3rem 0.55rem;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.82rem;
+            opacity: 0.85;
+            transition: all 0.2s;
+        }
+
+        .side-sub-sub a:hover {
+            background-color: var(--light-color);
+            color: var(--primary-color);
+            opacity: 1;
+        }
+
+        .side-sub-sub a.active {
+            background-color: var(--light-color);
+            color: var(--primary-color);
+            font-weight: 600;
+            opacity: 1;
         }
         
         .main-content {
@@ -614,59 +741,74 @@
     <div class="admin-container">
         <div class="sidebar" id="adminSidebar">
             @php($currentUser = auth()->user())
-            <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') || request()->is('admin') ? 'active' : '' }}">Dashboard</a>
-            <a href="{{ url('/profile') }}" class="{{ request()->is('profile') ? 'active' : '' }}">Profile</a>
-            <a href="{{ url('/admin/api-keys') }}" class="{{ request()->is('admin/api-keys*') ? 'active' : '' }}">API Keys</a>
-            <a href="{{ url('/api/v1/swagger') }}" target="_blank" rel="noopener" class="{{ request()->is('api/v1/swagger*') ? 'active' : '' }}">API Docs</a>
+            <a href="{{ url('/dashboard') }}" class="side-link {{ request()->is('dashboard') || request()->is('admin') ? 'active' : '' }}"><i class="fas fa-home"></i>Dashboard</a>
+            <a href="{{ url('/profile') }}" class="side-link {{ request()->is('profile') ? 'active' : '' }}"><i class="fas fa-user"></i>Profile</a>
+            <a href="{{ url('/admin/api-keys') }}" class="side-link {{ request()->is('admin/api-keys*') ? 'active' : '' }}"><i class="fas fa-key"></i>API Keys</a>
+            <a href="{{ url('/api/v1/swagger') }}" target="_blank" rel="noopener" class="side-link {{ request()->is('api/v1/swagger*') ? 'active' : '' }}"><i class="fas fa-book"></i>API Docs</a>
 
             @if($currentUser?->isStaff())
-            <div class="sidebar-group">
-                <a href="{{ url('/admin/posts') }}" class="{{ request()->is('admin/posts*') ? 'active' : '' }}">Posts</a>
-                <div class="sidebar-submenu">
-                    <a href="{{ url('/admin/categories') }}" class="{{ request()->is('admin/categories*') ? 'active' : '' }}">Categories</a>
-                    <a href="{{ url('/admin/tags') }}" class="{{ request()->is('admin/tags*') ? 'active' : '' }}">Tags</a>
-                    <a href="{{ url('/admin/comments') }}" class="{{ request()->is('admin/comments*') ? 'active' : '' }}">Comments</a>
-                    <a href="{{ url('/admin/comments/pending') }}" class="{{ request()->is('admin/comments/pending') ? 'active' : '' }}">Pending</a>
+            <div class="side-group">
+                <button type="button" class="side-group-toggle" aria-expanded="false"><i class="fas fa-folder-open"></i>Content<i class="fas fa-chevron-down side-chevron"></i></button>
+                <div class="side-group-body">
+                    <a href="{{ url('/admin/posts') }}" class="side-sub {{ request()->is('admin/posts*') || request()->is('admin/categories*') || request()->is('admin/tags*') || request()->is('admin/comments*') ? 'active' : '' }}"><i class="fas fa-newspaper"></i>Posts</a>
+                    <div class="side-sub-sub">
+                        <a href="{{ url('/admin/categories') }}" class="{{ request()->is('admin/categories*') ? 'active' : '' }}">Categories</a>
+                        <a href="{{ url('/admin/tags') }}" class="{{ request()->is('admin/tags*') ? 'active' : '' }}">Tags</a>
+                        <a href="{{ url('/admin/comments') }}" class="{{ request()->is('admin/comments*') && !request()->is('admin/comments/pending') ? 'active' : '' }}">Comments</a>
+                        <a href="{{ url('/admin/comments/pending') }}" class="{{ request()->is('admin/comments/pending') ? 'active' : '' }}">Pending</a>
+                    </div>
+                    <a href="{{ url('/admin/pages') }}" class="side-sub {{ request()->is('admin/pages*') ? 'active' : '' }}"><i class="fas fa-file"></i>Pages</a>
+                    <a href="{{ url('/admin/reusable-blocks') }}" class="side-sub {{ request()->is('admin/reusable-blocks*') ? 'active' : '' }}"><i class="fas fa-puzzle-piece"></i>Reusable Blocks</a>
+                    <a href="{{ url('/admin/media') }}" class="side-sub {{ request()->is('admin/media*') ? 'active' : '' }}"><i class="fas fa-images"></i>Media</a>
+                    <a href="{{ url('/admin/menus') }}" class="side-sub {{ request()->is('admin/menus*') ? 'active' : '' }}"><i class="fas fa-list"></i>Menus</a>
+                    <a href="{{ url('/admin/forms') }}" class="side-sub {{ request()->is('admin/forms*') ? 'active' : '' }}"><i class="fas fa-clipboard-list"></i>Forms</a>
+                    <a href="{{ url('/admin/bookings') }}" class="side-sub {{ request()->is('admin/bookings*') ? 'active' : '' }}"><i class="fas fa-calendar-check"></i>Bookings</a>
+                    @php($chatUnread = \App\Models\ChatMessage::where('sender', 'visitor')->whereNull('read_at')->count())
+                    <a href="{{ url('/admin/chat') }}" class="side-sub {{ request()->is('admin/chat*') ? 'active' : '' }}"><i class="fas fa-comments"></i>Chat @if($chatUnread > 0) <span style="display: inline-block; min-width: 20px; padding: 0 6px; margin-left: auto; border-radius: 999px; background-color: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; text-align: center;">{{ $chatUnread > 99 ? '99+' : $chatUnread }}</span>@endif</a>
+                    @foreach(\App\Support\PostTypes::generic() as $typeSlug => $typeDef)
+                        <a href="{{ url('/admin/' . $typeSlug) }}" class="side-sub {{ request()->is('admin/' . $typeSlug . '*') && !request()->is('admin/event/calendar*') ? 'active' : '' }}"><i class="{{ $typeDef['icon'] ?? 'fas fa-box' }}"></i>{{ $typeDef['menu'] }}</a>
+                    @endforeach
+                    <a href="{{ url('/admin/event/calendar') }}" class="side-sub {{ request()->is('admin/event/calendar*') ? 'active' : '' }}"><i class="fas fa-calendar"></i>Event Calendar</a>
                 </div>
             </div>
 
-            <a href="{{ url('/admin/pages') }}" class="{{ request()->is('admin/pages*') ? 'active' : '' }}">Pages</a>
-            <a href="{{ url('/admin/reusable-blocks') }}" class="{{ request()->is('admin/reusable-blocks*') ? 'active' : '' }}">Reusable Blocks</a>
-            <a href="{{ url('/admin/media') }}" class="{{ request()->is('admin/media*') ? 'active' : '' }}">Media</a>
-            <a href="{{ url('/admin/menus') }}" class="{{ request()->is('admin/menus*') ? 'active' : '' }}">Menus</a>
-            <a href="{{ url('/admin/forms') }}" class="{{ request()->is('admin/forms*') ? 'active' : '' }}">Forms</a>
-            <a href="{{ url('/admin/bookings') }}" class="{{ request()->is('admin/bookings*') ? 'active' : '' }}">Bookings</a>
-            @php($chatUnread = \App\Models\ChatMessage::where('sender', 'visitor')->whereNull('read_at')->count())
-            <a href="{{ url('/admin/chat') }}" class="{{ request()->is('admin/chat*') ? 'active' : '' }}">Chat @if($chatUnread > 0) <span style="display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 0.35rem; border-radius: 999px; background-color: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; text-align: center;">{{ $chatUnread > 99 ? '99+' : $chatUnread }}</span>@endif</a>
-
-            @foreach(\App\Support\PostTypes::generic() as $typeSlug => $typeDef)
-                <a href="{{ url('/admin/' . $typeSlug) }}" class="{{ request()->is('admin/' . $typeSlug . '*') && !request()->is('admin/event/calendar*') ? 'active' : '' }}">{{ $typeDef['menu'] }}</a>
-            @endforeach
-            <a href="{{ url('/admin/event/calendar') }}" class="{{ request()->is('admin/event/calendar*') ? 'active' : '' }}">Event Calendar</a>
-
             @if($currentUser?->hasRole('admin'))
-            <a href="{{ url('/admin/languages') }}" class="{{ request()->is('admin/languages*') ? 'active' : '' }}">Languages</a>
-            <a href="{{ url('/admin/translations') }}" class="{{ request()->is('admin/translations*') ? 'active' : '' }}">Translations</a>
-            @endif
+            <div class="side-group">
+                <button type="button" class="side-group-toggle" aria-expanded="false"><i class="fas fa-server"></i>System<i class="fas fa-chevron-down side-chevron"></i></button>
+                <div class="side-group-body">
+                    <a href="{{ url('/admin/users') }}" class="side-sub {{ request()->is('admin/users*') ? 'active' : '' }}"><i class="fas fa-users"></i>Users</a>
+                    <a href="{{ url('/admin/roles') }}" class="side-sub {{ request()->is('admin/roles*') ? 'active' : '' }}"><i class="fas fa-user-shield"></i>Roles</a>
+                    <a href="{{ url('/admin/sites') }}" class="side-sub {{ request()->is('admin/sites*') ? 'active' : '' }}"><i class="fas fa-globe"></i>Sites</a>
+                    <a href="{{ url('/admin/languages') }}" class="side-sub {{ request()->is('admin/languages*') ? 'active' : '' }}"><i class="fas fa-language"></i>Languages</a>
+                    <a href="{{ url('/admin/translations') }}" class="side-sub {{ request()->is('admin/translations*') ? 'active' : '' }}"><i class="fas fa-exchange-alt"></i>Translations</a>
+                </div>
+            </div>
 
-            @if($currentUser?->hasRole('admin'))
-            <a href="{{ url('/admin/users') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}">Users</a>
-            <a href="{{ url('/admin/roles') }}" class="{{ request()->is('admin/roles*') ? 'active' : '' }}">Roles</a>
-            <a href="{{ url('/admin/sites') }}" class="{{ request()->is('admin/sites*') ? 'active' : '' }}">Sites</a>
-            <a href="{{ url('/admin/themes') }}" class="{{ request()->is('admin/themes*') ? 'active' : '' }}">Themes</a>
-            <a href="{{ url('/admin/plugins') }}" class="{{ request()->is('admin/plugins*') ? 'active' : '' }}">Plugins</a>
-            <a href="{{ url('/admin/backups') }}" class="{{ request()->is('admin/backups*') ? 'active' : '' }}">Backups</a>
-            <a href="{{ url('/admin/webhooks') }}" class="{{ request()->is('admin/webhooks*') ? 'active' : '' }}">Webhooks</a>
-            <a href="{{ url('/admin/activity') }}" class="{{ request()->is('admin/activity*') ? 'active' : '' }}">Activity Log</a>
-            <a href="{{ url('/admin/analytics') }}" class="{{ request()->is('admin/analytics*') ? 'active' : '' }}">Analytics</a>
-            <a href="{{ url('/admin/health') }}" class="{{ request()->is('admin/health*') ? 'active' : '' }}">Health</a>
-            <a href="{{ url('/admin/ip-rules') }}" class="{{ request()->is('admin/ip-rules*') ? 'active' : '' }}">IP Rules</a>
-            <a href="{{ url('/admin/redirects') }}" class="{{ request()->is('admin/redirects*') ? 'active' : '' }}">Redirects</a>
-            <a href="{{ url('/admin/seo-health') }}" class="{{ request()->is('admin/seo-health*') ? 'active' : '' }}">SEO Health</a>
-            <a href="{{ url('/admin/products') }}" class="{{ request()->is('admin/products*') ? 'active' : '' }}">Products</a>
-            <a href="{{ url('/admin/orders') }}" class="{{ request()->is('admin/orders*') ? 'active' : '' }}">Orders</a>
-            <a href="{{ url('/admin/coupons') }}" class="{{ request()->is('admin/coupons*') ? 'active' : '' }}">Coupons</a>
-            <a href="{{ url('/admin/settings') }}" class="{{ request()->is('admin/settings*') ? 'active' : '' }}">Settings</a>
+            <div class="side-group">
+                <button type="button" class="side-group-toggle" aria-expanded="false"><i class="fas fa-shopping-cart"></i>Commerce<i class="fas fa-chevron-down side-chevron"></i></button>
+                <div class="side-group-body">
+                    <a href="{{ url('/admin/products') }}" class="side-sub {{ request()->is('admin/products*') ? 'active' : '' }}"><i class="fas fa-box"></i>Products</a>
+                    <a href="{{ url('/admin/orders') }}" class="side-sub {{ request()->is('admin/orders*') ? 'active' : '' }}"><i class="fas fa-receipt"></i>Orders</a>
+                    <a href="{{ url('/admin/coupons') }}" class="side-sub {{ request()->is('admin/coupons*') ? 'active' : '' }}"><i class="fas fa-ticket-alt"></i>Coupons</a>
+                </div>
+            </div>
+
+            <div class="side-group">
+                <button type="button" class="side-group-toggle" aria-expanded="false"><i class="fas fa-wrench"></i>Admin<i class="fas fa-chevron-down side-chevron"></i></button>
+                <div class="side-group-body">
+                    <a href="{{ url('/admin/themes') }}" class="side-sub {{ request()->is('admin/themes*') ? 'active' : '' }}"><i class="fas fa-palette"></i>Themes</a>
+                    <a href="{{ url('/admin/plugins') }}" class="side-sub {{ request()->is('admin/plugins*') ? 'active' : '' }}"><i class="fas fa-plug"></i>Plugins</a>
+                    <a href="{{ url('/admin/backups') }}" class="side-sub {{ request()->is('admin/backups*') ? 'active' : '' }}"><i class="fas fa-database"></i>Backups</a>
+                    <a href="{{ url('/admin/webhooks') }}" class="side-sub {{ request()->is('admin/webhooks*') ? 'active' : '' }}"><i class="fas fa-webhook"></i>Webhooks</a>
+                    <a href="{{ url('/admin/activity') }}" class="side-sub {{ request()->is('admin/activity*') ? 'active' : '' }}"><i class="fas fa-history"></i>Activity Log</a>
+                    <a href="{{ url('/admin/analytics') }}" class="side-sub {{ request()->is('admin/analytics*') ? 'active' : '' }}"><i class="fas fa-chart-bar"></i>Analytics</a>
+                    <a href="{{ url('/admin/health') }}" class="side-sub {{ request()->is('admin/health*') ? 'active' : '' }}"><i class="fas fa-heartbeat"></i>Health</a>
+                    <a href="{{ url('/admin/ip-rules') }}" class="side-sub {{ request()->is('admin/ip-rules*') ? 'active' : '' }}"><i class="fas fa-filter"></i>IP Rules</a>
+                    <a href="{{ url('/admin/redirects') }}" class="side-sub {{ request()->is('admin/redirects*') ? 'active' : '' }}"><i class="fas fa-external-link-alt"></i>Redirects</a>
+                    <a href="{{ url('/admin/seo-health') }}" class="side-sub {{ request()->is('admin/seo-health*') ? 'active' : '' }}"><i class="fas fa-search"></i>SEO Health</a>
+                    <a href="{{ url('/admin/settings') }}" class="side-sub {{ request()->is('admin/settings*') ? 'active' : '' }}"><i class="fas fa-cog"></i>Settings</a>
+                </div>
+            </div>
             @endif
             @endif
         </div>
@@ -721,6 +863,22 @@
                     if (e.key === 'Escape' && sidebar.classList.contains('open')) setSidebarOpen(false);
                 });
             }
+
+            // --- Collapsible sidebar groups ---
+            const sideGroups = document.querySelectorAll('.side-group');
+            sideGroups.forEach(function(group) {
+                const toggle = group.querySelector('.side-group-toggle');
+                const links = group.querySelectorAll('.side-sub, .side-sub-sub a');
+                if (!toggle) return;
+                // Auto-open the group that contains the active link
+                const hasActive = Array.from(links).some(function(a) { return a.classList.contains('active'); });
+                if (hasActive) group.classList.add('open');
+                toggle.addEventListener('click', function() {
+                    const isOpen = group.classList.toggle('open');
+                    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                });
+                toggle.setAttribute('aria-expanded', group.classList.contains('open') ? 'true' : 'false');
+            });
 
             // --- Dark mode toggle (persisted per user) ---
             const darkModeToggle = document.getElementById('darkModeToggle');

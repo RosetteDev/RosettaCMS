@@ -374,7 +374,7 @@ class I18nRemainingTest extends TestCase
             'admin_email' => 'admin@i18n.test',
         ]);
 
-        $this->actingAs($this->user)->post('/admin/settings', [
+        $this->actingAs($this->user)->post('/admin/settings/general', [
             'site_name' => 'Test Site',
             'site_description' => 'A test site.',
             'admin_email' => 'admin@i18n.test',
