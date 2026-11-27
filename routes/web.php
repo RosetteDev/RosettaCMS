@@ -38,6 +38,7 @@ use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\Admin\WordPressController;
 use App\Http\Controllers\Admin\WidgetController;
 use App\Http\Controllers\Admin\LanguageController;
+use App\Http\Controllers\Admin\ReusableBlockController;
 use App\Http\Controllers\Admin\RevisionController;
 use App\Http\Controllers\InstallController;
 use Illuminate\Support\Facades\View;
@@ -344,6 +345,13 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         // Additional actions
         Route::post('/{user}/verify', [UserController::class, 'verify'])->whereNumber('user')->name('verify');
         Route::post('/{user}/deactivate', [UserController::class, 'deactivate'])->whereNumber('user')->name('deactivate');
+    });
+
+    // Reusable blocks - Admin only
+    Route::prefix('admin/reusable-blocks')->middleware('role:admin')->name('admin.reusable-blocks.')->group(function () {
+        Route::get('/', [ReusableBlockController::class, 'index'])->name('index');
+        Route::post('/', [ReusableBlockController::class, 'store'])->name('store');
+        Route::delete('/{reusableBlock}', [ReusableBlockController::class, 'destroy'])->name('destroy');
     });
 
     // Settings - Admin only

@@ -10,9 +10,17 @@
         'settings' => $b->settings ?? [],
         'order' => $b->order,
     ])->values();
+    $reusableBlocks = \App\Models\ReusableBlock::with('site')->latest()->get();
+    $reusableBlocksPayload = $reusableBlocks->map(fn($r) => [
+        'id' => $r->id,
+        'name' => $r->name,
+        'description' => $r->description,
+        'blocks' => $r->blocks(),
+    ])->values();
     $editorConfig = [
         'blocks' => $blocksPayload,
         'blockTypes' => $blockTypes,
+        'reusableBlocks' => $reusableBlocksPayload,
         'urls' => [
             'store' => route('admin.pages.blocks.store', $post->id),
             'reorder' => route('admin.pages.blocks.reorder', $post->id),
@@ -20,6 +28,7 @@
             'preview' => route('preview.update', $post->id),
             'update' => route('admin.pages.blocks.update', [$post->id, '__ID__']),
             'destroy' => route('admin.pages.blocks.destroy', [$post->id, '__ID__']),
+            'reusableStore' => route('admin.reusable-blocks.store'),
         ],
     ];
 @endphp
@@ -43,6 +52,9 @@
                 </button>
                 <span class="badge bg-success" x-show="savedMessage" x-text="savedMessage"></span>
                 <span class="badge bg-danger" x-show="saveError" x-text="saveError"></span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" x-show="selectedBlock()" @click="openSaveReusableModal()" title="Save the selected block as a reusable template">
+                    <i class="fas fa-copy me-1"></i> Save as Reusable
+                </button>
                 <span class="flex-grow-1"></span>
                 <button type="button" class="btn btn-sm btn-outline-primary" @click="openPreview()">
                     <i class="fas fa-eye me-1"></i> Preview
@@ -283,6 +295,23 @@
                                     </div>
                                 </template>
                             </div>
+                            <template x-if="reusableBlocks.length > 0">
+                                <div class="mt-4">
+                                    <div class="text-muted small text-uppercase fw-semibold mb-2">Reusable blocks</div>
+                                    <div class="row g-2">
+                                        <template x-for="rb in reusableBlocks" :key="rb.id">
+                                            <div class="col-6 col-md-4">
+                                                <button type="button" class="btn btn-outline-primary w-100 text-start p-3"
+                                                        @click="insertReusableBlock(rb)" data-bs-dismiss="modal">
+                                                    <i class="fas fa-clone me-2"></i>
+                                                    <span x-text="rb.name"></span>
+                                                    <div class="text-muted small fw-normal" x-text="rb.blocks.length + ' block(s)'"></div>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -319,6 +348,39 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save as reusable block modal -->
+            <div class="modal fade" id="saveReusableModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Save as Reusable Block</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted small" x-show="selectedBlock()">
+                                Saving <strong x-text="selectedBlock() ? getBlockTypeLabel(selectedBlock().type) : ''"></strong> as a reusable template.
+                            </p>
+                            <div class="mb-3">
+                                <label class="form-label" for="reusableName">Name</label>
+                                <input type="text" class="form-control" id="reusableName" x-model="reusableName" placeholder="e.g. Hero CTA">
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label" for="reusableDescription">Description <span class="text-muted">(optional)</span></label>
+                                <input type="text" class="form-control" id="reusableDescription" x-model="reusableDescription" placeholder="Short description">
+                            </div>
+                            <div class="alert alert-danger py-2 small mt-3" x-show="reusableError" x-text="reusableError"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" @click="saveReusable()" :disabled="reusableSaving || !reusableName.trim()">
+                                <i class="fas fa-spinner fa-spin me-1" x-show="reusableSaving"></i>
+                                <span x-text="reusableSaving ? 'Saving…' : 'Save Template'"></span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -407,6 +469,11 @@ document.addEventListener('alpine:init', () => {
         previewHtml: '',
         previewLoading: false,
         previewError: '',
+        reusableBlocks: [],
+        reusableName: '',
+        reusableDescription: '',
+        reusableSaving: false,
+        reusableError: '',
 
         get canUndo() { return this.past.length > 0; },
         get canRedo() { return this.future.length > 0; },
@@ -421,6 +488,7 @@ document.addEventListener('alpine:init', () => {
 
         init() {
             this.blockTypes = this.cfg.blockTypes || {};
+            this.reusableBlocks = this.cfg.reusableBlocks || [];
             this.blocks = (this.cfg.blocks || []).map((block, index) => ({
                 id: block.id ?? null,
                 tempId: 'real-' + block.id,
@@ -776,6 +844,82 @@ document.addEventListener('alpine:init', () => {
             }
             this.mediaPickerTarget = null;
             bootstrap.Modal.getOrCreateInstance(document.getElementById('mediaPickerModal')).hide();
+        },
+
+        // ----- reusable blocks -----
+        openSaveReusableModal() {
+            const block = this.selectedBlock();
+            if (!block) return;
+            this.reusableName = '';
+            this.reusableDescription = '';
+            this.reusableError = '';
+            this.reusableSaving = false;
+            new bootstrap.Modal(document.getElementById('saveReusableModal')).show();
+        },
+
+        async saveReusable() {
+            const block = this.selectedBlock();
+            if (!block || !this.reusableName.trim() || this.reusableSaving) return;
+            this.reusableSaving = true;
+            this.reusableError = '';
+
+            const payload = {
+                name: this.reusableName.trim(),
+                description: this.reusableDescription.trim() || null,
+                blocks: [{
+                    type: block.type,
+                    content: block.type === 'gallery'
+                        ? { images: (block.content.imagesText ?? '').split('\n').map(s => s.trim()).filter(Boolean) }
+                        : JSON.parse(JSON.stringify(block.content ?? {})),
+                    settings: JSON.parse(JSON.stringify(block.settings ?? {})),
+                }],
+            };
+
+            try {
+                const res = await fetch(this.cfg.urls.reusableStore, {
+                    method: 'POST',
+                    headers: this.jsonHeaders(),
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to save reusable block');
+                }
+                this.reusableBlocks.unshift({
+                    id: data.reusableBlock.id,
+                    name: data.reusableBlock.name,
+                    description: data.reusableBlock.description,
+                    blocks: data.reusableBlock.blocks,
+                });
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('saveReusableModal')).hide();
+                this.savedMessage = 'Reusable block saved';
+                setTimeout(() => { this.savedMessage = ''; }, 3000);
+            } catch (e) {
+                this.reusableError = e.message || 'Save failed';
+            } finally {
+                this.reusableSaving = false;
+            }
+        },
+
+        insertReusableBlock(rb) {
+            this.pushHistory();
+            const maxOrder = this.blocks.reduce((max, b) => Math.max(max, b.order || 0), 0);
+            rb.blocks.forEach((templateBlock, index) => {
+                const content = JSON.parse(JSON.stringify(templateBlock.content ?? {}));
+                if (templateBlock.type === 'gallery' && Array.isArray(content.images)) {
+                    content.imagesText = content.images.join('\n');
+                    delete content.images;
+                }
+                this.blocks.push({
+                    id: null,
+                    tempId: 'temp-' + (++this.tempCounter),
+                    type: templateBlock.type,
+                    content,
+                    settings: JSON.parse(JSON.stringify(templateBlock.settings ?? {})),
+                    order: maxOrder + index + 1,
+                });
+            });
+            this.selectedBlockId = this.blocks[this.blocks.length - 1].tempId;
         },
 
         // ----- live preview -----
