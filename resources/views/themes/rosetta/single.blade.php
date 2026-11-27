@@ -12,6 +12,13 @@
     </div>
 
     <!-- Post Content -->
+    @if($post && $post->blocks && $post->blocks->whereNull('parent_block_id')->isNotEmpty())
+        <section style="padding: 4rem 0;">
+            <div class="container">
+                @include('themes.rosetta.partials.blocks', ['post' => $post])
+            </div>
+        </section>
+    @else
     <section style="padding: 4rem 0;">
         <div class="container">
             <div style="max-width: 800px; margin: 0 auto; line-height: 1.8;">
@@ -64,6 +71,7 @@
             </div>
         </div>
     </section>
+    @endif
 
     @if(isset($relatedPosts) && $relatedPosts->isNotEmpty())
         <section style="padding: 2rem 0 4rem;">

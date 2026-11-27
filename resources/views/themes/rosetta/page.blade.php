@@ -23,6 +23,13 @@
     </div>
 
     <!-- Page Content -->
+    @if($page && $page->blocks && $page->blocks->whereNull('parent_block_id')->isNotEmpty())
+        <section style="padding: 4rem 0;">
+            <div class="container">
+                @include('themes.rosetta.partials.blocks', ['post' => $page])
+            </div>
+        </section>
+    @else
     <section style="padding: 4rem 0;">
         <div class="container">
             <div style="max-width: 800px; margin: 0 auto; line-height: 1.8;">
@@ -48,6 +55,7 @@
             </div>
         </div>
     </section>
+    @endif
 
     @if($page && $page->featured_image_url)
         <section style="padding-bottom: 3rem;">

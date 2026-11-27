@@ -27,6 +27,7 @@
             'reorder' => route('admin.pages.blocks.reorder', $post->id),
             'mediaPicker' => route('admin.pages.blocks.media-picker', $post->id),
             'preview' => route('preview.update', $post->id),
+            'previewPage' => route('preview.show', $post->id),
             'update' => route('admin.pages.blocks.update', [$post->id, '__ID__']),
             'destroy' => route('admin.pages.blocks.destroy', [$post->id, '__ID__']),
             'reusableStore' => route('admin.reusable-blocks.store'),
@@ -59,6 +60,9 @@
                 <span class="flex-grow-1"></span>
                 <button type="button" class="btn btn-sm btn-outline-primary" @click="openPreview()">
                     <i class="fas fa-eye me-1"></i> Preview
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" @click="openPreviewOnSite()" title="Open the live preview on the frontend">
+                    <i class="fas fa-external-link-alt me-1"></i> Open on Site
                 </button>
                 <button type="button" class="btn btn-sm btn-success" @click="save()" :disabled="saving">
                     <i class="fas fa-spinner fa-spin me-1" x-show="saving"></i>
@@ -963,6 +967,23 @@ document.addEventListener('alpine:init', () => {
                 settings: b.settings ?? {},
                 order: b.order
             }));
+        },
+
+        async openPreviewOnSite() {
+            // Push the live editor state so the frontend preview renders it,
+            // then open the frontend preview in a new tab.
+            try {
+                await fetch(this.cfg.urls.preview, {
+                    method: 'POST',
+                    headers: this.jsonHeaders(),
+                    body: JSON.stringify({ blocks: this.blocksPayload() }),
+                });
+            } catch (e) {
+                // Open the preview anyway — it renders persisted state.
+            }
+            if (this.cfg.urls.previewPage) {
+                window.open(this.cfg.urls.previewPage, '_blank');
+            }
         },
 
         async openPreview() {
