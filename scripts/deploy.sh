@@ -43,7 +43,7 @@ ssh "$SSH_ALIAS" "cd $APP_ROOT && \
     tar -xzf rosetta-cms-release.tar.gz && \
     rm rosetta-cms-release.tar.gz && \
     /opt/cpanel/ea-php84/root/usr/bin/php -r 'echo \"php: \" . PHP_VERSION . PHP_EOL;' && \
-    /home2/naftzdte/bin/composer install --no-dev --optimize-autoloader --quiet && \
+    /opt/cpanel/ea-php84/root/usr/bin/php /home2/naftzdte/bin/composer install --no-dev --optimize-autoloader --quiet && \
     $PHP artisan migrate --force && \
     $PHP artisan config:clear && \
     $PHP artisan route:clear && \
