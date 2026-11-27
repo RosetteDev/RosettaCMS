@@ -6,6 +6,7 @@ use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\IpRulesController;
 use App\Http\Controllers\Admin\RedirectController;
@@ -384,6 +385,11 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
     // Security & trust - Admin only
     Route::prefix('admin/activity')->middleware('role:admin')->name('admin.activity.')->group(function () {
         Route::get('/', [ActivityLogController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('admin/analytics')->middleware('role:admin')->name('admin.analytics.')->group(function () {
+        Route::get('/', [AnalyticsController::class, 'index'])->name('index');
+        Route::get('/export', [AnalyticsController::class, 'export'])->name('export');
     });
 
     Route::prefix('admin/health')->middleware('role:admin')->name('admin.health.')->group(function () {
