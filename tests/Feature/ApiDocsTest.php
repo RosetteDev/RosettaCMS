@@ -25,6 +25,10 @@ class ApiDocsTest extends TestCase
         $this->assertArrayHasKey('/categories', $spec['paths']);
         $this->assertArrayHasKey('/tags', $spec['paths']);
         $this->assertArrayHasKey('/search', $spec['paths']);
+        $this->assertArrayHasKey('/media', $spec['paths']);
+        $this->assertArrayHasKey('/media/{id}', $spec['paths']);
+        $this->assertArrayHasKey('/menus', $spec['paths']);
+        $this->assertArrayHasKey('/menus/{slug}', $spec['paths']);
         $this->assertArrayHasKey('/posts/{slug}', $spec['paths']);
         $this->assertArrayHasKey('/pages/{slug}', $spec['paths']);
         $this->assertArrayHasKey('components', $spec);
@@ -60,7 +64,7 @@ class ApiDocsTest extends TestCase
     {
         $response = $this->get('/api/v1/docs')->assertOk();
 
-        foreach (['/posts', '/pages', '/categories', '/tags', '/search'] as $path) {
+        foreach (['/posts', '/pages', '/categories', '/tags', '/search', '/media', '/menus'] as $path) {
             $response->assertSee($path, false);
         }
     }

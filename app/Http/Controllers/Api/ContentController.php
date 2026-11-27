@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Media;
+use App\Models\Menu;
+use App\Models\MenuItem;
 use App\Models\Post;
 use App\Models\Site;
 use App\Models\SiteSetting;
@@ -32,6 +35,8 @@ class ContentController extends Controller
                 'categories' => url('/api/categories'),
                 'tags' => url('/api/tags'),
                 'search' => url('/api/search?q=term'),
+                'media' => url('/api/media'),
+                'menus' => url('/api/menus'),
             ],
         ]);
     }
@@ -141,6 +146,178 @@ class ContentController extends Controller
             ->map(fn (Post $post) => $this->transform($post));
 
         return response()->json(['data' => $posts, 'meta' => ['query' => $term]]);
+    }
+
+    /**
+     * Paginated, filterable media listing.
+     */
+    public function media(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'folder' => ['nullable', 'string', 'max:255'],
+            'type' => ['nullable', 'string', 'in:image,video,audio,document'],
+            'search' => ['nullable', 'string', 'max:200'],
+        ]);
+
+        $query = $this->scoped(Media::query());
+
+        if (!empty($validated['folder'])) {
+            $query->where('folder', $validated['folder']);
+        }
+
+        if (!empty($validated['type'])) {
+            $this->applyMediaType($query, $validated['type']);
+        }
+
+        if (!empty($validated['search'])) {
+            $term = $validated['search'];
+            $query->where(function ($q) use ($term) {
+                $q->where('file_name', 'like', '%' . $term . '%')
+                    ->orWhere('alt_text', 'like', '%' . $term . '%')
+                    ->orWhere('caption', 'like', '%' . $term . '%');
+            });
+        }
+
+        $media = $query
+            ->orderByDesc('created_at')
+            ->paginate($validated['per_page'] ?? 10)
+            ->withQueryString();
+
+        return response()->json([
+            'data' => collect($media->items())->map(fn (Media $item) => $this->mediaTransform($item)),
+            'meta' => [
+                'current_page' => $media->currentPage(),
+                'per_page' => $media->perPage(),
+                'total' => $media->total(),
+                'last_page' => $media->lastPage(),
+            ],
+            'links' => [
+                'first' => $media->url(1),
+                'prev' => $media->previousPageUrl(),
+                'next' => $media->nextPageUrl(),
+                'last' => $media->url($media->lastPage()),
+            ],
+        ]);
+    }
+
+    /**
+     * A single media item by id.
+     */
+    public function mediaShow(int $id): JsonResponse
+    {
+        $media = $this->scoped(Media::query())->findOrFail($id);
+
+        return response()->json(['data' => $this->mediaTransform($media)]);
+    }
+
+    /**
+     * Paginated-free menu listing with item counts.
+     */
+    public function menus(): JsonResponse
+    {
+        $menus = $this->scoped(Menu::query())
+            ->withCount('items')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Menu $menu) => $this->menuTransform($menu, false));
+
+        return response()->json(['data' => $menus]);
+    }
+
+    /**
+     * A single menu by slug, with its full item tree.
+     */
+    public function menu(string $slug): JsonResponse
+    {
+        $menu = $this->scoped(Menu::query())
+            ->where('slug', $slug)
+            ->with('items')
+            ->firstOrFail();
+
+        return response()->json(['data' => $this->menuTransform($menu, true)]);
+    }
+
+    /**
+     * Restrict a media query to the given mime family.
+     */
+    protected function applyMediaType($query, string $type): void
+    {
+        match ($type) {
+            'image' => $query->where('mime_type', 'like', 'image/%'),
+            'video' => $query->where('mime_type', 'like', 'video/%'),
+            'audio' => $query->where('mime_type', 'like', 'audio/%'),
+            'document' => $query->where('mime_type', 'not like', 'image/%')
+                ->where('mime_type', 'not like', 'video/%')
+                ->where('mime_type', 'not like', 'audio/%'),
+            default => null,
+        };
+    }
+
+    /**
+     * Shape a media record for the public JSON API.
+     */
+    protected function mediaTransform(Media $media): array
+    {
+        return [
+            'id' => $media->id,
+            'file_name' => $media->file_name,
+            'url' => $media->url,
+            'folder' => $media->folder,
+            'mime_type' => $media->mime_type,
+            'file_size' => $media->file_size,
+            'human_size' => $media->human_size,
+            'alt_text' => $media->alt_text,
+            'caption' => $media->caption,
+            'is_image' => $media->is_image,
+            'created_at' => $media->created_at?->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Shape a menu for the public JSON API.
+     */
+    protected function menuTransform(Menu $menu, bool $withItems = false): array
+    {
+        $data = [
+            'id' => $menu->id,
+            'name' => $menu->name,
+            'slug' => $menu->slug,
+            'location' => $menu->location,
+            'item_count' => $menu->items_count ?? $menu->items->count(),
+        ];
+
+        if ($withItems) {
+            $data['items'] = $this->menuTree($menu->items);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Build a nested tree of menu items from a flat collection.
+     */
+    protected function menuTree($items): array
+    {
+        $items = $items->keyBy('id');
+        $roots = $items->whereNull('parent_id')->values();
+
+        $build = function ($item) use (&$build, $items) {
+            $children = $items->where('parent_id', $item->id)->sortBy('order')->values();
+
+            return [
+                'id' => $item->id,
+                'title' => $item->title,
+                'type' => $item->type,
+                'url' => $item->resolved_url,
+                'target' => $item->target,
+                'order' => $item->order,
+                'children' => $children->map(fn ($child) => $build($child))->values(),
+            ];
+        };
+
+        return $roots->sortBy('order')->map(fn ($item) => $build($item))->values()->all();
     }
 
     /**

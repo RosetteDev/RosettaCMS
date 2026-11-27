@@ -19,7 +19,7 @@ class OpenApi
                 'title' => 'Rosetta CMS Public API',
                 'description' => "Versioned read/write API for Rosetta CMS.\n\n"
                     . "Read endpoints are public (rate limited). Write endpoints require an API key with the matching scope (`posts:write` / `pages:write`) passed as a Bearer token.\n\n"
-                    . "API keys are managed in the admin at `/admin/api-keys`.",
+                    . "Media and menus are read-only. API keys are managed in the admin at `/admin/api-keys`.",
                 'version' => 'v1',
                 'contact' => [
                     'name' => 'Rosetta CMS',
@@ -35,6 +35,8 @@ class OpenApi
                 ['name' => 'Categories', 'description' => 'List categories'],
                 ['name' => 'Tags', 'description' => 'List tags'],
                 ['name' => 'Search', 'description' => 'Full-text search over published posts'],
+                ['name' => 'Media', 'description' => 'List and fetch media assets'],
+                ['name' => 'Menus', 'description' => 'List and fetch navigation menus'],
                 ['name' => 'Write', 'description' => 'Authenticated create/update/delete (API key required)'],
             ],
             'paths' => [
@@ -138,6 +140,57 @@ class OpenApi
                         ],
                     ],
                 ],
+                '/media' => [
+                    'get' => [
+                        'tags' => ['Media'],
+                        'summary' => 'List media assets',
+                        'operationId' => 'listMedia',
+                        'parameters' => [
+                            ['name' => 'page', 'in' => 'query', 'required' => false, 'schema' => ['type' => 'integer', 'minimum' => 1]],
+                            ['name' => 'per_page', 'in' => 'query', 'required' => false, 'schema' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'default' => 10]],
+                            ['name' => 'folder', 'in' => 'query', 'required' => false, 'schema' => ['type' => 'string']],
+                            ['name' => 'type', 'in' => 'query', 'required' => false, 'schema' => ['type' => 'string', 'enum' => ['image', 'video', 'audio', 'document']]],
+                            ['name' => 'search', 'in' => 'query', 'required' => false, 'schema' => ['type' => 'string', 'maxLength' => 200]],
+                        ],
+                        'responses' => [
+                            '200' => self::jsonResponse('Paginated list of media', ['type' => 'object']),
+                        ],
+                    ],
+                ],
+                '/media/{id}' => [
+                    'get' => [
+                        'tags' => ['Media'],
+                        'summary' => 'Fetch a media asset by id',
+                        'operationId' => 'getMedia',
+                        'parameters' => self::idParam(),
+                        'responses' => [
+                            '200' => self::jsonResponse('A single media asset', ['type' => 'object']),
+                            '404' => self::errorResponse(),
+                        ],
+                    ],
+                ],
+                '/menus' => [
+                    'get' => [
+                        'tags' => ['Menus'],
+                        'summary' => 'List navigation menus',
+                        'operationId' => 'listMenus',
+                        'responses' => [
+                            '200' => self::jsonResponse('List of menus', ['type' => 'object']),
+                        ],
+                    ],
+                ],
+                '/menus/{slug}' => [
+                    'get' => [
+                        'tags' => ['Menus'],
+                        'summary' => 'Fetch a menu with its full item tree',
+                        'operationId' => 'getMenu',
+                        'parameters' => self::slugParam(),
+                        'responses' => [
+                            '200' => self::jsonResponse('A single menu', ['type' => 'object']),
+                            '404' => self::errorResponse(),
+                        ],
+                    ],
+                ],
             ],
             'components' => [
                 'securitySchemes' => [
@@ -174,6 +227,51 @@ class OpenApi
                             'updated_at' => ['type' => ['string', 'null'], 'format' => 'date-time'],
                         ],
                     ],
+                    'Media' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'id' => ['type' => 'integer'],
+                            'file_name' => ['type' => 'string'],
+                            'url' => ['type' => 'string'],
+                            'folder' => ['type' => 'string'],
+                            'mime_type' => ['type' => 'string'],
+                            'file_size' => ['type' => 'integer'],
+                            'human_size' => ['type' => 'string'],
+                            'alt_text' => ['type' => ['string', 'null']],
+                            'caption' => ['type' => ['string', 'null']],
+                            'is_image' => ['type' => 'boolean'],
+                            'created_at' => ['type' => ['string', 'null'], 'format' => 'date-time'],
+                        ],
+                    ],
+                    'Menu' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'id' => ['type' => 'integer'],
+                            'name' => ['type' => 'string'],
+                            'slug' => ['type' => 'string'],
+                            'location' => ['type' => 'string'],
+                            'item_count' => ['type' => 'integer'],
+                            'items' => [
+                                'type' => 'array',
+                                'items' => ['$ref' => '#/components/schemas/MenuItem'],
+                            ],
+                        ],
+                    ],
+                    'MenuItem' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'id' => ['type' => 'integer'],
+                            'title' => ['type' => 'string'],
+                            'type' => ['type' => 'string', 'example' => 'page'],
+                            'url' => ['type' => 'string'],
+                            'target' => ['type' => ['string', 'null']],
+                            'order' => ['type' => 'integer'],
+                            'children' => [
+                                'type' => 'array',
+                                'items' => ['$ref' => '#/components/schemas/MenuItem'],
+                            ],
+                        ],
+                    ],
                     'Error' => [
                         'type' => 'object',
                         'properties' => [
@@ -193,6 +291,16 @@ class OpenApi
             'in' => 'path',
             'required' => true,
             'schema' => ['type' => 'string'],
+        ]];
+    }
+
+    protected static function idParam(): array
+    {
+        return [[
+            'name' => 'id',
+            'in' => 'path',
+            'required' => true,
+            'schema' => ['type' => 'integer'],
         ]];
     }
 

@@ -22,6 +22,12 @@ Route::middleware('throttle:120,1')->group(function () {
         Route::get('/tags', [ContentController::class, 'tags'])->name('api.tags.index');
         Route::get('/search', [ContentController::class, 'search'])->name('api.search');
 
+        Route::get('/media', [ContentController::class, 'media'])->name('api.media.index');
+        Route::get('/media/{id}', [ContentController::class, 'mediaShow'])->whereNumber('id')->name('api.media.show');
+
+        Route::get('/menus', [ContentController::class, 'menus'])->name('api.menus.index');
+        Route::get('/menus/{slug}', [ContentController::class, 'menu'])->name('api.menus.show');
+
         // Authenticated write endpoints.
         Route::post('/posts', [WriteController::class, 'storePost'])
             ->middleware('api.key:posts:write')->name('api.posts.store');
@@ -47,4 +53,8 @@ Route::middleware('throttle:120,1')->group(function () {
     Route::get('/categories', [ContentController::class, 'categories'])->name('api.categories.index.legacy');
     Route::get('/tags', [ContentController::class, 'tags'])->name('api.tags.index.legacy');
     Route::get('/search', [ContentController::class, 'search'])->name('api.search.legacy');
+    Route::get('/media', [ContentController::class, 'media'])->name('api.media.index.legacy');
+    Route::get('/media/{id}', [ContentController::class, 'mediaShow'])->whereNumber('id')->name('api.media.show.legacy');
+    Route::get('/menus', [ContentController::class, 'menus'])->name('api.menus.index.legacy');
+    Route::get('/menus/{slug}', [ContentController::class, 'menu'])->name('api.menus.show.legacy');
 });
