@@ -111,6 +111,17 @@ class ChatTest extends TestCase
         $response->assertSee('chat-widget-toggle', false);
     }
 
+    public function test_widget_panel_hidden_attribute_hides_panel(): void
+    {
+        // The panel is styled with display:flex, which would otherwise beat the
+        // UA [hidden] rule and keep the panel visible when the close button is used.
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('.chat-widget-panel[hidden]', false);
+        $response->assertSee('.chat-widget-badge[hidden]', false);
+    }
+
     public function test_widget_not_rendered_when_disabled(): void
     {
         $this->site->settings()->updateOrCreate(
