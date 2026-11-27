@@ -513,7 +513,9 @@
 <style>
     .block-editor-container { position: relative; }
     .block-item { transition: box-shadow 0.2s ease, opacity 0.2s ease; }
-    .block-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    /* The global admin .card:hover rule translates the card on hover; the
+       builder needs a stable list, so keep block items in place. */
+    .block-editor-container .block-item:hover { transform: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .block-item .cursor-grab { cursor: grab; }
     .block-item:active .cursor-grab { cursor: grabbing; }
     .block-item.drag-source { opacity: 0.45; }
@@ -1184,7 +1186,7 @@ document.addEventListener('alpine:init', () => {
         // ----- modals & media picker -----
         openAddModal(parentTempId = null) {
             this._addTargetParent = parentTempId;
-            new bootstrap.Modal(document.getElementById('blockTypeModal')).show();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('blockTypeModal')).show();
         },
 
         openMediaPicker(tempId, field) {
@@ -1192,7 +1194,7 @@ document.addEventListener('alpine:init', () => {
             this.mediaSearch = '';
             this.mediaLoading = true;
             this.mediaItems = [];
-            new bootstrap.Modal(document.getElementById('mediaPickerModal')).show();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('mediaPickerModal')).show();
 
             fetch(this.cfg.urls.mediaPicker, { headers: { Accept: 'application/json' } })
                 .then(r => r.json())
@@ -1225,7 +1227,7 @@ document.addEventListener('alpine:init', () => {
             this.reusableDescription = '';
             this.reusableError = '';
             this.reusableSaving = false;
-            new bootstrap.Modal(document.getElementById('saveReusableModal')).show();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('saveReusableModal')).show();
         },
 
         async saveReusable() {
@@ -1385,7 +1387,7 @@ document.addEventListener('alpine:init', () => {
             this.previewLoading = true;
             this.previewError = '';
             this.previewHtml = '';
-            const modal = new bootstrap.Modal(document.getElementById('blockPreviewModal'));
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('blockPreviewModal'));
             modal.show();
 
             try {
