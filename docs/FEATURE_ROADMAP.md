@@ -83,16 +83,38 @@ counter, shipping calculation, and live payment processing (Stripe/PayPal)
 
 See `docs/ECOMMERCE.md`.
 
-### 3. A Gutenberg-class block editor
-Rosetta has a block builder, but it is not yet a visual editor. To match
-WordPress it needs:
+### 3. A Gutenberg-class block editor — ✅ done (2026-11)
+Rosetta has a block builder. To match WordPress it now has:
 
 - Undo/redo, reusable blocks, and a pattern library
-- Nested columns and drag-reorder with drop indicators
+- Nested columns (drag blocks into a columns container, child rows with
+  move/delete, compact inline editing) and drag-reorder with drop indicators
 - Global styles (theme.json equivalent): color, typography, spacing tokens
-- Live preview in the editor and on the frontend (currently preview is
-  post-save, not live)
-- Inline editing polish (already scaffolded — finish it)
+- Live preview in the editor and on the frontend (replays the unsaved editor
+  state from the session)
+- Inline editing polish (dirty state, disabled save until changed, spinner,
+  status text)
+
+**Done (2026-11):**
+- Undo/redo, drag-reorder with drop indicators, live editor preview
+- Global styles: color + typography/spacing tokens from `theme.json`, merged
+  with per-site overrides and emitted as CSS custom properties
+- Reusable blocks (single-level root templates, saved from the editor)
+- Pattern library (curated starter templates inserted from the Add Block modal)
+- Nested columns: drag top-level blocks into a columns container, child rows
+  with type label / summary / move / delete, compact inline editing for
+  heading/button/image/text, Add button inside the container, and patterns /
+  reusable blocks inserted into a container
+- Frontend live preview: the editor pushes its live state (including unsaved
+  nested children) to the JSON preview endpoint, which stores it in the
+  session; `/preview/{post}` replays it before rendering
+- Inline-editing polish: wired controls, dirty state, disabled save until a
+  change, spinner + status text
+- Editor-side nesting: two-phase save flow (create top-level blocks → create
+  children with `parent_id` → update top-level blocks and children (with
+  `parent_id`) → delete removed blocks (404-tolerant) → reorder top-level and
+  children); single-level nesting enforced (columns cannot nest inside
+  containers)
 
 ### 4. Full localization (i18n) — ✅ done (core)
 The `languages` and `language_content` tables are now wired up.
