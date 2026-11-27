@@ -3,8 +3,8 @@
 This document lists the feature enhancements and new features that would
 make Rosetta CMS a credible alternative to WordPress. It is organized from
 highest impact to lower, and each item notes what exists today so the list
-stays honest. Nothing here is implemented yet — it is the prioritized work
-list.
+stays honest. All high-impact and medium-impact items below are shipped
+(2026-11); the remaining items are called out explicitly as open.
 
 ## What Rosetta CMS already does well
 
@@ -51,11 +51,16 @@ content events (`post.published`, `post.updated`, `page.published`,
 `/admin/webhooks`, signed HMAC-SHA256 delivery, one-time signing secret,
 per-site scoping, test-send button. See docs/WEBHOOKS.md.
 
-**Still open:**
-- Public API endpoints for media and menus (the spec documents only what
-  exists — posts, pages, categories, tags, search)
-- Swagger UI proper (the in-app docs page is a self-contained HTML
-  reference, not a Swagger UI instance)
+**Done (2026-11):** in-app Swagger UI at `/api/v1/swagger` (assets vendored
+under `public/vendor/swagger-ui/`), linked from the API docs page and the
+admin sidebar.
+
+**Done (2026-11):** public read endpoints for media and menus —
+`GET /api/v1/media` (paginated, filterable by folder/type, search),
+`GET /api/v1/media/{id}`, `GET /api/v1/menus` and
+`GET /api/v1/menus/{slug}` (with the menu's full item tree) — documented in
+the OpenAPI spec and rendered by the in-app docs page. Legacy unversioned
+routes mirror the versioned namespace.
 
 ### 2. E-commerce foundation — ✅ done (foundation, 2026-11)
 WordPress's biggest commercial driver is WooCommerce. The foundation
@@ -235,17 +240,31 @@ The `languages` and `language_content` tables are now wired up.
 
 ## Medium-impact enhancements
 
-### 9. Media library depth
-- Batch actions beyond delete (rename, alt text, folder move, replace)
-- Video/audio/document attachments (currently images only)
-- Gallery/carousel block improvements
-- Automatic alt-text generation and image description editing
+### 9. Media library depth — ✅ done (2026-11)
+- Bulk rename (with auto-increment suffix to avoid overwriting) and bulk
+  set-alt-text (images only) from the bulk toolbar, alongside Move and Delete
+- File replace on the media detail page (same record/path, re-optimized)
+- Auto alt-text generation from the filename + inline metadata editing
+  (alt + caption)
+- Video/audio/document attachments (audio previews with a working
+  `<audio>` player; video/PDF already worked)
+- Gallery/carousel block: grid + carousel layouts, column/gap controls,
+  lazy-loaded images, keyboard-focusable track, normalized string/associative
+  entries
 
-### 10. Forms and contacts
-- Contact forms with validation, spam filtering (Akismet-lite), and a
-  submissions inbox
-- Mail notifications on new submissions
-- Custom fields for form data
+### 10. Forms and contacts — ✅ done (2026-11)
+- Contact form with validation, Akismet-lite spam filtering and a
+  submissions inbox (`/admin/forms`: status filter, search, stats cards,
+  full detail with spam analysis, status updates)
+- Mail notifications on new submissions (incl. custom-field values)
+- Custom fields for form data (admin-defined in Settings → Form Fields,
+  rendered and validated on the public contact form)
+- Contact Form 7-style Form Builder plugin (`/admin/forms-builder`):
+  visual field builder (text, email, phone, number, textarea, select,
+  radio, checkbox, date), per-form settings (submit label, success message,
+  notification email, spam toggle), public pages at `/forms/{slug}` with
+  honeypot + heuristic spam filtering, mail notifications and a per-form
+  submissions inbox (status filter, search, spam analysis, detail view)
 
 ### 11. SEO optimization pass — ✅ done (2026-11)
 A full audit-and-fix pass across every template, with per-site defaults,
@@ -289,40 +308,79 @@ structured data, i18n alternates, redirects and health checks.
   SEO health one-click fixes, media alt enforcement, 410 page — 27 new
   tests.
 
-### 12. Widgets and blocks for the frontend
-- Widget areas in the theme (currently custom widgets exist — surface them
-  in the frontend layout)
-- Reusable frontend patterns (hero, feature grid, CTA, testimonial)
+### 12. Widgets and blocks for the frontend — ✅ done (2026-11)
+- Widget areas surfaced in every theme's frontend layout (sidebar,
+  before-footer, header — configurable per widget)
+- Reusable frontend patterns (hero, feature grid, CTA, testimonial) wired
+  into the business theme and shipped in every example theme
 
-### 13. Analytics dashboard
-- Pageviews, top posts/pages, referrers, device/browser breakdown
-- Per-site stats (currently the dashboard shows site overview, not traffic)
-- Export to CSV
+### 13. Analytics dashboard — ✅ done (2026-11)
+- Pageview tracking (`PageView` + middleware; staff/bots/admins excluded;
+  visitor identity is a salted hash of IP + user agent)
+- Dashboard at `/admin/analytics`: 7/30/90-day range, totals, daily bar
+  chart, top posts/pages/referrers, device and browser breakdowns
+- CSV export of the raw table
+- Per-site stats (scoped to the current site)
 
-### 14. Plugin and theme ecosystem
+### 14. Plugin and theme ecosystem — ✅ mostly done (2026-11)
 WordPress's moat is plugins and themes. Rosetta has a plugin system
 (visual editor, SEO, multi-site, WordPress) but it is in-house only.
 
-- Plugin manifest + directory/marketplace integration
-- One-click theme install/upload/activate with live preview
-- Theme demo content (starter sites)
-- Plugin auto-updates and security scanning
-- Sandboxing / permission model for third-party plugins
+- Plugin manifest + discovery: third-party plugins in `plugins/` declare a
+  `plugin.json` (name, slug, version, description, author, entry,
+  permissions, requires_rosetta); the admin plugins page discovers,
+  validates and displays them (invalid manifests show errors, not silent
+  failures). `plugins/` is a gitignored drop-zone.
+- One-click theme install: the themes page uploads and validates a theme
+  ZIP (theme folder + theme.json, kebab-case slug, no path traversal) and
+  appears in the list immediately; activate and live preview were already
+  available.
+- Theme demo content: starter content + admin install button + artisan
+  command (shipped in #5).
+- Plugin security scanning: static scan of plugin PHP files for eval /
+  base64_decode / shell execution / filesystem mutation with severity
+  badges and per-file details.
+- Sandboxing / permission model: manifest-declared permissions (filesystem,
+  network, shell, database, admin) are not granted until approved per-plugin
+  in the admin (`plugin_approvals`, revocable); pending permissions are
+  flagged in the UI.
 
-### 15. Content authoring polish
-- Reusable content blocks and pattern library
-- Custom fields per post type (already scaffolded via `meta` — finish it)
-- Inline style/typography in the editor
-- Revisions UI with side-by-side diff (exists — polish it)
-- Bulk actions across posts (publish/unpublish/delete/assign)
+**Still open:** plugin auto-updates — there is no marketplace registry to
+check versions against, so real auto-updates can't be honestly implemented.
+The infrastructure for a future marketplace (manifest + permission model +
+security scan) is in place; a registry endpoint would be the missing piece.
 
-### 16. Admin UX and accessibility
-- WCAG 2.1 AA compliance across the admin
-- Keyboard navigation and focus management in the block editor
-- Notifications center in the admin (new comments, pending moderation)
-- Dark mode polish (toggle exists — finish it)
-- Search within the admin (posts, pages, media, users)
-- Dashboard widgets with drag-and-drop layout
+### 15. Content authoring polish — ✅ done (2026-11)
+- Reusable content blocks and pattern library (shipped with the block
+  editor; not rebuilt here)
+- Custom fields per post type: repeatable key/value rows in the editor
+  (`meta.custom_fields`, snake_case keys, validated)
+- Inline style/typography in the editor: Quill toolbar exposes font
+  family, font size and text color
+- Revisions UI with side-by-side diff: two-column from/to layout with
+  added/removed rows highlighted, Compare form (pick two revisions) and a
+  fixed 'Diff vs latest' link
+- Bulk actions across posts: publish/unpublish/trash/restore/delete were
+  already there; added author assignment
+
+### 16. Admin UX and accessibility — ✅ done (2026-11)
+- WCAG 2.1 AA pass: skip-to-content link, `:focus-visible` outlines,
+  `aria-current=page` on the active sidebar link, labelled search input,
+  landmark structure
+- Keyboard navigation + focus management in the block editor: cards are
+  focusable and labelled, ArrowUp/ArrowDown moves selection, Enter focuses
+  the editable field, Delete/Backspace removes the selection, Escape
+  deselects, icon-only buttons got aria-labels
+- Notifications center at `/admin/notifications`: pending comments,
+  pending posts, scheduled posts in 7 days, recent activity feed, unread
+  badge on the bell icon
+- Dark mode polish: real `<button>` with aria-pressed/aria-label,
+  pre-paint theme script (no flash), proper dark stylesheet, per-user
+  persistence via POST /admin/preferences/theme
+- Admin global search: header search box (posts, pages, media, users) with
+  results dropdown, keyboard navigation and no-results state
+- Dashboard widgets with drag-and-drop layout: sections reorder via HTML5
+  drag & drop or keyboard buttons, persisted per user (`dashboard_layout`)
 
 ### 17. Proper, simple installer — ✅ done (2026-11)
 A one-command CLI installer with a shared preflight/install service used by
@@ -345,20 +403,29 @@ both the CLI and the (simplified) web installer.
 - Tests: command registration, dry-run isolation, idempotency guard, input
   validation, web check/form rendering, install-enabled gate — 13 new tests.
 
-## Lower-impact / nice-to-have
+## Lower-impact / nice-to-have — ✅ all done (2026-11, #17)
 
-- Custom roles with per-post-type and per-field permissions (currently
-  admin/editor/author)
-- Custom post types with dedicated UIs (portfolio, testimonial, event)
-- Multi-language menus
-- E-mail templates and transactional email (welcome, password reset,
-  notification)
-- Calendar / events module
-- Bookings / appointments
-- Social login (Google/GitHub) for the frontend
-- In-app chat/support widget
-- Real-time collaboration in the editor (rare, but differentiating)
-- Public API documentation as a first-class screen (Swagger UI in-app)
+- Custom roles with per-post-type and per-field permissions (admin/editor/
+  author seeded with full/restricted defaults; enforcement in post and
+  custom-post-type controllers; editor locks uneditable fields)
+- Custom post types with dedicated UIs (portfolio, testimonial, event —
+  own admin list/create/edit/delete flows with a shared type-aware editor)
+- Multi-language menus (menu-item labels translatable via `language_content`)
+- E-mail templates and transactional email (welcome on registration, custom
+  password-reset notification, comment notification to the post author,
+  booking notification to the admin)
+- Calendar / events module (admin month-grid at `/admin/event/calendar`,
+  public `/events` page)
+- Bookings / appointments (public `/book` form with honeypot + Akismet-lite
+  spam filter; admin inbox at `/admin/bookings`)
+- Social login (Google/GitHub via laravel/socialite, per-provider toggles,
+  frontend login buttons when enabled)
+- In-app chat/support widget (theme-agnostic floating widget, `/chat/messages`
+  + poll endpoint, admin inbox at `/admin/chat`, unread badge)
+- Real-time collaboration in the editor (lightweight presence/locking with
+  heartbeat + 120s stale window; no websockets)
+- Public API documentation as a first-class screen (in-app Swagger UI at
+  `/api/v1/swagger`, linked from the API docs page and the sidebar)
 
 ## Recommended first three (highest ROI)
 
