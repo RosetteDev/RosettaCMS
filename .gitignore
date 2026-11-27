@@ -43,3 +43,10 @@ composer.phar
 
 # Log files
 *.log
+
+# Third-party plugins are installed, not committed
+/plugins/*
+!/plugins/.gitkeep
+
+# Intentionally untracked
+/package-lock.json

@@ -25,7 +25,14 @@
             <h1 class="h3 mb-1">Themes</h1>
             <p class="text-muted mb-0">Manage and activate themes for your site</p>
         </div>
-        <div class="mt-3 mt-sm-0">
+        <div class="mt-3 mt-sm-0 d-flex gap-2 align-items-center flex-wrap">
+            <form action="{{ route('admin.themes.upload') }}" method="POST" enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
+                @csrf
+                <input type="file" name="theme_zip" accept=".zip" required class="form-control form-control-sm" style="max-width: 220px;">
+                <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-upload me-1"></i>Install theme ZIP
+                </button>
+            </form>
             <a href="{{ route('admin.settings.index') }}" class="btn btn-primary">
                 <i class="fas fa-cog me-2"></i>Customize Theme
             </a>

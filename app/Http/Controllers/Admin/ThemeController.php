@@ -303,6 +303,117 @@ class ThemeController extends Controller
     }
 
     /**
+     * Upload and install a theme from a ZIP archive.
+     *
+     * The archive must contain a theme folder with a theme.json manifest.
+     * Uploaded themes are validated (manifest schema, slug format, path
+     * traversal) and extracted into the themes/ directory.
+     */
+    public function upload(Request $request)
+    {
+        $request->validate([
+            'theme_zip' => 'required|file|mimes:zip|max:20480',
+        ]);
+
+        $zip = $request->file('theme_zip');
+        $tmp = sys_get_temp_dir() . '/theme-upload-' . uniqid() . '.zip';
+        $zip->move(sys_get_temp_dir(), basename($tmp));
+
+        try {
+            $archive = new \ZipArchive();
+            if ($archive->open($tmp) !== true) {
+                return redirect()->route('admin.themes.index')->with('error', 'The uploaded file is not a valid ZIP archive.');
+            }
+
+            // Scan for theme.json and reject path traversal.
+            $themeJsonEntry = null;
+            $topLevelDirs = [];
+
+            for ($i = 0; $i < $archive->numFiles; $i++) {
+                $name = $archive->getNameIndex($i);
+
+                if ($name === false) {
+                    continue;
+                }
+
+                $normalized = str_replace('\\', '/', $name);
+
+                if (str_contains($normalized, '..') || str_starts_with($normalized, '/') || preg_match('/^[a-zA-Z]:/', $normalized)) {
+                    return redirect()->route('admin.themes.index')->with('error', 'The archive contains unsafe paths and was rejected.');
+                }
+
+                if ($normalized === 'theme.json') {
+                    $themeJsonEntry = $normalized;
+                } elseif (str_ends_with($normalized, '/theme.json')) {
+                    $themeJsonEntry = $normalized;
+                    $topLevelDirs[] = explode('/', $normalized)[0];
+                }
+            }
+
+            if ($themeJsonEntry === null) {
+                return redirect()->route('admin.themes.index')->with('error', 'The archive does not contain a theme.json manifest.');
+            }
+
+            $contents = $archive->getFromName($themeJsonEntry);
+            $manifest = json_decode($contents, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($manifest)) {
+                return redirect()->route('admin.themes.index')->with('error', 'theme.json is not valid JSON.');
+            }
+
+            $slug = $manifest['slug'] ?? null;
+
+            if (empty($slug) || !preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $slug)) {
+                return redirect()->route('admin.themes.index')->with('error', 'theme.json must declare a valid "slug" (lowercase kebab-case).');
+            }
+
+            if (empty($manifest['name'])) {
+                return redirect()->route('admin.themes.index')->with('error', 'theme.json must declare a "name".');
+            }
+
+            $destination = base_path('themes/' . $slug);
+
+            if (is_dir($destination)) {
+                return redirect()->route('admin.themes.index')->with('error', 'A theme named "' . $slug . '" already exists.');
+            }
+
+            // Extract into a temp directory, then move into themes/.
+            $extractDir = sys_get_temp_dir() . '/theme-extract-' . uniqid();
+            mkdir($extractDir, 0755, true);
+            $archive->extractTo($extractDir);
+            $archive->close();
+
+            // Find the extracted theme folder.
+            $extracted = $extractDir;
+            $candidate = $extractDir . '/' . $slug;
+            if (is_dir($candidate)) {
+                $extracted = $candidate;
+            } elseif (count(File::directories($extractDir)) === 1) {
+                $extracted = File::directories($extractDir)[0];
+            } elseif (File::exists($extractDir . '/theme.json')) {
+                $extracted = $extractDir;
+            } else {
+                return redirect()->route('admin.themes.index')->with('error', 'Could not find a theme folder inside the archive.');
+            }
+
+            if (!File::exists($extracted . '/theme.json')) {
+                return redirect()->route('admin.themes.index')->with('error', 'The extracted folder is missing theme.json.');
+            }
+
+            File::move($extracted, $destination);
+
+            // Clean up temp extraction.
+            File::deleteDirectory($extractDir);
+
+            return redirect()->route('admin.themes.index')->with('success', 'Theme "' . $slug . '" installed. Activate it from the list or preview it at /?theme=' . $slug . '.');
+        } finally {
+            if (is_file($tmp)) {
+                @unlink($tmp);
+            }
+        }
+    }
+
+    /**
      * Remove a theme from the system.
      */
     public function destroy($slug)

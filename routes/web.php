@@ -436,6 +436,7 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
     // Theme management - Admin only
     Route::prefix('admin/themes')->middleware('role:admin')->name('admin.themes.')->group(function () {
         Route::get('/', [ThemeController::class, 'index'])->name('index');
+        Route::post('/upload', [ThemeController::class, 'upload'])->name('upload');
         Route::get('/{slug}', [ThemeController::class, 'edit'])->name('edit');
         Route::post('/{slug}', [ThemeController::class, 'update'])->name('update');
         Route::post('/{slug}/demo-content', [ThemeController::class, 'installDemoContent'])->name('demo-content');
@@ -447,6 +448,8 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
         Route::get('/', [PluginController::class, 'index'])->name('index');
         Route::post('/{id}/activate', [PluginController::class, 'activate'])->name('activate');
         Route::post('/{id}/deactivate', [PluginController::class, 'deactivate'])->name('deactivate');
+        Route::post('/{slug}/permissions/{permission}/approve', [PluginController::class, 'approve'])->name('permissions.approve');
+        Route::post('/{slug}/permissions/{permission}/revoke', [PluginController::class, 'revoke'])->name('permissions.revoke');
     });
 
     // Menu management
