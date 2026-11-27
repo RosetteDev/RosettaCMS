@@ -304,43 +304,101 @@ class FrontendController extends Controller
      */
     public function submitContact(Request $request)
     {
-        // Silently accept bots that fill the hidden honeypot field.
-        if ($request->filled('website')) {
-            return back()->with('status', 'Thanks! Your message has been sent.');
-        }
+        $settings = $this->settings();
+        $customFields = $this->customFormFields($settings);
 
-        $validated = $request->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
-        ]);
+        ];
 
-        $settings = $this->settings();
+        foreach ($customFields as $field) {
+            $fieldRules = $field['required'] ? ['required'] : ['nullable'];
+            $fieldRules[] = 'string';
+            $fieldRules[] = 'max:2000';
+            if ($field['type'] === 'email') {
+                $fieldRules[] = 'email';
+            }
+            $rules[$field['name']] = $fieldRules;
+        }
+
+        $validated = $request->validate($rules);
+
+        $customValues = [];
+        foreach ($customFields as $field) {
+            $value = $validated[$field['name']] ?? null;
+            if ($value !== null && $value !== '') {
+                $customValues[$field['name']] = $value;
+            }
+        }
+
+        // Silently accept bots that fill the hidden honeypot field.
+        $honeypot = $request->filled('website');
+
+        // Akismet-lite spam scoring (honeypot hits are definitive).
+        $spam = $honeypot
+            ? ['score' => 100, 'reason' => 'honeypot']
+            : app(\App\Services\SpamFilter::class)->analyze([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'subject' => $validated['subject'] ?? null,
+                'message' => $validated['message'],
+                'custom_fields' => $customValues,
+            ]);
+
+        $isSpam = $spam['score'] >= 50;
+
+        try {
+            \App\Models\ContactSubmission::create([
+                'site_id' => $this->site()?->id,
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'subject' => $validated['subject'] ?? null,
+                'message' => $validated['message'],
+                'custom_fields' => $customValues ?: null,
+                'ip_hash' => $request->ip() ? hash('sha256', $request->ip() . '|' . $request->userAgent()) : null,
+                'user_agent' => substr((string) $request->userAgent(), 0, 255),
+                'spam_score' => $spam['score'],
+                'spam_reason' => $spam['reason'],
+                'status' => $isSpam ? 'spam' : 'new',
+            ]);
+        } catch (\Throwable $e) {
+            // Never block the visitor because of bookkeeping.
+            report($e);
+        }
+
+        if ($honeypot) {
+            return back()->with('status', 'Thanks! Your message has been sent.');
+        }
+
         $recipient = $settings->admin_email
-            ?: $settings->contact_email
             ?: config('mail.from.address');
 
-        if (!$recipient) {
+        if (!$isSpam && !$recipient) {
             return back()->withInput()
                 ->with('error', 'This site has not configured a contact address yet.');
         }
 
-        $subject = trim(str_replace(["\r", "\n"], ' ', $validated['subject']));
+        if (!$isSpam && $recipient) {
+            $subject = trim(str_replace(["\r", "\n"], ' ', (string) ($validated['subject'] ?? '')));
 
-        try {
-            Mail::to($recipient)->send(new \App\Mail\ContactMessage(
-                senderName: $validated['name'],
-                senderEmail: $validated['email'],
-                messageSubject: $subject,
-                messageBody: $validated['message'],
-                siteName: $settings->site_title ?? $this->site()->name ?? 'your website',
-            ));
-        } catch (\Throwable $e) {
-            report($e);
+            try {
+                Mail::to($recipient)->send(new \App\Mail\ContactMessage(
+                    senderName: $validated['name'],
+                    senderEmail: $validated['email'],
+                    messageSubject: $subject,
+                    messageBody: $validated['message'],
+                    siteName: $settings->site_title ?? $this->site()->name ?? 'your website',
+                    customFields: $customValues,
+                ));
+            } catch (\Throwable $e) {
+                report($e);
 
-            return back()->withInput()
-                ->with('error', 'Sorry, your message could not be sent. Please try again later.');
+                return back()->withInput()
+                    ->with('error', 'Sorry, your message could not be sent. Please try again later.');
+            }
         }
 
         return back()->with('status', 'Thanks! Your message has been sent.');
@@ -356,12 +414,37 @@ class FrontendController extends Controller
         return $this->render('contact', [
             'page' => $page,
             'post' => $page,
+            'customFields' => $this->customFormFields($settings),
             'seo' => $this->seo([
                 'title' => $page?->title ?: 'Contact Us',
                 'description' => $settings->site_description,
                 'canonical' => url('/contact'),
             ]),
         ]);
+    }
+
+    /**
+     * Normalized custom form fields from site settings.
+     */
+    protected function customFormFields(?\App\Models\SiteSetting $settings): array
+    {
+        $fields = is_array($settings?->custom_form_fields) ? $settings->custom_form_fields : [];
+
+        return array_values(array_filter(array_map(function ($field) {
+            if (!is_array($field) || blank($field['name'] ?? null)) {
+                return null;
+            }
+
+            $type = in_array($field['type'] ?? null, ['text', 'email', 'textarea', 'number'], true) ? $field['type'] : 'text';
+
+            return [
+                'name' => preg_replace('/[^a-z0-9_]/', '_', strtolower($field['name'])),
+                'label' => trim((string) ($field['label'] ?? $field['name'])) ?: $field['name'],
+                'type' => $type,
+                'required' => (bool) ($field['required'] ?? false),
+                'placeholder' => trim((string) ($field['placeholder'] ?? '')),
+            ];
+        }, $fields)));
     }
 
     /**

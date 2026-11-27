@@ -64,7 +64,20 @@
                             <label for="message">Message</label>
                             <textarea id="message" name="message" required>{{ old('message') }}</textarea>
                         </div>
-                        
+
+                        @foreach(($customFields ?? []) as $field)
+                            <div class="form-group">
+                                <label for="{{ $field['name'] }}">{{ $field['label'] }}@if($field['required']) <span style="color:#dc2626;">*</span>@endif</label>
+                                @if($field['type'] === 'textarea')
+                                    <textarea id="{{ $field['name'] }}" name="{{ $field['name'] }}" rows="3" @if($field['required']) required @endif placeholder="{{ $field['placeholder'] }}">{{ old($field['name']) }}</textarea>
+                                @elseif($field['type'] === 'number')
+                                    <input type="number" id="{{ $field['name'] }}" name="{{ $field['name'] }}" value="{{ old($field['name']) }}" @if($field['required']) required @endif placeholder="{{ $field['placeholder'] }}">
+                                @else
+                                    <input type="{{ $field['type'] === 'email' ? 'email' : 'text' }}" id="{{ $field['name'] }}" name="{{ $field['name'] }}" value="{{ old($field['name']) }}" @if($field['required']) required @endif placeholder="{{ $field['placeholder'] }}">
+                                @endif
+                            </div>
+                        @endforeach
+
                         <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
                     </form>
                 </div>

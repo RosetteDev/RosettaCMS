@@ -25,6 +25,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\CommentController;
+use App\Http\Controllers\Admin\ContactSubmissionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Models\Site;
 use App\Models\Category;
@@ -305,6 +306,14 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
         Route::post('/bulk/approve', [CommentController::class, 'bulkApprove'])->name('bulk.approve');
         Route::post('/bulk/reject', [CommentController::class, 'bulkReject'])->name('bulk.reject');
         Route::post('/bulk/destroy', [CommentController::class, 'bulkDestroy'])->name('bulk.destroy');
+    });
+
+    // Forms inbox - Contact submissions
+    Route::prefix('admin/forms')->name('admin.forms.')->group(function () {
+        Route::get('/', [ContactSubmissionController::class, 'index'])->name('index');
+        Route::get('/{submission}', [ContactSubmissionController::class, 'show'])->whereNumber('submission')->name('show');
+        Route::post('/{submission}/status', [ContactSubmissionController::class, 'updateStatus'])->whereNumber('submission')->name('status');
+        Route::delete('/{submission}', [ContactSubmissionController::class, 'destroy'])->whereNumber('submission')->name('destroy');
     });
 
     // Backups management - Admin only

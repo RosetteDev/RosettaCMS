@@ -553,6 +553,7 @@
             <a href="{{ url('/admin/reusable-blocks') }}" class="{{ request()->is('admin/reusable-blocks*') ? 'active' : '' }}">Reusable Blocks</a>
             <a href="{{ url('/admin/media') }}" class="{{ request()->is('admin/media*') ? 'active' : '' }}">Media</a>
             <a href="{{ url('/admin/menus') }}" class="{{ request()->is('admin/menus*') ? 'active' : '' }}">Menus</a>
+            <a href="{{ url('/admin/forms') }}" class="{{ request()->is('admin/forms*') ? 'active' : '' }}">Forms</a>
 
             @if($currentUser?->hasRole('admin'))
             <a href="{{ url('/admin/languages') }}" class="{{ request()->is('admin/languages*') ? 'active' : '' }}">Languages</a>

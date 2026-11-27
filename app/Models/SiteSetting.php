@@ -25,6 +25,7 @@ class SiteSetting extends Model
         'site_title',
         'site_description',
         'admin_email',
+        'custom_form_fields',
         // Spam protection
         'enable_akismet',
         'akismet_api_key',
@@ -72,6 +73,7 @@ class SiteSetting extends Model
 
     protected $casts = [
         'verification_meta' => 'array',
+        'custom_form_fields' => 'array',
         'maintenance_mode' => 'boolean',
         'disable_comments' => 'boolean',
         'enable_comment_approval' => 'boolean',

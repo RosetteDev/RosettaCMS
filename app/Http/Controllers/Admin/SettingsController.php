@@ -119,7 +119,12 @@ class SettingsController extends Controller
 
             // Home page selection
             'home_post_id' => 'nullable|integer|exists:posts,id',
+
+            // Custom form fields (JSON-encoded array)
+            'custom_form_fields' => 'nullable|string|max:20000',
         ]);
+
+        $customFields = $this->validateCustomFormFields($request->input('custom_form_fields'));
 
         $site = Site::firstOrFail();
 
@@ -140,6 +145,7 @@ class SettingsController extends Controller
         ], fn ($value) => $value !== '');
 
         $settingsData['verification_meta'] = $verification ?: null;
+        $settingsData['custom_form_fields'] = $customFields ?: null;
 
         unset(
             $settingsData['site_name'],
@@ -184,6 +190,83 @@ class SettingsController extends Controller
         \App\Services\ContentCache::bump();
 
         return back()->with('success', 'Settings updated successfully.');
+    }
+
+    /**
+     * Validate the custom form fields JSON payload. Throws a validation
+     * exception with a readable message on failure.
+     */
+    protected function validateCustomFormFields(?string $raw): array
+    {
+        if ($raw === null || trim($raw) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if (!is_array($decoded)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'custom_form_fields' => ['Custom form fields must be valid JSON.'],
+            ]);
+        }
+
+        if (count($decoded) > 25) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'custom_form_fields' => ['A maximum of 25 custom form fields is allowed.'],
+            ]);
+        }
+
+        $fields = [];
+
+        foreach ($decoded as $index => $field) {
+            if (!is_array($field)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'custom_form_fields' => ["Field #" . ($index + 1) . " must be an object."],
+                ]);
+            }
+
+            $name = trim((string) ($field['name'] ?? ''));
+            $type = (string) ($field['type'] ?? 'text');
+
+            if ($name === '' || !preg_match('/^[a-z0-9_]{1,64}$/i', $name)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'custom_form_fields' => ["Field #" . ($index + 1) . ": name must be a slug (letters, numbers, underscores)."],
+                ]);
+            }
+
+            if (!in_array($type, ['text', 'email', 'textarea', 'number'], true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'custom_form_fields' => ["Field #" . ($index + 1) . ": unsupported type '{$type}'."],
+                ]);
+            }
+
+            $label = trim((string) ($field['label'] ?? '')) ?: $name;
+            $placeholder = trim((string) ($field['placeholder'] ?? ''));
+
+            if (mb_strlen($label) > 255 || mb_strlen($placeholder) > 255) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'custom_form_fields' => ["Field #" . ($index + 1) . ": label and placeholder must be 255 characters or fewer."],
+                ]);
+            }
+
+            $fields[] = [
+                'name' => strtolower($name),
+                'label' => $label,
+                'type' => $type,
+                'placeholder' => $placeholder,
+                'required' => (bool) ($field['required'] ?? false),
+            ];
+        }
+
+        // Reject duplicate names.
+        $names = array_column($fields, 'name');
+        if (count($names) !== count(array_unique($names))) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'custom_form_fields' => ['Field names must be unique.'],
+            ]);
+        }
+
+        return $fields;
     }
 
     /**

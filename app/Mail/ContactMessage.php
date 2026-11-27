@@ -19,6 +19,7 @@ class ContactMessage extends Mailable
         public string $messageSubject,
         public string $messageBody,
         public string $siteName,
+        public array $customFields = [],
     ) {
     }
 

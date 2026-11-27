@@ -29,6 +29,7 @@
                         <a href="#home-page" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Home Page</a>
                         <a href="#comments" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Comments</a>
                         <a href="#spam" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Spam Protection</a>
+                        <a href="#custom-form-fields" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Form Fields</a>
                         <a href="#display" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">Display</a>
                         <a href="#general" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">General</a>
                         <a href="#ecommerce" class="settings-nav-item" style="padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; color: var(--text-color); background-color: transparent;">E-commerce</a>
@@ -227,6 +228,52 @@
                                     <span style="color: var(--text-color);">Enable CAPTCHA for guest comments</span>
                                 </label>
                             </div>
+                        </div>
+
+                        <div id="custom-form-fields" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 0.5rem;">Custom Form Fields</h2>
+                            <p style="font-size: 0.9rem; color: var(--text-color); margin-bottom: 1rem;">Extra fields rendered on the public contact form and stored with each submission. Names must be slugs (letters, numbers, underscores).</p>
+
+                            @if($errors->has('custom_form_fields'))
+                                <div style="background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.875rem;">{{ $errors->first('custom_form_fields') }}</div>
+                            @endif
+
+                            <div id="custom-form-fields-list" style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
+                                @foreach(($settings->custom_form_fields ?? []) as $field)
+                                    <div class="cff-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.5rem; align-items: end; background-color: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.75rem;">
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Name</label>
+                                            <input type="text" class="cff-name form-control form-control-sm" value="{{ $field['name'] ?? '' }}" placeholder="field_name" required>
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Label</label>
+                                            <input type="text" class="cff-label form-control form-control-sm" value="{{ $field['label'] ?? '' }}" placeholder="Field label">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Type</label>
+                                            <select class="cff-type form-select form-select-sm">
+                                                <option value="text" {{ ($field['type'] ?? 'text') === 'text' ? 'selected' : '' }}>Text</option>
+                                                <option value="email" {{ ($field['type'] ?? '') === 'email' ? 'selected' : '' }}>Email</option>
+                                                <option value="textarea" {{ ($field['type'] ?? '') === 'textarea' ? 'selected' : '' }}>Textarea</option>
+                                                <option value="number" {{ ($field['type'] ?? '') === 'number' ? 'selected' : '' }}>Number</option>
+                                            </select>
+                                        </div>
+                                        <button type="button" class="cff-remove btn btn-danger btn-sm" title="Remove field" style="padding: 0.4rem 0.7rem;">✕</button>
+                                        <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; align-items: end;">
+                                            <div>
+                                                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Placeholder (optional)</label>
+                                                <input type="text" class="cff-placeholder form-control form-control-sm" value="{{ $field['placeholder'] ?? '' }}" placeholder="Placeholder text">
+                                            </div>
+                                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--text-color); padding-bottom: 0.35rem;">
+                                                <input type="checkbox" class="cff-required" value="1" {{ !empty($field['required']) ? 'checked' : '' }}> Required
+                                            </label>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <button type="button" id="cff-add" class="btn btn-outline-secondary btn-sm">+ Add field</button>
+                            <input type="hidden" name="custom_form_fields" id="custom_form_fields_json" value="{{ old('custom_form_fields', json_encode($settings->custom_form_fields ?? [])) }}">
                         </div>
 
                         <div id="display" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
@@ -965,6 +1012,81 @@
                     bootstrap.Modal.getOrCreateInstance(ogPickerModal).hide();
                 }
             });
+        }
+
+        // Custom form fields editor
+        const cffList = document.getElementById('custom-form-fields-list');
+        const cffJson = document.getElementById('custom_form_fields_json');
+        const cffForm = document.querySelector('form[action="{{ route('admin.settings.update') }}"]');
+
+        const cffRowTemplate = (name = '', label = '', type = 'text', placeholder = '', required = false) => `
+            <div class="cff-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.5rem; align-items: end; background-color: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.75rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Name</label>
+                    <input type="text" class="cff-name form-control form-control-sm" value="${name.replace(/"/g, '&quot;')}" placeholder="field_name" required>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Label</label>
+                    <input type="text" class="cff-label form-control form-control-sm" value="${label.replace(/"/g, '&quot;')}" placeholder="Field label">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Type</label>
+                    <select class="cff-type form-select form-select-sm">
+                        <option value="text" ${type === 'text' ? 'selected' : ''}>Text</option>
+                        <option value="email" ${type === 'email' ? 'selected' : ''}>Email</option>
+                        <option value="textarea" ${type === 'textarea' ? 'selected' : ''}>Textarea</option>
+                        <option value="number" ${type === 'number' ? 'selected' : ''}>Number</option>
+                    </select>
+                </div>
+                <button type="button" class="cff-remove btn btn-danger btn-sm" title="Remove field" style="padding: 0.4rem 0.7rem;">✕</button>
+                <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; align-items: end;">
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">Placeholder (optional)</label>
+                        <input type="text" class="cff-placeholder form-control form-control-sm" value="${placeholder.replace(/"/g, '&quot;')}" placeholder="Placeholder text">
+                    </div>
+                    <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--text-color); padding-bottom: 0.35rem;">
+                        <input type="checkbox" class="cff-required" value="1" ${required ? 'checked' : ''}> Required
+                    </label>
+                </div>
+            </div>`;
+
+        const serializeCff = () => {
+            const fields = [];
+            document.querySelectorAll('#custom-form-fields-list .cff-row').forEach((row) => {
+                const name = row.querySelector('.cff-name').value.trim();
+                if (!name) return;
+                fields.push({
+                    name: name,
+                    label: row.querySelector('.cff-label').value.trim() || name,
+                    type: row.querySelector('.cff-type').value,
+                    placeholder: row.querySelector('.cff-placeholder').value.trim(),
+                    required: row.querySelector('.cff-required').checked,
+                });
+            });
+            if (cffJson) cffJson.value = JSON.stringify(fields);
+        };
+
+        if (cffList) {
+            cffList.addEventListener('click', (event) => {
+                const removeBtn = event.target.closest('.cff-remove');
+                if (removeBtn) {
+                    removeBtn.closest('.cff-row').remove();
+                }
+            });
+        }
+
+        const cffAdd = document.getElementById('cff-add');
+        if (cffAdd && cffList) {
+            cffAdd.addEventListener('click', () => {
+                cffList.insertAdjacentHTML('beforeend', cffRowTemplate());
+                const newRow = cffList.lastElementChild;
+                const input = newRow.querySelector('.cff-name');
+                if (input) input.focus();
+            });
+        }
+
+        if (cffForm) {
+            cffForm.addEventListener('submit', serializeCff);
         }
 
         // Smooth scrolling for anchor links
