@@ -12,13 +12,13 @@
     <div class="block-type-label text-capitalize">{{ $block->type }}</div>
 
     <div class="block-controls">
-        <button type="button" class="btn btn-sm btn-outline-primary" title="Move up">
+        <button type="button" class="btn btn-sm btn-outline-primary" title="Move up" onclick="moveBlock('{{ $block->id }}', 'up')">
             <i class="fas fa-chevron-up"></i>
         </button>
-        <button type="button" class="btn btn-sm btn-outline-primary" title="Move down">
+        <button type="button" class="btn btn-sm btn-outline-primary" title="Move down" onclick="moveBlock('{{ $block->id }}', 'down')">
             <i class="fas fa-chevron-down"></i>
         </button>
-        <button type="button" class="btn btn-sm btn-outline-danger" title="Delete">
+        <button type="button" class="btn btn-sm btn-outline-danger" title="Delete" onclick="deleteBlock('{{ $block->id }}')">
             <i class="fas fa-trash"></i>
         </button>
     </div>

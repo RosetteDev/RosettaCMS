@@ -159,6 +159,20 @@ class InlineEditTest extends TestCase
         $this->assertNull(Block::find($child->id));
     }
 
+    public function test_inline_edit_modal_renders_wired_controls(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->get('/inline-edit/' . $this->page->id);
+
+        $response->assertOk();
+        // Controls are wired to handlers, not dead buttons.
+        $response->assertSee('moveBlock(');
+        $response->assertSee('deleteBlock(');
+        // Save flow is honest: disabled until a change is made.
+        $response->assertSee('inlineEditSaveBtn');
+        $response->assertSee('inlineEditStatus');
+    }
+
     public function test_preview_returns_rendered_blocks_html(): void
     {
         $response = $this->actingAs($this->admin)
