@@ -115,6 +115,32 @@ class ThemePreviewTest extends TestCase
             ->assertSee('News');
     }
 
+    public function test_admin_can_preview_blog_legacy_theme(): void
+    {
+        $this->actingAs($this->admin)
+            ->get('/?theme=blog')
+            ->assertOk()
+            ->assertSee('Elegant Post');
+    }
+
+    public function test_admin_can_preview_photography_legacy_theme(): void
+    {
+        $this->actingAs($this->admin)
+            ->get('/?theme=photography')
+            ->assertOk()
+            ->assertSee('Elegant Post');
+    }
+
+    public function test_admin_can_preview_business_and_magazine_legacy_themes(): void
+    {
+        foreach (['business', 'magazine'] as $slug) {
+            $this->actingAs($this->admin)
+                ->get('/?theme=' . $slug)
+                ->assertOk()
+                ->assertSee('Elegant Post');
+        }
+    }
+
     public function test_preview_rejects_invalid_slug(): void
     {
         $this->actingAs($this->admin)

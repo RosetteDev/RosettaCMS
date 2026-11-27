@@ -1,0 +1,46 @@
+/* Magazine theme — bold editorial */
+
+:root {
+    --mag-accent: #dc2626;
+}
+
+body {
+    background: #faf9f7;
+    color: #1a1a1a;
+    -webkit-font-smoothing: antialiased;
+}
+
+.mag-masthead {
+    border-bottom: 3px solid #111111;
+    padding: 2rem 0 1.25rem;
+    text-align: center;
+}
+.mag-masthead h1 { font-size: 3.5rem; letter-spacing: -0.02em; line-height: 1; color: #111111; }
+.mag-masthead p { font-family: -apple-system, sans-serif; font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; color: #555555; margin-top: 0.6rem; }
+
+.mag-feature { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2.5rem; align-items: center; padding: 2.5rem 0; border-bottom: 1px solid #e5e0da; }
+.mag-feature img { width: 100%; height: 100%; min-height: 320px; object-fit: cover; border-radius: 0.5rem; }
+.mag-feature .kicker { font-family: -apple-system, sans-serif; font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mag-accent); margin-bottom: 0.75rem; font-weight: 700; }
+.mag-feature h2 { font-size: 2.1rem; line-height: 1.15; margin-bottom: 1rem; }
+.mag-feature p { color: #444444; line-height: 1.7; }
+.mag-feature .byline { font-family: -apple-system, sans-serif; font-size: 0.8rem; color: #777777; margin-top: 1rem; }
+
+.mag-stories { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.75rem; padding: 2.5rem 0; }
+.mag-story { border-top: 3px solid #111111; padding-top: 1rem; }
+.mag-story .kicker { font-family: -apple-system, sans-serif; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mag-accent); font-weight: 700; }
+.mag-story h3 { font-size: 1.35rem; line-height: 1.25; margin: 0.5rem 0; }
+.mag-story h3 a { color: #111111; text-decoration: none; }
+.mag-story h3 a:hover { color: var(--mag-accent); }
+.mag-story p { color: #555555; font-size: 0.95rem; line-height: 1.6; }
+
+.mag-single-hero { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid #e5e0da; }
+.mag-single-hero .kicker { font-family: -apple-system, sans-serif; font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mag-accent); font-weight: 700; margin-bottom: 0.75rem; }
+.mag-single-hero h1 { font-size: 2.75rem; line-height: 1.12; margin-bottom: 1rem; }
+.mag-single-hero .byline { font-family: -apple-system, sans-serif; font-size: 0.85rem; color: #777777; }
+.mag-single-hero img { width: 100%; max-height: 480px; object-fit: cover; margin: 2rem 0; border-radius: 0.5rem; }
+
+@media (max-width: 900px) {
+    .mag-feature { grid-template-columns: 1fr; }
+    .mag-stories { grid-template-columns: 1fr; }
+    .mag-masthead h1 { font-size: 2.5rem; }
+}
