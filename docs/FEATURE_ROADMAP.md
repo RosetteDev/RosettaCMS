@@ -314,6 +314,27 @@ WordPress's moat is plugins and themes. Rosetta has a plugin system
 - Search within the admin (posts, pages, media, users)
 - Dashboard widgets with drag-and-drop layout
 
+### 17. Proper, simple installer — ✅ done (2026-11)
+A one-command CLI installer with a shared preflight/install service used by
+both the CLI and the (simplified) web installer.
+
+- `php artisan install`: runs preflight checks, asks for site name / app URL /
+  admin email / admin password, writes `.env`, runs migrations and seeds the
+  site + settings + admin role + admin user, then locks itself off
+  (`INSTALL_ENABLED=false`, `APP_INSTALLED=true`).
+- SQLite by default (zero external services required); MySQL/PostgreSQL/SQL
+  Server via `--db-connection`.
+- Preflight report (PHP version, required extensions, writable storage/,
+  dependencies, database connectivity) with plain-language failure messages —
+  never raw stack traces.
+- Idempotent: refuses to re-install over an existing configured site unless
+  `--force` is passed; `--dry-run` previews without writing anything.
+- `App\Services\InstallService` is the single source of truth for checks and
+  install — the web installer (`/install`) delegates to it, so both paths
+  produce the same result.
+- Tests: command registration, dry-run isolation, idempotency guard, input
+  validation, web check/form rendering, install-enabled gate — 13 new tests.
+
 ## Lower-impact / nice-to-have
 
 - Custom roles with per-post-type and per-field permissions (currently

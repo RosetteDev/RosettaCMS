@@ -317,42 +317,46 @@
                         <div class="input-group">
                             <i class="fas fa-server"></i>
                             <select name="db_connection" id="db_connection" class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors cursor-pointer">
-                                <option value="mysql" {{ old('db_connection', 'mysql') == 'mysql' ? 'selected' : '' }}>MySQL</option>
+                                <option value="sqlite" {{ old('db_connection', 'sqlite') == 'sqlite' ? 'selected' : '' }}>SQLite</option>
+                                <option value="mysql" {{ old('db_connection') == 'mysql' ? 'selected' : '' }}>MySQL</option>
                                 <option value="pgsql" {{ old('db_connection') == 'pgsql' ? 'selected' : '' }}>PostgreSQL</option>
-                                <option value="sqlite" {{ old('db_connection') == 'sqlite' ? 'selected' : '' }}>SQLite</option>
+                                <option value="sqlsrv" {{ old('db_connection') == 'sqlsrv' ? 'selected' : '' }}>SQL Server</option>
                             </select>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-5">
-                            <!-- Host -->
-                            <div class="input-group">
-                                <i class="fas fa-server"></i>
-                                <input type="text" name="db_host" id="db_host" value="{{ old('db_host', '127.0.0.1') }}" required class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors" placeholder="127.0.0.1">
+                        <div id="db-non-sqlite-fields">
+                            <div class="grid grid-cols-2 gap-5">
+                                <!-- Host -->
+                                <div class="input-group">
+                                    <i class="fas fa-server"></i>
+                                    <input type="text" name="db_host" id="db_host" value="{{ old('db_host', '127.0.0.1') }}" class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors" placeholder="127.0.0.1">
+                                </div>
+                                <!-- Port -->
+                                <div class="input-group">
+                                    <i class="fas fa-port-hole"></i>
+                                    <input type="number" name="db_port" id="db_port" value="{{ old('db_port', '3306') }}" class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors" placeholder="3306">
+                                </div>
                             </div>
-                            <!-- Port -->
-                            <div class="input-group">
-                                <i class="fas fa-port-hole"></i>
-                                <input type="number" name="db_port" id="db_port" value="{{ old('db_port', '3306') }}" required class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors" placeholder="3306">
+
+                            <!-- Username -->
+                            <div class="input-group" style="margin-top: 1.25rem;">
+                                <i class="fas fa-user"></i>
+                                <input type="text" name="db_username" id="db_username" value="{{ old('db_username', config('database.connections.mysql.username', '')) }}" class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors" placeholder="username">
+                            </div>
+
+                            <!-- Password -->
+                            <div class="input-group" style="margin-top: 1.25rem;">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" name="db_password" id="db_password" value="{{ old('db_password', config('database.connections.mysql.password', '')) }}" class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors" placeholder="Password (optional)">
                             </div>
                         </div>
 
-                        <!-- Database Name -->
+                        <!-- Database Name / SQLite path (single field; placeholder follows the selected driver) -->
                         <div class="input-group">
                             <i class="fas fa-database"></i>
-                            <input type="text" name="db_database" id="db_database" value="{{ old('db_database', config('database.connections.mysql.database', '')) }}" required class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors" placeholder="database_name">
+                            <input type="text" name="db_database" id="db_database" value="{{ old('db_database') }}" class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors" placeholder="database/database.sqlite">
                         </div>
-
-                        <!-- Username -->
-                        <div class="input-group">
-                            <i class="fas fa-user"></i>
-                            <input type="text" name="db_username" id="db_username" value="{{ old('db_username', config('database.connections.mysql.username', '')) }}" required class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors" placeholder="username">
-                        </div>
-
-                        <!-- Password -->
-                        <div class="input-group">
-                            <i class="fas fa-lock"></i>
-                            <input type="password" name="db_password" id="db_password" value="{{ old('db_password', config('database.connections.mysql.password', '')) }}" class="input-field w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:bg-white transition-colors" placeholder="Password (optional)">
-                        </div>
+                        <p class="text-xs text-gray-500" id="db_database_hint">SQLite: path to the database file (created automatically).</p>
                     </div>
 
                     <!-- Info Box -->
@@ -361,7 +365,7 @@
                             <i class="fas fa-info-circle text-blue-500 text-lg mt-0.5 mr-3 flex-shrink-0"></i>
                             <div class="text-sm text-blue-700">
                                 <p class="font-medium mb-1">Database Creation</p>
-                                <p>If your MySQL user has CREATE DATABASE permission, Rosetta CMS can create the database automatically.</p>
+                                <p>SQLite needs no server — the database file is created automatically. For MySQL, Rosetta CMS can create the database if your user has CREATE DATABASE permission.</p>
                             </div>
                         </div>
                     </div>
@@ -465,5 +469,33 @@
             <p>Rosetta CMS &copy; {{ date('Y') }} &bull; Professional Content Management System</p>
         </div>
     </div>
+    <script>
+        (function () {
+            var select = document.getElementById('db_connection');
+            var nonSqlite = document.getElementById('db-non-sqlite-fields');
+            var dbName = document.getElementById('db_database');
+            var hint = document.getElementById('db_database_hint');
+
+            function toggle() {
+                var isSqlite = select.value === 'sqlite';
+                nonSqlite.style.display = isSqlite ? 'none' : '';
+                // Disabled inputs are not submitted — keep the non-sqlite fields out of the form when sqlite is chosen.
+                var fields = nonSqlite.querySelectorAll('input, select, textarea');
+                fields.forEach(function (field) { field.disabled = isSqlite; });
+                if (dbName) {
+                    dbName.placeholder = isSqlite ? 'database/database.sqlite' : 'database_name';
+                    dbName.required = !isSqlite;
+                }
+                if (hint) {
+                    hint.textContent = isSqlite
+                        ? 'SQLite: path to the database file (created automatically).'
+                        : 'Database name. The database is created automatically if the user has CREATE DATABASE permission.';
+                }
+            }
+
+            select.addEventListener('change', toggle);
+            toggle();
+        })();
+    </script>
 </body>
 </html>

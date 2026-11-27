@@ -201,171 +201,50 @@
         </div>
 
         <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
-            <!-- Progress -->
-            <div class="bg-gray-50 px-8 py-4 border-b border-gray-100">
-                <div class="flex items-center justify-center space-x-4">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 rounded-full bg-violet-600 text-white flex items-center justify-center text-sm font-bold">
-                            <i class="fas fa-check"></i>
-                        </div>
-                        <span class="text-sm font-medium text-gray-700">Requirements</span>
-                    </div>
-                    <div class="w-px h-8 bg-gray-300"></div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center text-sm font-bold">
-                            <i class="fas fa-cog"></i>
-                        </div>
-                        <span class="text-sm font-medium text-gray-500">Configuration</span>
-                    </div>
-                </div>
-            </div>
-
             <div class="p-8">
                 <!-- Summary -->
                 <div class="mb-8">
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Server Requirements</h2>
-                    <p class="text-gray-600">Your server meets all the requirements for Rosetta CMS</p>
+                    @if($preflight['all_passed'])
+                        <p class="text-gray-600">Your server meets all the requirements for Rosetta CMS.</p>
+                    @else
+                        <p class="text-gray-600">Some requirements are not met. Fix the issues below before continuing.</p>
+                    @endif
                 </div>
 
-                <!-- Requirements Grid -->
+                <!-- Checks -->
                 <div class="grid grid-cols-1 gap-4 mb-8">
-                    <!-- PHP Version -->
-                    <div class="flex items-center p-4 bg-green-100 rounded-xl" style="border-left: 4px solid var(--green-500);">
-                        <i class="fas fa-brain text-green-600 text-2xl mr-3"></i>
-                        <div>
-                            <p class="text-lg font-medium text-green-800">PHP Version</p>
-                            <p class="text-sm text-green-700 mt-1">Required: 8.1+ | Installed: {{ $phpVersion }}</p>
-                        </div>
-                    </div>
-
-                    <!-- MySQLi Extension -->
-                    <div class="flex items-center p-4 bg-green-100 rounded-xl" style="border-left: 4px solid var(--green-500);">
-                        <i class="fas fa-database text-green-600 text-2xl mr-3"></i>
-                        <div>
-                            <p class="text-lg font-medium text-green-800">MySQLi Extension</p>
-                            <p class="text-sm text-green-700 mt-1">Required for database connectivity</p>
-                        </div>
-                    </div>
-
-                    <!-- OpenSSL Extension -->
-                    <div class="flex items-center p-4 bg-green-100 rounded-xl" style="border-left: 4px solid var(--green-500);">
-                        <i class="fas fa-lock text-green-600 text-2xl mr-3"></i>
-                        <div>
-                            <p class="text-lg font-medium text-green-800">OpenSSL Extension</p>
-                            <p class="text-sm text-green-700 mt-1">Required for encryption</p>
-                        </div>
-                    </div>
-
-                    <!-- MBString Extension -->
-                    <div class="flex items-center p-4 bg-green-100 rounded-xl" style="border-left: 4px solid var(--green-500);">
-                        <i class="fas fa-font text-green-600 text-2xl mr-3"></i>
-                        <div>
-                            <p class="text-lg font-medium text-green-800">MBString Extension</p>
-                            <p class="text-sm text-green-700 mt-1">Required for multibyte string handling</p>
-                        </div>
-                    </div>
-
-                    <!-- GD/GD2 Extension -->
-                    <div class="flex items-center p-4 bg-green-100 rounded-xl" style="border-left: 4px solid var(--green-500);">
-                        <i class="fas fa-image text-green-600 text-2xl mr-3"></i>
-                        <div>
-                            <p class="text-lg font-medium text-green-800">GD/GD2 Extension</p>
-                            <p class="text-sm text-green-700 mt-1">Required for image processing</p>
-                        </div>
-                    </div>
-
-                    <!-- Fileinfo Extension -->
-                    <div class="flex items-center p-4 bg-green-100 rounded-xl" style="border-left: 4px solid var(--green-500);">
-                        <i class="fas fa-file-alt text-green-600 text-2xl mr-3"></i>
-                        <div>
-                            <p class="text-lg font-medium text-green-800">Fileinfo Extension</p>
-                            <p class="text-sm text-green-700 mt-1">Required for file type detection</p>
-                        </div>
-                    </div>
-
-                    <!-- Tokenizer Extension -->
-                    <div class="flex items-center p-4 bg-green-100 rounded-xl" style="border-left: 4px solid var(--green-500);">
-                        <i class="fas fa-code text-green-600 text-2xl mr-3"></i>
-                        <div>
-                            <p class="text-lg font-medium text-green-800">Tokenizer Extension</p>
-                            <p class="text-sm text-green-700 mt-1">Required for Blade templating</p>
-                        </div>
-                    </div>
-
-                    <!-- XML Extension -->
-                    <div class="flex items-center p-4 bg-green-100 rounded-xl" style="border-left: 4px solid var(--green-500);">
-                        <i class="fas fa-code-branch text-green-600 text-2xl mr-3"></i>
-                        <div>
-                            <p class="text-lg font-medium text-green-800">XML Extension</p>
-                            <p class="text-sm text-green-700 mt-1">Required for various operations</p>
-                        </div>
-                    </div>
-
-                    <!-- PDO Extension -->
-                    <div class="flex items-center p-4 bg-green-100 rounded-xl" style="border-left: 4px solid var(--green-500);">
-                        <i class="fas fa-project-diagram text-green-600 text-2xl mr-3"></i>
-                        <div>
-                            <p class="text-lg font-medium text-green-800">PDO Extension</p>
-                            <p class="text-sm text-green-700 mt-1">Required for database operations</p>
-                        </div>
-                    </div>
-
-                    <!-- Composer -->
-                    <div class="flex items-center p-4 bg-green-100 rounded-xl" style="border-left: 4px solid var(--green-500);">
-                        <i class="fas fa-box text-green-600 text-2xl mr-3"></i>
-                        <div>
-                            <p class="text-lg font-medium text-green-800">Composer</p>
-                            <p class="text-sm text-green-700 mt-1">Required for dependency management</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Optional Extensions -->
-                <div class="mb-8">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Optional Extensions</h3>
-                    <div class="bg-gray-50 rounded-xl p-4">
-                        <p class="text-gray-700 text-sm mb-2">These extensions are not required but recommended:</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="flex items-center text-gray-600">
-                                <i class="fas fa-check-circle text-green-500 mr-3"></i>
-                                <span class="text-sm">Redis (for caching and sessions)</span>
-                            </div>
-                            <div class="flex items-center text-gray-600">
-                                <i class="fas fa-check-circle text-green-500 mr-3"></i>
-                                <span class="text-sm">Sodium (for enhanced encryption)</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Permissions Status -->
-                <div class="mb-8">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Directory Permissions</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="flex items-center p-3 rounded-xl bg-green-100" style="border-left: 4px solid var(--green-500);">
-                            <i class="fas fa-folder text-green-600 mr-3"></i>
+                    @foreach($preflight['checks'] as $check)
+                        <div class="flex items-center p-4 rounded-xl" style="background-color: {{ $check['passed'] ? 'var(--green-100)' : 'var(--red-100)' }}; border-left: 4px solid {{ $check['passed'] ? 'var(--green-500)' : 'var(--red-500)' }};">
+                            <i class="fas {{ $check['passed'] ? 'fa-check-circle text-green-600' : 'fa-times-circle text-red-600' }} text-2xl mr-3 flex-shrink-0"></i>
                             <div>
-                                <p class="font-medium text-green-800">storage/</p>
-                                <p class="text-sm text-green-700">Writable</p>
+                                <p class="text-lg font-medium" style="color: {{ $check['passed'] ? 'var(--green-800)' : 'var(--red-800)' }};">{{ $check['name'] }}</p>
+                                <p class="text-sm mt-1" style="color: {{ $check['passed'] ? 'var(--green-700)' : 'var(--red-700)' }};">{{ $check['message'] }}</p>
+                                @if(!empty($check['missing']))
+                                    <p class="text-xs mt-1" style="color: var(--red-600);">Missing: {{ implode(', ', $check['missing']) }}</p>
+                                @endif
+                                @if(!empty($check['unwritable']))
+                                    <p class="text-xs mt-1" style="color: var(--red-600);">Unwritable: {{ implode(', ', $check['unwritable']) }}</p>
+                                @endif
                             </div>
                         </div>
-                        <div class="flex items-center p-3 rounded-xl bg-green-100" style="border-left: 4px solid var(--green-500);">
-                            <i class="fas fa-folder text-green-600 mr-3"></i>
-                            <div>
-                                <p class="font-medium text-green-800">bootstrap/cache/</p>
-                                <p class="text-sm text-green-700">Writable</p>
-                            </div>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <a href="{{ route('install.form') }}" class="btn-primary text-white text-lg font-semibold py-4 px-8 rounded-xl w-full sm:w-auto shadow-lg flex items-center justify-center">
-                        <i class="fas fa-arrow-right mr-3"></i>
-                        Continue Setup
-                    </a>
-                    <a href="{{ route('install.refresh') }}" class="text-gray-700 hover:text-violet-600 font-medium transition-colors flex items-center justify-center sm:justify-start">
+                    @if($preflight['all_passed'])
+                        <a href="{{ route('install') }}" class="btn-primary text-white text-lg font-semibold py-4 px-8 rounded-xl w-full sm:w-auto shadow-lg flex items-center justify-center">
+                            <i class="fas fa-arrow-right mr-3"></i>
+                            Continue Setup
+                        </a>
+                    @else
+                        <span class="text-gray-500 text-center sm:text-left flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            Resolve the issues above to continue.
+                        </span>
+                    @endif
+                    <a href="{{ route('install.check') }}" class="text-gray-700 hover:text-violet-600 font-medium transition-colors flex items-center justify-center sm:justify-start">
                         <i class="fas fa-redo mr-2"></i>
                         Refresh Check
                     </a>
@@ -375,11 +254,8 @@
             <!-- Footer -->
             <div class="bg-gray-50 px-8 py-4 text-center border-t border-gray-100">
                 <p class="text-gray-500 text-sm">
-                    <i class="fas fa-question-circle mr-2"></i>
-                    Need help? Check the
-                    <a href="https://rosettacms.com/docs" class="text-violet-600 font-medium hover:underline ml-1" target="_blank">
-                        documentation <i class="fas fa-external-link-alt text-xs"></i>
-                    </a>
+                    <i class="fas fa-terminal mr-2"></i>
+                    Prefer the command line? Run <code>php artisan install</code> for a guided CLI setup.
                 </p>
             </div>
         </div>

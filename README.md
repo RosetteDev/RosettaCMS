@@ -30,68 +30,69 @@ A modern, open-source content management system built on Laravel with a robust v
 
 ## Installation
 
-### Prerequisites
+### One-command installer (recommended)
 
-1. Ensure you have PHP 8.2+ installed
-2. Install Composer if you haven't already
-3. Create a database for Rosetta CMS
+Rosetta CMS ships with a guided CLI installer that handles preflight checks,
+`.env` generation, migrations and seeding in one step:
 
-### Steps
+```bash
+git clone https://github.com/RosettaDev/RosettaCMS.git
+cd rosetta-cms
+composer install
+php artisan install
+```
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/RosettaDev/RosettaCMS.git
-   cd rosetta-cms
-   ```
+The installer will:
 
-2. **Install dependencies:**
-   ```bash
-   composer install
-   ```
+1. **Preflight-check** the server: PHP version, required extensions
+   (pdo, mbstring, zip, …), writable `storage/`, dependencies and database
+   connectivity — with plain-language failure messages, never stack traces.
+2. **Ask for** the site name, app URL and admin email/password (or take them
+   via flags, e.g. `--site-name`, `--admin-email`, `--admin-password`, `--yes`
+   for non-interactive installs).
+3. **Write `.env`** (SQLite by default — zero external services required).
+4. **Run migrations** and **seed** the site, settings, admin role and admin
+   user.
+5. **Lock itself off** (`INSTALL_ENABLED=false`, `APP_INSTALLED=true`) so the
+   installer cannot be re-run over a configured site.
 
-3. **Copy environment file:**
-   ```bash
-   cp .env.example .env
-   ```
+Useful flags:
 
-4. **Generate application key:**
-   ```bash
-   php artisan key:generate
-   ```
+- `--dry-run` — show the preflight report and planned steps without changing anything
+- `--db-connection=mysql|pgsql|sqlsrv` — use an external database instead of SQLite
+- `--force` — reinstall over an existing configured site (use with care)
 
-5. **Configure database in `.env`:**
-   ```env
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=rosettacms
-   DB_USERNAME=root
-   DB_PASSWORD=
-   ```
+You can also preview the installer without writing anything:
 
-6. **Run migrations:**
-   ```bash
-   php artisan migrate
-   ```
+```bash
+php artisan install --dry-run
+```
 
-7. **Run seeders (optional):**
-   ```bash
-   php artisan db:seed
-   ```
+### Manual installation
 
-8. **Link public storage (for media uploads):**
-   ```bash
-   php artisan storage:link
-   ```
+If you prefer to set things up by hand:
 
-9. **Start the development server:**
-   ```bash
-   php artisan serve
-   ```
+1. **Copy environment file:** `cp .env.example .env`
+2. **Generate application key:** `php artisan key:generate`
+3. **Configure database** in `.env` (SQLite by default; for MySQL set
+   `DB_CONNECTION=mysql` plus host/port/database/username/password)
+4. **Run migrations:** `php artisan migrate`
+5. **Seed the site and admin user:** `php artisan db:seed`
+6. **Link public storage (for media uploads):** `php artisan storage:link`
+7. **Start the development server:** `php artisan serve`
 
-10. **Access the application:**
-    - Frontend: http://localhost:8000
-    - Admin: http://localhost:8000/admin
+### Web installer (optional)
+
+A simplified web installer is retained for environments where shell access is
+impractical. It uses the same checks and the same result as the CLI installer.
+Enable it first by setting `INSTALL_ENABLED=true` in `.env`, then visit
+`/install`. The installer locks itself off (`INSTALL_ENABLED=false`) once it
+completes.
+
+### Access the application
+
+- Frontend: http://localhost:8000
+- Admin: http://localhost:8000/admin
 
 ## Default Credentials
 
