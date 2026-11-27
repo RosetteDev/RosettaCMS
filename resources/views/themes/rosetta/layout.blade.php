@@ -461,6 +461,9 @@
         @yield('content')
     </main>
     
+    <!-- Widgets (before footer) -->
+    @include('themes._shared.widget-area', ['location' => 'before-footer'])
+
     <!-- Footer -->
     <footer class="footer">
         @include('themes._shared.footer')

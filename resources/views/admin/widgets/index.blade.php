@@ -5,7 +5,7 @@
     <div class="hero">
         <div class="container">
             <h1>Custom Widgets</h1>
-            <p>Manage custom widgets for your dashboard and sidebar</p>
+            <p>Manage custom widgets for your dashboard, sidebar and frontend footer</p>
         </div>
     </div>
 

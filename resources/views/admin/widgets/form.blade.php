@@ -57,8 +57,10 @@
                             <label for="location" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-color);">Location <span style="color: var(--error-color);">*</span></label>
                             <select name="location" id="location" 
                                     style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;">
-                                <option value="dashboard" {{ old('location', $widget->location) === 'dashboard' ? 'selected' : '' }}>Dashboard</option>
-                                <option value="sidebar" {{ old('location', $widget->location) === 'sidebar' ? 'selected' : '' }}>Sidebar</option>
+                                <option value="dashboard" {{ old('location', $widget->location) === 'dashboard' ? 'selected' : '' }}>Dashboard (admin)</option>
+                                <option value="sidebar" {{ old('location', $widget->location) === 'sidebar' ? 'selected' : '' }}>Sidebar (frontend)</option>
+                                <option value="before-footer" {{ old('location', $widget->location) === 'before-footer' ? 'selected' : '' }}>Before footer (frontend)</option>
+                                <option value="header" {{ old('location', $widget->location) === 'header' ? 'selected' : '' }}>Header (frontend)</option>
                             </select>
                             @error('location')
                                 <span style="color: var(--error-color); font-size: 0.875rem;">{{ $message }}</span>

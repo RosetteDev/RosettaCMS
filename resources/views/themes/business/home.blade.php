@@ -1,44 +1,30 @@
 @extends('themes.business.layout')
 
 @section('content')
-    <!-- Hero -->
-    <section class="hero-services">
-        <div class="container">
-            <h1>{{ $settings->resolved_site_title ?? ($site->name ?? 'Business') }}</h1>
-            <p>{{ $settings->resolved_site_description ?? 'We help teams ship reliable, well-designed products — fast.' }}</p>
-            <div class="cta-row">
-                <a href="{{ url('/contact') }}" class="btn-light">Get a Quote</a>
-                <a href="{{ url('/blog') }}" class="btn-accent">Read the Blog</a>
-            </div>
-        </div>
-    </section>
+    <!-- Hero (shared pattern) -->
+    @include('themes._shared.patterns.hero', [
+        'title' => $settings->resolved_site_title ?? ($site->name ?? 'Business'),
+        'subtitle' => $settings->resolved_site_description ?? 'We help teams ship reliable, well-designed products — fast.',
+        'buttonText' => 'Get a Quote',
+        'buttonUrl' => url('/contact'),
+    ])
 
-    <!-- Services -->
-    <section class="section">
-        <div class="container">
-            <div class="section-title">
-                <h2>What we do</h2>
-                <p>Focused services for growing teams</p>
-            </div>
-            <div class="services-grid">
-                <div class="service-card">
-                    <div class="icon">&#9878;</div>
-                    <h3>Strategy &amp; Planning</h3>
-                    <p>Clear roadmaps, positioning and go-to-market plans built around your goals.</p>
-                </div>
-                <div class="service-card">
-                    <div class="icon">&#9638;</div>
-                    <h3>Design &amp; Build</h3>
-                    <p>Modern, responsive websites and product interfaces designed to convert.</p>
-                </div>
-                <div class="service-card">
-                    <div class="icon">&#10004;</div>
-                    <h3>Support &amp; Growth</h3>
-                    <p>Ongoing maintenance, performance work and content that keeps you found.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- Services (shared pattern) -->
+    @include('themes._shared.patterns.feature-grid', [
+        'heading' => 'What we do',
+        'features' => [
+            ['icon' => '&#9878;', 'title' => 'Strategy & Planning', 'text' => 'Clear roadmaps, positioning and go-to-market plans built around your goals.'],
+            ['icon' => '&#9638;', 'title' => 'Design & Build', 'text' => 'Modern, responsive websites and product interfaces designed to convert.'],
+            ['icon' => '&#10004;', 'title' => 'Support & Growth', 'text' => 'Ongoing maintenance, performance work and content that keeps you found.'],
+        ],
+    ])
+
+    <!-- Testimonial (shared pattern) -->
+    @include('themes._shared.patterns.testimonial', [
+        'quote' => 'The team delivered a site our customers actually like. Leads are up and the old phone system is quiet.',
+        'author' => 'Dana Whitfield',
+        'role' => 'Owner, Whitfield & Co.',
+    ])
 
     <!-- Team -->
     <section class="section" style="background:#fff;">
@@ -105,12 +91,11 @@
         @media (max-width: 768px) { .team-grid { grid-template-columns: 1fr; } }
     </style>
 
-    <!-- CTA band -->
-    <section class="cta-band">
-        <div class="container">
-            <h2>Ready to get started?</h2>
-            <p>Tell us what you need and we will get back to you within one business day.</p>
-            <a href="{{ url('/contact') }}" class="btn-dark">Contact us</a>
-        </div>
-    </section>
+    <!-- CTA band (shared pattern) -->
+    @include('themes._shared.patterns.cta', [
+        'title' => 'Ready to get started?',
+        'text' => 'Tell us what you need and we will get back to you within one business day.',
+        'buttonText' => 'Contact us',
+        'buttonUrl' => url('/contact'),
+    ])
 @endsection
