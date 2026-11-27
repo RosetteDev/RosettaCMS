@@ -40,6 +40,52 @@
         max-height: 70vh;
         overflow-y: auto;
     }
+
+    .diff-side {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        line-height: 1.6;
+    }
+
+    .diff-side-col {
+        padding: 0.5rem 0.75rem;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .diff-side-col:first-child {
+        border-right: 1px solid #dee2e6;
+    }
+
+    .diff-side-head {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #555;
+        padding: 0.4rem 0.75rem;
+        border-bottom: 1px solid #dee2e6;
+        z-index: 1;
+    }
+
+    .diff-row-removed { background: #f8d7da; color: #721c24; }
+    .diff-row-added { background: #d4edda; color: #155724; }
+    .diff-row-same { color: #666; }
+
+    @media (max-width: 767px) {
+        .diff-side { grid-template-columns: 1fr; }
+        .diff-side-col:first-child { border-right: none; border-bottom: 1px solid #dee2e6; }
+    }
     
     .diff-controls {
         padding: 1rem;
@@ -118,28 +164,41 @@
 
             <!-- Content Diff -->
             <div class="mb-4">
-                <h6><i class="fas fa-file-alt"></i> Content</h6>
-                <div class="diff-container">
-                    @if(count($diff) > 0)
-                        @foreach($diff as $line)
-                            @if($line['type'] === 'unchanged')
-                                <div class="diff-line diff-unchanged">
-                                    <i class="far fa-circle"></i> {{ e($line['to'] ?? $line['from']) }}
-                                </div>
-                            @elseif($line['type'] === 'added')
-                                <div class="diff-line diff-added">
-                                    <i class="fas fa-plus-circle"></i> {{ e($line['to']) }}
-                                </div>
-                            @elseif($line['type'] === 'deleted')
-                                <div class="diff-line diff-deleted">
-                                    <i class="fas fa-minus-circle"></i> {{ e($line['from']) }}
-                                </div>
-                            @endif
-                        @endforeach
-                    @else
-                        <p class="text-muted">No differences found.</p>
-                    @endif
-                </div>
+                <h6><i class="fas fa-file-alt"></i> Content <span class="text-muted small fw-normal">(side by side)</span></h6>
+                @if(count($diff) > 0)
+                    <div class="diff-side">
+                        <div>
+                            <div class="diff-side-head">From · #{{ $fromRevision->revision_number }}</div>
+                            <div class="diff-side-col">
+                                @foreach($diff as $line)
+                                    @if($line['type'] === 'unchanged')
+                                        <div class="diff-row-same">{{ e($line['from']) }}</div>
+                                    @elseif($line['type'] === 'deleted')
+                                        <div class="diff-row-removed">{{ e($line['from']) }}</div>
+                                    @elseif($line['type'] === 'added')
+                                        <div class="diff-row-same">&nbsp;</div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                        <div>
+                            <div class="diff-side-head">To · #{{ $toRevision->revision_number }}</div>
+                            <div class="diff-side-col">
+                                @foreach($diff as $line)
+                                    @if($line['type'] === 'unchanged')
+                                        <div class="diff-row-same">{{ e($line['to']) }}</div>
+                                    @elseif($line['type'] === 'added')
+                                        <div class="diff-row-added">{{ e($line['to']) }}</div>
+                                    @elseif($line['type'] === 'deleted')
+                                        <div class="diff-row-same">&nbsp;</div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <p class="text-muted">No differences found.</p>
+                @endif
             </div>
 
             <!-- Excerpt Diff -->

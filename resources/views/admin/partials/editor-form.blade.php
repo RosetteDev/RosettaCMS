@@ -135,6 +135,40 @@
                 </div>
             </div>
 
+            {{-- Custom fields (per post type, stored in meta) --}}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Custom Fields</h2>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="add-custom-field">
+                        <i class="fas fa-plus me-1"></i>Add field
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">Arbitrary key/value fields, stored in the post meta and available to themes. Keys are lowercase snake_case.</p>
+                    <div id="custom-fields">
+                        @php $customFields = old('custom_fields', $meta['custom_fields'] ?? []); @endphp
+                        @foreach($customFields as $i => $field)
+                            <div class="custom-field-row mb-2" data-index="{{ $i }}">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-4">
+                                        <input type="text" name="custom_fields[{{ $i }}][key]" class="form-control form-control-sm" placeholder="field_name" value="{{ $field['key'] ?? '' }}" pattern="[a-z][a-z0-9_]*" maxlength="100">
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="text" name="custom_fields[{{ $i }}][value]" class="form-control form-control-sm" placeholder="Value" value="{{ $field['value'] ?? '' }}" maxlength="1000">
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-custom-field" title="Remove field"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    @if(empty($customFields))
+                        <p class="text-muted small mb-0" id="custom-fields-empty">No custom fields yet.</p>
+                    @endif
+                </div>
+            </div>
+
             {{-- Translations --}}
             @php
                 $translationLanguages = \App\Models\Language::where('is_active', true)->where('is_default', false)->orderBy('sort_order')->get();
@@ -366,6 +400,7 @@ document.addEventListener('DOMContentLoaded', function () {
             toolbar: {
                 container: [
                     [{ header: [1, 2, 3, 4, false] }],
+                    [{ font: [] }, { size: ['small', 'large', 'huge'] }, { color: [] }],
                     ['bold', 'italic', 'underline', 'strike'],
                     [{ list: 'ordered' }, { list: 'bullet' }],
                     ['blockquote', 'code-block'],
@@ -428,6 +463,49 @@ document.addEventListener('DOMContentLoaded', function () {
         if (counter) counter.textContent = seoDesc ? seoDesc.value.length : 0;
     };
     [seoTitle, seoDesc, title].forEach(el => el && el.addEventListener('input', updateSeo));
+
+    // Custom fields: add/remove rows.
+    let customFieldIndex = @json(count($customFields ?? []));
+    const customFieldsWrap = document.getElementById('custom-fields');
+    const addCustomFieldBtn = document.getElementById('add-custom-field');
+    const emptyNote = document.getElementById('custom-fields-empty');
+
+    const updateEmptyNote = () => {
+        const hasRows = customFieldsWrap && customFieldsWrap.querySelectorAll('.custom-field-row').length > 0;
+        if (emptyNote) emptyNote.style.display = hasRows ? 'none' : '';
+    };
+
+    const addCustomFieldRow = () => {
+        if (!customFieldsWrap) return;
+        const i = customFieldIndex++;
+        const row = document.createElement('div');
+        row.className = 'custom-field-row mb-2';
+        row.dataset.index = i;
+        row.innerHTML = `
+            <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <input type="text" name="custom_fields[${i}][key]" class="form-control form-control-sm" placeholder="field_name" pattern="[a-z][a-z0-9_]*" maxlength="100">
+                </div>
+                <div class="col-md-7">
+                    <input type="text" name="custom_fields[${i}][value]" class="form-control form-control-sm" placeholder="Value" maxlength="1000">
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-custom-field" title="Remove field"><i class="fas fa-times"></i></button>
+                </div>
+            </div>`;
+        customFieldsWrap.appendChild(row);
+        updateEmptyNote();
+    };
+
+    if (addCustomFieldBtn) addCustomFieldBtn.addEventListener('click', addCustomFieldRow);
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.remove-custom-field');
+        if (!btn) return;
+        const row = btn.closest('.custom-field-row');
+        if (row) row.remove();
+        updateEmptyNote();
+    });
+    updateEmptyNote();
     updateSeo();
 
     // Featured image preview.

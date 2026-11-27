@@ -9,6 +9,31 @@
         </div>
     </div>
 
+    <!-- Compare two revisions -->
+    @if(count($revisions) >= 2)
+        <form method="GET" action="{{ route('admin.posts.revisions.diff', $post->id) }}" class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <h2 class="h6 mb-0">Compare</h2>
+                    <select name="from" class="form-select" style="max-width: 280px;" required>
+                        @foreach($revisions as $revision)
+                            <option value="{{ $revision->id }}">#{{ $revision->revision_number }} — {{ $revision->revision_date->format('M d, Y H:i') }} ({{ $revision->user->name ?? 'Unknown' }})</option>
+                        @endforeach
+                    </select>
+                    <span class="text-muted">→</span>
+                    <select name="to" class="form-select" style="max-width: 280px;" required>
+                        @foreach($revisions as $revision)
+                            <option value="{{ $revision->id }}" @if($loop->first) selected @endif>#{{ $revision->revision_number }} — {{ $revision->revision_date->format('M d, Y H:i') }} ({{ $revision->user->name ?? 'Unknown' }})</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-code-compare me-1"></i>Compare
+                    </button>
+                </div>
+            </div>
+        </form>
+    @endif
+
     <!-- Revisions List -->
     <div style="background-color: var(--light-color); border-radius: 8px; overflow: hidden;">
         @if(count($revisions) > 0)
@@ -44,7 +69,7 @@
                             <td style="padding: 1rem; text-align: center;">
                                 <a href="{{ route('admin.posts.revisions.show', [$post->id, $revision->id]) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; margin: 0.25rem;">View</a>
                                 <a href="{{ route('admin.posts.revisions.restore', [$post->id, $revision->id]) }}" class="btn btn-success" style="padding: 0.5rem 1rem; margin: 0.25rem;" onclick="return confirm('Restore this revision? This will replace the current content.');">Restore</a>
-                                <a href="{{ route('admin.posts.revisions.diff', $post->id) }}?from={{ $revision->id }}&to={{ $revision->id }}" class="btn btn-outline-secondary" style="padding: 0.5rem 1rem; margin: 0.25rem;">Diff</a>
+                                <a href="{{ route('admin.posts.revisions.diff', $post->id) }}?from={{ $revision->id }}&to={{ $revisions->first()->id }}" class="btn btn-outline-secondary" style="padding: 0.5rem 1rem; margin: 0.25rem;">Diff vs latest</a>
                             </td>
                         </tr>
                     @endforeach

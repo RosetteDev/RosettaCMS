@@ -80,8 +80,16 @@
             <option value="trash">Move to Trash</option>
             <option value="restore">Restore from Trash</option>
             <option value="delete">Delete Permanently</option>
+            <option value="assign">Assign to author…</option>
         </select>
-        
+
+        <select id="bulkAssignUser" class="form-select form-select-sm" style="display:none; max-width: 220px;">
+            <option value="">Choose author…</option>
+            @foreach($users ?? [] as $user)
+                <option value="{{ $user->id }}">{{ $user->name }}</option>
+            @endforeach
+        </select>
+
         <button id="applyBulkAction" class="btn btn-primary btn-apply">Apply</button>
         <button id="cancelBulkAction" class="btn btn-secondary btn-cancel">Cancel</button>
         
@@ -262,6 +270,14 @@
                 updateSelectAll();
             });
 
+            // Toggle author selector when "assign" is chosen
+            const bulkAssignUser = document.getElementById('bulkAssignUser');
+            bulkActionSelect.addEventListener('change', function() {
+                if (bulkAssignUser) {
+                    bulkAssignUser.style.display = this.value === 'assign' ? '' : 'none';
+                }
+            });
+
             // Apply bulk action
             applyBulkActionBtn.addEventListener('click', async function() {
                 const action = bulkActionSelect.value;
@@ -276,6 +292,11 @@
                     return;
                 }
 
+                if (action === 'assign' && (!bulkAssignUser || !bulkAssignUser.value)) {
+                    alert('Please choose an author to assign to');
+                    return;
+                }
+
                 const ids = Array.from(checkedBoxes).map(checkbox => checkbox.value);
 
                 try {
@@ -287,7 +308,8 @@
                         },
                         body: JSON.stringify({
                             ids: ids,
-                            action: action
+                            action: action,
+                            assign_user_id: action === 'assign' ? parseInt(bulkAssignUser.value, 10) : null
                         })
                     });
 

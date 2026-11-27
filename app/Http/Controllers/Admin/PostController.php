@@ -39,8 +39,9 @@ class PostController extends Controller
             ->withQueryString();
 
         $settings = SiteSetting::forSite();
+        $users = \App\Models\User::orderBy('name')->get();
 
-        return view('admin.posts.index', compact('posts', 'settings'));
+        return view('admin.posts.index', compact('posts', 'settings', 'users'));
     }
 
     /**
@@ -143,8 +144,13 @@ class PostController extends Controller
         $validated = $request->validate([
             'ids' => 'required|array|min:1',
             'ids.*' => 'required|exists:posts,id',
-            'action' => 'required|in:delete,publish,unpublish,trash,restore',
+            'action' => 'required|in:delete,publish,unpublish,trash,restore,assign',
+            'assign_user_id' => 'nullable|exists:users,id',
         ]);
+
+        if ($validated['action'] === 'assign' && empty($validated['assign_user_id'])) {
+            return response()->json(['success' => false, 'message' => 'Choose an author to assign.'], 422);
+        }
 
         $posts = Post::whereIn('id', $validated['ids'])->get();
 
@@ -180,6 +186,13 @@ class PostController extends Controller
                 }
                 return response()->json(['success' => true, 'message' => count($posts) . ' posts moved to trash.']);
             
+            case 'assign':
+                foreach ($posts as $post) {
+                    $post->user_id = $validated['assign_user_id'];
+                    $post->save();
+                }
+                return response()->json(['success' => true, 'message' => count($posts) . ' post(s) assigned to ' . \App\Models\User::find($validated['assign_user_id'])?->name . '.']);
+
             case 'restore':
                 foreach ($posts as $post) {
                     $post->status = 'draft';
@@ -219,6 +232,11 @@ class PostController extends Controller
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',
 
+            // Custom fields (stored in meta['custom_fields'])
+            'custom_fields' => 'nullable|array|max:50',
+            'custom_fields.*.key' => 'nullable|string|max:100|regex:/^[a-z][a-z0-9_]*$/',
+            'custom_fields.*.value' => 'nullable|string|max:1000',
+
             // SEO
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string|max:500',
@@ -256,6 +274,16 @@ class PostController extends Controller
             $status = 'pending';
         }
 
+        // Build the custom fields meta payload (drops empty keys).
+        $customFields = [];
+        foreach ($validated['custom_fields'] ?? [] as $field) {
+            $key = trim($field['key'] ?? '');
+            $value = trim($field['value'] ?? '');
+            if ($key !== '' && $value !== '') {
+                $customFields[$key] = $value;
+            }
+        }
+
         // Build the SEO meta payload (drops empty values).
         $meta = array_filter([
             'seo_title' => $validated['seo_title'] ?? null,
@@ -265,6 +293,10 @@ class PostController extends Controller
             'robots' => $validated['robots'] ?? null,
             'og_image' => $validated['og_image'] ?? null,
         ], fn ($value) => $value !== null && $value !== '');
+
+        if ($customFields !== []) {
+            $meta['custom_fields'] = $customFields;
+        }
 
         $post->fill([
             'site_id' => $validated['site_id'] ?? $post->site_id ?? optional(\App\Models\Site::first())->id,
