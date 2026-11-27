@@ -34,7 +34,7 @@
             <hr style="border-top: {{ $blockContent['thickness'] ?? 1 }}px {{ $blockContent['style'] ?? 'solid' }} #dee2e6;">
         @elseif($block->type === 'image')
             @if($blockContent['image'] ?? '')
-                <img src="{{ $blockContent['image'] }}" alt="{{ $blockContent['caption'] ?? '' }}" style="max-width:100%;border-radius:0.375rem;">
+                <img loading="lazy" decoding="async" src="{{ $blockContent['image'] }}" alt="{{ $blockContent['caption'] ?? '' }}" style="max-width:100%;border-radius:0.375rem;">
             @endif
         @elseif($block->type === 'html')
             <pre class="mb-0" style="white-space:pre-wrap;font-size:0.85rem;">{{ $blockContent['html'] ?? $blockContent['content'] ?? '' }}</pre>

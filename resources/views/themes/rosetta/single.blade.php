@@ -83,7 +83,7 @@
                     @foreach($relatedPosts as $related)
                         <article class="post-item card">
                             @if($related->featured_image_url)
-                                <img src="{{ $related->featured_image_url }}" alt="{{ $related->title }}" class="card-img">
+                                <img loading="lazy" decoding="async" src="{{ $related->featured_image_url }}" alt="{{ $related->title }}" class="card-img">
                             @endif
                             <div class="card-content">
                                 <div class="post-meta">

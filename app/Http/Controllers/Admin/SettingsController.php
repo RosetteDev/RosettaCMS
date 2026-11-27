@@ -181,6 +181,8 @@ class SettingsController extends Controller
 
         $this->saveTranslations($request, $site);
 
+        \App\Services\ContentCache::bump();
+
         return back()->with('success', 'Settings updated successfully.');
     }
 

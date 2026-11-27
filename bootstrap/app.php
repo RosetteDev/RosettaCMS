@@ -37,6 +37,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         $middleware->append(\App\Http\Middleware\TrimStringsWithLimits::class);
         $middleware->append(\App\Http\Middleware\RecordPageView::class);
+        $middleware->append(\App\Http\Middleware\FullPageCache::class);
+        $middleware->append(\App\Http\Middleware\HttpCacheHeaders::class);
+        $middleware->append(\App\Http\Middleware\QueryProfiler::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'api.key' => \App\Http\Middleware\AuthenticateApiKey::class,

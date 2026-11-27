@@ -17,7 +17,7 @@
                     @foreach($posts as $post)
                         <div class="card" style="background-color: var(--light-color); border-radius: 8px; overflow: hidden; transition: all 0.3s;">
                             @if($post->featured_image_url)
-                                <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" style="width: 100%; height: 200px; object-fit: cover;">
+                                <img loading="lazy" decoding="async" src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" style="width: 100%; height: 200px; object-fit: cover;">
                             @endif
                             <div style="padding: 1.5rem;">
                                 <div style="margin-bottom: 0.5rem;">

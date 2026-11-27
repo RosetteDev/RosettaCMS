@@ -12,7 +12,7 @@ trait CDNHelper
     /**
      * Check if CDN is enabled.
      */
-    protected function isCDNEnabled(): bool
+    public function isCDNEnabled(): bool
     {
         return (bool) env('CDN_ENABLED', false);
     }
@@ -20,7 +20,7 @@ trait CDNHelper
     /**
      * Get CDN URL.
      */
-    protected function getCDNUrl(): ?string
+    public function getCDNUrl(): ?string
     {
         if (!$this->isCDNEnabled()) {
             return null;
@@ -32,7 +32,7 @@ trait CDNHelper
     /**
      * Get CDN-enabled URL for a file.
      */
-    protected function cdnUrl(string $path): string
+    public function cdnUrl(string $path): string
     {
         $cdnUrl = $this->getCDNUrl();
 
@@ -55,7 +55,7 @@ trait CDNHelper
     /**
      * Get CDN-enabled URL for storage disk.
      */
-    protected function cdnStorageUrl(string $path, string $disk = 'public'): string
+    public function cdnStorageUrl(string $path, string $disk = 'public'): string
     {
         if ($this->isCDNEnabled()) {
             return $this->cdnUrl($path);
@@ -67,7 +67,7 @@ trait CDNHelper
     /**
      * Check if CDN is configured properly.
      */
-    protected function isCDNConfigured(): bool
+    public function isCDNConfigured(): bool
     {
         if (!$this->isCDNEnabled()) {
             return true;

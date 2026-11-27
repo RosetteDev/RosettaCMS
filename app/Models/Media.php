@@ -32,7 +32,13 @@ class Media extends Model
      */
     public function getUrlAttribute(): string
     {
-        return asset('storage/' . ltrim((string) $this->file_path, '/'));
+        $path = ltrim((string) $this->file_path, '/');
+
+        if (\App\Facades\CDN::isCDNEnabled()) {
+            return \App\Facades\CDN::cdnUrl('storage/' . $path);
+        }
+
+        return asset('storage/' . $path);
     }
 
     /**

@@ -34,7 +34,7 @@
                     @foreach($posts->take(6) as $post)
                         <a href="{{ url('/posts/' . $post->slug) }}" class="portfolio-item">
                             @if($post->featured_image_url)
-                                <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="lightbox-trigger" data-lightbox="{{ $post->featured_image_url }}" data-lightbox-title="{{ $post->title }}">
+                                <img loading="lazy" decoding="async" src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="lightbox-trigger" data-lightbox="{{ $post->featured_image_url }}" data-lightbox-title="{{ $post->title }}">
                             @else
                                 <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1e293b;">
                                     <span style="font-family:-apple-system,sans-serif;color:#475569;font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;">No image</span>

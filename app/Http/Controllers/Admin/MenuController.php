@@ -46,6 +46,8 @@ class MenuController extends Controller
             'location' => $validated['location'],
         ]);
 
+        \App\Services\ContentCache::bump();
+
         return redirect()->route('admin.menus.index')->with('success', 'Menu created.');
     }
 
@@ -72,6 +74,8 @@ class MenuController extends Controller
             'location' => $validated['location'],
         ]);
 
+        \App\Services\ContentCache::bump();
+
         return redirect()->route('admin.menus.edit', $menu)->with('success', 'Menu updated.');
     }
 
@@ -90,6 +94,8 @@ class MenuController extends Controller
 
         $this->saveTranslations($request, $item);
 
+        \App\Services\ContentCache::bump();
+
         return redirect()->route('admin.menus.edit', $menu)->with('success', 'Menu item added.');
     }
 
@@ -104,6 +110,8 @@ class MenuController extends Controller
         $item->update($this->validateItem($request));
 
         $this->saveTranslations($request, $item);
+
+        \App\Services\ContentCache::bump();
 
         return redirect()->route('admin.menus.edit', $menu)->with('success', 'Menu item updated.');
     }
@@ -212,6 +220,8 @@ class MenuController extends Controller
                     'parent_id' => $itemData['parent_id'] ?? null,
                 ]);
         }
+
+        \App\Services\ContentCache::bump();
 
         return response()->json([
             'success' => true,

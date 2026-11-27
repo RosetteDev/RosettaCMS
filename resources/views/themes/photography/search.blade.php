@@ -14,7 +14,7 @@
                     @foreach($posts as $post)
                         <a href="{{ url('/posts/' . $post->slug) }}" class="portfolio-item">
                             @if($post->featured_image_url)
-                                <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="lightbox-trigger" data-lightbox="{{ $post->featured_image_url }}" data-lightbox-title="{{ $post->title }}">
+                                <img loading="lazy" decoding="async" src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="lightbox-trigger" data-lightbox="{{ $post->featured_image_url }}" data-lightbox-title="{{ $post->title }}">
                             @endif
                             <div class="overlay">
                                 <span>{{ $post->published_at?->format('M Y') ?? $post->created_at->format('M Y') }}</span>

@@ -56,6 +56,12 @@ class DashboardController extends Controller
         $savedWidgets = $user->dashboard_widgets ?? $request->session()->get('dashboard_widgets', []);
         $widgets = array_merge($defaultWidgets, $savedWidgets);
 
-        return view('admin.dashboard', compact('stats', 'recentPosts', 'recentMedia', 'settings', 'layout', 'widgets'));
+        // Query profiler data (populated by QueryProfiler middleware)
+        $queries = $request->attributes->get('queries', []);
+        $queryCount = count($queries);
+        $totalQueryTime = array_sum(array_column($queries, 'time_ms'));
+        $slowQueries = collect($queries)->sortByDesc('time_ms')->take(5)->values();
+
+        return view('admin.dashboard', compact('stats', 'recentPosts', 'recentMedia', 'settings', 'layout', 'widgets', 'queryCount', 'totalQueryTime', 'slowQueries'));
     }
 }

@@ -24,7 +24,7 @@
                     @foreach($posts as $post)
                         <article class="post-item">
                             @if($post->featured_image_url)
-                                <a href="{{ url('/posts/' . $post->slug) }}"><img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}"></a>
+                                <a href="{{ url('/posts/' . $post->slug) }}"><img loading="lazy" decoding="async" src="{{ $post->featured_image_url }}" alt="{{ $post->title }}"></a>
                             @endif
                             <div class="meta">{{ $post->published_at?->format('F j, Y') ?? $post->created_at->format('F j, Y') }} &middot; By {{ $post->author->name ?? 'Author' }}</div>
                             <h2><a href="{{ url('/posts/' . $post->slug) }}">{{ $post->title }}</a></h2>

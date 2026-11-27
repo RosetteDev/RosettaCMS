@@ -65,7 +65,7 @@
                     @foreach($posts->take(3) as $post)
                         <article class="card">
                             @if($post->featured_image_url)
-                                <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}">
+                                <img loading="lazy" decoding="async" src="{{ $post->featured_image_url }}" alt="{{ $post->title }}">
                             @endif
                             <div class="card-body">
                                 <div class="post-meta"><span>{{ $post->published_at?->format('F j, Y') ?? $post->created_at->format('F j, Y') }}</span></div>

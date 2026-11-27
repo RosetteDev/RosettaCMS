@@ -38,50 +38,57 @@ trait ThemeHelper
     /**
      * Get responsive image HTML.
      */
-    protected function responsiveImage(string $path, array $sizes = [1920, 1200, 800, 400]): string
+    protected function responsiveImage(string $path, array $sizes = [1920, 1200, 800, 400], string $alt = ''): string
     {
+        $fallback = '<img src="' . $this->themeUrl($path) . '" alt="' . htmlspecialchars($alt, ENT_QUOTES) . '">';
+
         if (!class_exists(Image::class)) {
-            return '<img src="' . $this->themeUrl($path) . '" alt="">';
+            return $fallback;
         }
 
         try {
-            $originalPath = storage_path('app/public/' . ltrim($path, '/'));
-            
+            $relative = ltrim($path, '/');
+            $originalPath = storage_path('app/public/' . $relative);
+
             if (!file_exists($originalPath)) {
-                return '<img src="' . $this->themeUrl($path) . '" alt="">';
+                return $fallback;
             }
 
             $info = pathinfo($originalPath);
-            $webpPath = $info['dirname'] . '/' . $info['filename'] . '.webp';
+            $size = @getimagesize($originalPath);
+            if (!$size) {
+                return $fallback;
+            }
+            $originalWidth = $size[0];
+            $originalHeight = $size[1];
 
-            $sources = [];
-            foreach ($sizes as $size) {
-                $resizedPath = $info['dirname'] . '/' . $info['filename'] . '-' . $size . 'w.' . $info['extension'];
-                
-                if (file_exists($resizedPath)) {
-                    $sources[] = [
-                        'path' => $resizedPath,
-                        'width' => $size,
-                    ];
+            $srcset = [];
+
+            foreach ($sizes as $targetWidth) {
+                if ($targetWidth >= $originalWidth) {
+                    continue;
                 }
+                $resizedPath = $info['dirname'] . '/' . $info['filename'] . '-' . $targetWidth . 'w.' . $info['extension'];
+                if (!file_exists($resizedPath)) {
+                    continue;
+                }
+                $resizedRelative = str_replace(storage_path('app/public') . '/', '', $resizedPath);
+                $srcset[] = $this->themeUrl('storage/' . $resizedRelative) . ' ' . $targetWidth . 'w';
             }
 
-            $originalWidth = getimagesize($originalPath)[0] ?? 1920;
-            $sources[] = [
-                'path' => $originalPath,
-                'width' => $originalWidth,
-            ];
+            // Always include the original as the largest source.
+            $srcset[] = $this->themeUrl($path) . ' ' . $originalWidth . 'w';
 
-            $urls = array_map(function ($source) {
-                return $this->themeUrl('storage/' . basename($source['path']) . ' ' . $source['width'] . 'w');
-            }, $sources);
+            $altAttr = htmlspecialchars($alt, ENT_QUOTES);
 
-            return '<img src="' . $this->themeUrl($path) . '" 
-                    srcset="' . implode(', ', $urls) . '"
-                    sizes="(max-width: 1200px) 100vw, 1200px"
-                    alt="">';
+            return '<img src="' . $this->themeUrl($path) . '" '
+                . 'srcset="' . implode(', ', $srcset) . '" '
+                . 'sizes="(max-width: 1200px) 100vw, 1200px" '
+                . 'width="' . $originalWidth . '" height="' . $originalHeight . '" '
+                . 'loading="lazy" decoding="async" '
+                . 'alt="' . $altAttr . '">';
         } catch (\Exception $e) {
-            return '<img src="' . $this->themeUrl($path) . '" alt="">';
+            return $fallback;
         }
     }
 

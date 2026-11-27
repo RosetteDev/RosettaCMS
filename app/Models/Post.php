@@ -305,7 +305,13 @@ class Post extends Model
             return $image;
         }
 
-        return asset('storage/' . ltrim($image, '/'));
+        $path = ltrim($image, '/');
+
+        if (\App\Facades\CDN::isCDNEnabled()) {
+            return \App\Facades\CDN::cdnUrl('storage/' . $path);
+        }
+
+        return asset('storage/' . $path);
     }
 
     /**

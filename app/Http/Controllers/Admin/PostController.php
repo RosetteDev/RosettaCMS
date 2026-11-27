@@ -325,6 +325,8 @@ class PostController extends Controller
 
         $this->saveTranslations($request, $post, $type);
 
+        \App\Services\ContentCache::bump();
+
         return $post;
     }
 

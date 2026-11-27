@@ -26,7 +26,7 @@
                     @foreach($posts as $post)
                         <article class="post-item card">
                             @if($post->featured_image_url)
-                                <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="card-img">
+                                <img loading="lazy" decoding="async" src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="card-img">
                             @endif
                             <div class="card-content">
                                 <div class="post-meta">

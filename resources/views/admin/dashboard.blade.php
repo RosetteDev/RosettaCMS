@@ -178,6 +178,31 @@
         @endforeach
     </div>
 
+    {{-- Query profiler --}}
+    <div class="card border-0 shadow-sm mb-4" id="queryProfilerCard">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Query Profiler</h2>
+            <span class="badge bg-secondary">{{ $queryCount }} queries · {{ number_format($totalQueryTime, 1) }} ms total</span>
+        </div>
+        <div class="card-body">
+            @if(count($slowQueries) > 0)
+                <div class="list-group list-group-flush">
+                    @foreach($slowQueries as $q)
+                        <div class="list-group-item bg-transparent d-flex justify-content-between align-items-start gap-3">
+                            <code class="text-truncate flex-grow-1" style="max-width: 70%;" title="{{ $q['sql'] }}">{{ $q['sql'] }}</code>
+                            <span class="badge {{ $q['time_ms'] > 50 ? 'bg-danger' : ($q['time_ms'] > 10 ? 'bg-warning text-dark' : 'bg-success') }}">{{ $q['time_ms'] }} ms</span>
+                        </div>
+                    @endforeach
+                </div>
+                @if($queryCount > 5)
+                    <small class="text-muted d-block mt-2">Showing the {{ count($slowQueries) }} slowest of {{ $queryCount }} queries on this page.</small>
+                @endif
+            @else
+                <p class="text-muted mb-0">No database queries recorded.</p>
+            @endif
+        </div>
+    </div>
+
     @php
         $layoutIndex = array_flip($layout);
     @endphp

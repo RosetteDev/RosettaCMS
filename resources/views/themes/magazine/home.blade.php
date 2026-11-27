@@ -32,7 +32,7 @@
             <div class="mag-feature">
                 <a href="{{ url('/posts/' . $featured->slug) }}">
                     @if($featured->featured_image_url)
-                        <img src="{{ $featured->featured_image_url }}" alt="{{ $featured->title }}">
+                        <img loading="lazy" decoding="async" src="{{ $featured->featured_image_url }}" alt="{{ $featured->title }}">
                     @endif
                 </a>
                 <div>
