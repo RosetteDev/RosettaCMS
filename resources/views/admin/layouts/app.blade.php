@@ -761,7 +761,8 @@
                     <a href="{{ url('/admin/reusable-blocks') }}" class="side-sub {{ request()->is('admin/reusable-blocks*') ? 'active' : '' }}"><i class="fas fa-puzzle-piece"></i>Reusable Blocks</a>
                     <a href="{{ url('/admin/media') }}" class="side-sub {{ request()->is('admin/media*') ? 'active' : '' }}"><i class="fas fa-images"></i>Media</a>
                     <a href="{{ url('/admin/menus') }}" class="side-sub {{ request()->is('admin/menus*') ? 'active' : '' }}"><i class="fas fa-list"></i>Menus</a>
-                    <a href="{{ url('/admin/forms') }}" class="side-sub {{ request()->is('admin/forms*') ? 'active' : '' }}"><i class="fas fa-clipboard-list"></i>Forms</a>
+                    <a href="{{ url('/admin/forms') }}" class="side-sub {{ request()->is('admin/forms*') && !request()->is('admin/forms-builder*') ? 'active' : '' }}"><i class="fas fa-clipboard-list"></i>Forms</a>
+                    <a href="{{ url('/admin/forms-builder') }}" class="side-sub {{ request()->is('admin/forms-builder*') ? 'active' : '' }}"><i class="fas fa-file-signature"></i>Form Builder</a>
                     <a href="{{ url('/admin/bookings') }}" class="side-sub {{ request()->is('admin/bookings*') ? 'active' : '' }}"><i class="fas fa-calendar-check"></i>Bookings</a>
                     @php($chatUnread = \App\Models\ChatMessage::where('sender', 'visitor')->whereNull('read_at')->count())
                     <a href="{{ url('/admin/chat') }}" class="side-sub {{ request()->is('admin/chat*') ? 'active' : '' }}"><i class="fas fa-comments"></i>Chat @if($chatUnread > 0) <span style="display: inline-block; min-width: 20px; padding: 0 6px; margin-left: auto; border-radius: 999px; background-color: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; text-align: center;">{{ $chatUnread > 99 ? '99+' : $chatUnread }}</span>@endif</a>

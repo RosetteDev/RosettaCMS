@@ -37,6 +37,11 @@ return [
             'enabled' => true,
             'priority' => 300,
         ],
+
+        'Forms' => [
+            'enabled' => true,
+            'priority' => 250,
+        ],
     ],
 
     // Plugin storage

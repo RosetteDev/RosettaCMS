@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FrontendController;
+use App\Http\Controllers\Public\FormController as PublicFormController;
+use App\Http\Controllers\Admin\FormController as AdminFormController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\ActivityLogController;
@@ -79,6 +81,11 @@ Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
 Route::post('/contact', [FrontendController::class, 'submitContact'])
     ->middleware('throttle:5,1')
     ->name('contact.submit');
+Route::get('/forms/{slug}', [PublicFormController::class, 'show'])->name('form.show');
+Route::post('/forms/{slug}', [PublicFormController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('form.submit');
+
 Route::post('/chat/messages', [FrontendController::class, 'storeChatMessage'])
     ->middleware('throttle:10,1')
     ->name('chat.store');
@@ -358,6 +365,21 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
         Route::get('/{submission}', [ContactSubmissionController::class, 'show'])->whereNumber('submission')->name('show');
         Route::post('/{submission}/status', [ContactSubmissionController::class, 'updateStatus'])->whereNumber('submission')->name('status');
         Route::delete('/{submission}', [ContactSubmissionController::class, 'destroy'])->whereNumber('submission')->name('destroy');
+    });
+
+    // Forms builder (plugin) — separate from the contact-submission inbox.
+    Route::prefix('admin/forms-builder')->name('admin.forms-builder.')->group(function () {
+        Route::get('/', [AdminFormController::class, 'index'])->name('index');
+        Route::get('/create', [AdminFormController::class, 'create'])->name('create');
+        Route::post('/', [AdminFormController::class, 'store'])->name('store');
+        Route::get('/{form}/edit', [AdminFormController::class, 'edit'])->whereNumber('form')->name('edit');
+        Route::put('/{form}', [AdminFormController::class, 'update'])->whereNumber('form')->name('update');
+        Route::delete('/{form}', [AdminFormController::class, 'destroy'])->whereNumber('form')->name('destroy');
+
+        Route::get('/{form}/submissions', [AdminFormController::class, 'submissions'])->whereNumber('form')->name('submissions.index');
+        Route::get('/{form}/submissions/{submission}', [AdminFormController::class, 'submission'])->whereNumber('form')->whereNumber('submission')->name('submissions.show');
+        Route::post('/{form}/submissions/{submission}/status', [AdminFormController::class, 'updateSubmissionStatus'])->whereNumber('form')->whereNumber('submission')->name('submissions.status');
+        Route::delete('/{form}/submissions/{submission}', [AdminFormController::class, 'destroySubmission'])->whereNumber('form')->whereNumber('submission')->name('submissions.destroy');
     });
 
     // Bookings inbox - Contact submissions style
