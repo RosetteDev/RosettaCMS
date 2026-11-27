@@ -19,7 +19,11 @@
         "background_color": "#ffffff",
         "text_color": "#1f2937",
         "font_family": "system-ui, sans-serif",
-        "container_width": "1200px"
+        "container_width": "1200px",
+        "body_font_size": "16px",
+        "line_height": "1.6",
+        "block_gap": "2rem",
+        "section_padding": "3rem"
     },
     "assets": {
         "css": ["css/style.css"],

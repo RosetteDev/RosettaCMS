@@ -42,6 +42,12 @@ class SiteSetting extends Model
         'border_color',
         'font_family',
         'container_width',
+        // Typography tokens
+        'body_font_size',
+        'line_height',
+        // Spacing tokens
+        'block_gap',
+        'section_padding',
         // Permalinks
         'permalink_structure',
         'custom_permalink',
@@ -114,6 +120,10 @@ class SiteSetting extends Model
             $setting->text_color = '#1f2937';
             $setting->bg_color = '#ffffff';
             $setting->border_color = '#e5e7eb';
+            $setting->body_font_size = '16px';
+            $setting->line_height = '1.6';
+            $setting->block_gap = '2rem';
+            $setting->section_padding = '3rem';
         }
 
         return $setting;

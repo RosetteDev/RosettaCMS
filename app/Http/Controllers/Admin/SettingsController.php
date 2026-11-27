@@ -42,6 +42,10 @@ class SettingsController extends Controller
             'theme' => 'nullable|string|max:255',
             'font_family' => 'nullable|string|max:255',
             'container_width' => 'nullable|string|max:20',
+            'body_font_size' => 'nullable|string|max:20',
+            'line_height' => 'nullable|string|max:10',
+            'block_gap' => 'nullable|string|max:20',
+            'section_padding' => 'nullable|string|max:20',
 
             // Permalinks
             'permalink_structure' => 'nullable|in:post_name,date_and_name,numeric,custom',
@@ -124,7 +128,11 @@ class SettingsController extends Controller
             'bg_color' => $validated['bg_color'] ?? '#ffffff',
             'border_color' => $validated['border_color'] ?? '#e5e7eb',
             'font_family' => $validated['font_family'] ?? 'system-ui, sans-serif',
-            'container_width' => $validated['container_width'] ?? '1200px',
+            'container_width' => $validated['container_width'] ?? ($settings->container_width ?? '1200px'),
+            'body_font_size' => $validated['body_font_size'] ?? ($settings->body_font_size ?? '16px'),
+            'line_height' => $validated['line_height'] ?? ($settings->line_height ?? '1.6'),
+            'block_gap' => $validated['block_gap'] ?? ($settings->block_gap ?? '2rem'),
+            'section_padding' => $validated['section_padding'] ?? ($settings->section_padding ?? '3rem'),
         ]);
         $site->save();
 

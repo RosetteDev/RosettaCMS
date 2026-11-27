@@ -10,6 +10,10 @@
         'border_color' => '#e5e7eb',
         'font_family' => "'Segoe UI', system-ui, -apple-system, sans-serif",
         'container_width' => '1200px',
+        'body_font_size' => '16px',
+        'line_height' => '1.6',
+        'block_gap' => '2rem',
+        'section_padding' => '3rem',
     ], array_filter($theme_options, fn ($value) => $value !== null && $value !== ''));
 @endphp
 @php
@@ -46,6 +50,10 @@
             --border-color: {{ $palette['border_color'] }};
             --container-width: {{ $palette['container_width'] }};
             --font-family: {!! $palette['font_family'] !!};
+            --body-font-size: {{ $palette['body_font_size'] ?? '16px' }};
+            --line-height: {{ $palette['line_height'] ?? '1.6' }};
+            --block-gap: {{ $palette['block_gap'] ?? '2rem' }};
+            --section-padding: {{ $palette['section_padding'] ?? '3rem' }};
         }
         
         * {
@@ -56,9 +64,10 @@
         
         body {
             font-family: var(--font-family);
+            font-size: var(--body-font-size);
             background-color: var(--bg-color);
             color: var(--text-color);
-            line-height: 1.6;
+            line-height: var(--line-height);
         }
         
         /* Container */
@@ -343,6 +352,8 @@
             background: var(--primary-color);
             color: #fff;
         }
+        .block { margin-bottom: var(--block-gap); }
+        .section, .section-padding { padding-top: var(--section-padding); padding-bottom: var(--section-padding); }
         .section-title { text-align: center; margin-bottom: 2rem; }
         .section-title h2 { font-size: 2rem; margin-bottom: .5rem; }
         .section-title p { color: var(--secondary-color); }

@@ -45,7 +45,6 @@
                 <div style="background-color: var(--light-color); border-radius: 8px; padding: 2rem;">
                     <form action="{{ route('admin.settings.update') }}" method="POST">
                         @csrf
-                        @method('PUT')
 
                         <div id="site-info">
                             <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 1.5rem;">Site Information</h2>
@@ -270,6 +269,60 @@
                                        value="{{ old('container_width', $settings->container_width ?? '1200px') }}" 
                                        placeholder="1200px">
                                 <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Maximum width for your site's content container.</p>
+                            </div>
+
+                            <!-- Typography tokens -->
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="body_font_size">
+                                    Body Font Size
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="body_font_size" 
+                                       type="text" 
+                                       name="body_font_size" 
+                                       value="{{ old('body_font_size', $settings->body_font_size ?? '16px') }}" 
+                                       placeholder="16px">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Base font size for body text (e.g. 16px, 1rem).</p>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="line_height">
+                                    Line Height
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="line_height" 
+                                       type="text" 
+                                       name="line_height" 
+                                       value="{{ old('line_height', $settings->line_height ?? '1.6') }}" 
+                                       placeholder="1.6">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Body line height as a unitless multiplier (e.g. 1.6).</p>
+                            </div>
+
+                            <!-- Spacing tokens -->
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="block_gap">
+                                    Block Gap
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="block_gap" 
+                                       type="text" 
+                                       name="block_gap" 
+                                       value="{{ old('block_gap', $settings->block_gap ?? '2rem') }}" 
+                                       placeholder="2rem">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Vertical space between blocks (e.g. 2rem, 32px).</p>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color);" for="section_padding">
+                                    Section Padding
+                                </label>
+                                <input style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;" 
+                                       id="section_padding" 
+                                       type="text" 
+                                       name="section_padding" 
+                                       value="{{ old('section_padding', $settings->section_padding ?? '3rem') }}" 
+                                       placeholder="3rem">
+                                <p style="font-size: 0.875rem; color: var(--text-color); margin-top: 0.5rem;">Vertical padding for sections (e.g. 3rem).</p>
                             </div>
                         </div>
 
