@@ -216,12 +216,22 @@ The `languages` and `language_content` tables are now wired up.
       See `docs/MIGRATION_AND_STAGING.md`.
 
 ### 8. Performance and scale
-- Full-page caching with smart invalidation (object cache exists; extend)
-- Image pipeline: automatic resizing, WebP/AVIF conversion, lazy loading,
-  responsive srcsets (ImageOptimizer exists — finish it)
-- CDN integration with edge caching (CDNHelper exists — finish it)
-- HTTP caching headers, gzip/brotli, minified assets
-- Database query profiling in the dashboard (N+1 detection)
+- [x] Full-page caching with smart invalidation — `FullPageCache` middleware
+      (content-only public GET routes, per-visitor session cookies stripped
+      from cached copies); invalidated via `ContentCache::bump()` on content
+      save, settings update and menu changes.
+- [x] Image pipeline: automatic resizing, WebP conversion, lazy loading,
+      responsive srcsets — `ImageOptimizer` (WebP, 1920/1200/800/400 srcsets)
+      + `ThemeHelper::responsiveImage()`; `<img loading="lazy">` across themes.
+      AVIF conversion is NOT done yet.
+- [x] CDN integration with edge caching — `CDNHelper` registered in the
+      provider; Media/Post URLs are CDN-aware; driven by `CDN_ENABLED` and
+      `CDN_URL` env vars.
+- [x] HTTP caching headers — `HttpCacheHeaders` middleware (Cache-Control,
+      ETag, Vary). Assets are minified by the Vite production build.
+      gzip/brotli is handled at the server/CDN level, not in-app.
+- [x] Database query profiling in the dashboard (N+1 detection) —
+      `QueryProfiler` middleware + dashboard card.
 
 ## Medium-impact enhancements
 
