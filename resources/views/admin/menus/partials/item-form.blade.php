@@ -99,3 +99,29 @@
         {{ $isEdit ? 'Update item' : 'Add item' }}
     </button>
 </form>
+
+<script>
+(function () {
+    var form = document.querySelector('[data-menu-item-form]');
+    if (!form) return;
+
+    var typeSelect = form.querySelector('[data-menu-type]');
+    var contentPicker = form.querySelector('[data-content-picker]');
+    var urlPicker = form.querySelector('[data-url-picker]');
+    if (!typeSelect || !contentPicker || !urlPicker) return;
+
+    var urlInput = urlPicker.querySelector('input[name="url"]');
+
+    function sync() {
+        var isCustom = typeSelect.value === 'custom';
+        contentPicker.classList.toggle('d-none', isCustom);
+        urlPicker.classList.toggle('d-none', !isCustom);
+        if (urlInput) {
+            urlInput.required = isCustom;
+        }
+    }
+
+    typeSelect.addEventListener('change', sync);
+    sync();
+})();
+</script>
