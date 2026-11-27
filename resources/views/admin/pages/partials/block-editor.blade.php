@@ -1,7 +1,8 @@
 @php
     // Top-level blocks only (nested children of container blocks render inside
-    // their parent). The editor operates on the flat set.
-    $blocks = $post->blocks->whereNull('parent_block_id')->values();
+    // their parent). The editor operates on the flat set, with nested children
+    // carried on the container block.
+    $blocks = $post->blocks()->with('childBlocks')->whereNull('parent_block_id')->get()->values();
     $blockTypes = \App\Models\Block::getTypeOptions();
     $blocksPayload = $blocks->map(fn($b) => [
         'id' => $b->id,
@@ -9,6 +10,13 @@
         'content' => $b->content ?? [],
         'settings' => $b->settings ?? [],
         'order' => $b->order,
+        'children' => $b->childBlocks->map(fn($c) => [
+            'id' => $c->id,
+            'type' => $c->type,
+            'content' => $c->content ?? [],
+            'settings' => $c->settings ?? [],
+            'order' => $c->order,
+        ])->values()->all(),
     ])->values();
     $reusableBlocks = \App\Models\ReusableBlock::with('site')->latest()->get();
     $reusableBlocksPayload = $reusableBlocks->map(fn($r) => [
@@ -261,6 +269,73 @@
                                 </template>
                             </div>
                         </div>
+                        <template x-if="block.type === 'columns'">
+                            <div class="nested-zone"
+                                 @dragover.prevent.stop="onNestedDragOver($event, block.tempId)"
+                                 @dragleave.stop="onNestedDragLeave()"
+                                 @drop.prevent.stop="onNestedDrop($event, block.tempId)"
+                                 :class="{ 'nested-zone-active': nestedZoneActive === block.tempId }">
+                                <div class="nested-zone-header">
+                                    <span class="small text-uppercase text-muted" style="font-size: 0.65rem; letter-spacing: 0.06em;">Nested blocks</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" @click="openAddModal(block.tempId)" title="Add a block inside this container">
+                                        <i class="fas fa-plus me-1"></i> Add
+                                    </button>
+                                </div>
+                                <template x-for="child in block.children" :key="child.tempId">
+                                    <div class="nested-child-item"
+                                         draggable="true"
+                                         :data-temp-id="child.tempId"
+                                         @dragstart.stop="onChildDragStart($event, block.tempId)"
+                                         @dragend="onDragEnd()"
+                                         @click="selectChild(block.tempId, child.tempId)"
+                                         :class="{ 'nested-child-selected': selectedChildId === child.tempId }">
+                                        <i class="fas fa-grip-vertical text-muted me-2"></i>
+                                        <span class="nested-child-label" x-text="getBlockTypeLabel(child.type)"></span>
+                                        <span class="nested-child-summary" x-text="childSummary(child)"></span>
+                                        <div class="nested-child-controls" @click.stop>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" @click="moveChild(block.tempId, child.tempId, 'up')" title="Move up"><i class="fas fa-chevron-up"></i></button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" @click="moveChild(block.tempId, child.tempId, 'down')" title="Move down"><i class="fas fa-chevron-down"></i></button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" @click="deleteChild(block.tempId, child.tempId)" title="Delete"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="block.children.length === 0" class="nested-zone-empty small text-muted py-2">
+                                    <i class="fas fa-arrow-down me-1"></i> Drag blocks here to nest them inside the columns container.
+                                </div>
+                                <template x-for="child in block.children" :key="'edit-' + child.tempId">
+                                    <div x-show="selectedChildId === child.tempId" x-transition class="nested-child-edit" @click.stop>
+                                        <template x-if="child.type === 'heading'">
+                                            <div class="d-flex gap-2">
+                                                <select class="form-select form-select-sm" style="width:auto" @focus="onFieldFocus()" x-model="child.content.level" @change="onFieldChange()">
+                                                    <option value="h1">H1</option>
+                                                    <option value="h2">H2</option>
+                                                    <option value="h3">H3</option>
+                                                    <option value="h4">H4</option>
+                                                    <option value="h5">H5</option>
+                                                    <option value="h6">H6</option>
+                                                </select>
+                                                <input type="text" class="form-control form-control-sm" @focus="onFieldFocus()" x-model="child.content.text" @change="onFieldChange()" placeholder="Heading text...">
+                                            </div>
+                                        </template>
+                                        <template x-if="child.type === 'button'">
+                                            <div class="d-grid gap-2">
+                                                <input type="text" class="form-control form-control-sm" @focus="onFieldFocus()" x-model="child.content.text" @change="onFieldChange()" placeholder="Button text...">
+                                                <input type="text" class="form-control form-control-sm" @focus="onFieldFocus()" x-model="child.content.url" @change="onFieldChange()" placeholder="Link URL...">
+                                            </div>
+                                        </template>
+                                        <template x-if="child.type === 'image'">
+                                            <input type="text" class="form-control form-control-sm" @focus="onFieldFocus()" x-model="child.content.image" @change="onFieldChange()" placeholder="Image URL or media path">
+                                        </template>
+                                        <template x-if="!['heading','button','image'].includes(child.type)">
+                                            <textarea class="form-control form-control-sm" rows="3"
+                                                      @focus="onFieldFocus()" x-model="child.content.text" @change="onFieldChange()"
+                                                      placeholder="Content..."></textarea>
+                                        </template>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" @click="selectChild(block.tempId, null)">Done</button>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
                         <div class="card-footer bg-light py-2 small text-muted d-flex justify-content-between">
                             <span x-text="'Order: ' + block.order"></span>
                             <div class="btn-group btn-group-sm">
@@ -293,7 +368,7 @@
                                 <template x-for="[value, label] in Object.entries(blockTypes)" :key="value">
                                     <div class="col-6 col-md-4">
                                         <button type="button" class="btn btn-outline-secondary w-100 text-start p-3"
-                                                @click="addBlock(value)" data-bs-dismiss="modal">
+                                                @click="addBlock(value, _addTargetParent)" data-bs-dismiss="modal">
                                             <i class="fas fa-plus-circle text-primary me-2"></i>
                                             <span x-text="label"></span>
                                         </button>
@@ -307,7 +382,7 @@
                                         <template x-for="pattern in patterns" :key="pattern.id">
                                             <div class="col-6 col-md-4">
                                                 <button type="button" class="btn btn-outline-secondary w-100 text-start p-3"
-                                                        @click="insertPattern(pattern)" data-bs-dismiss="modal">
+                                                        @click="insertPattern(pattern, _addTargetParent)" data-bs-dismiss="modal">
                                                     <i :class="'fas ' + pattern.icon + ' me-2 text-primary'"></i>
                                                     <span x-text="pattern.name"></span>
                                                     <div class="text-muted small fw-normal" x-text="pattern.blocks.length + ' block(s)'"></div>
@@ -324,7 +399,7 @@
                                         <template x-for="rb in reusableBlocks" :key="rb.id">
                                             <div class="col-6 col-md-4">
                                                 <button type="button" class="btn btn-outline-primary w-100 text-start p-3"
-                                                        @click="insertReusableBlock(rb)" data-bs-dismiss="modal">
+                                                        @click="insertReusableBlock(rb, _addTargetParent)" data-bs-dismiss="modal">
                                                     <i class="fas fa-clone me-2"></i>
                                                     <span x-text="rb.name"></span>
                                                     <div class="text-muted small fw-normal" x-text="rb.blocks.length + ' block(s)'"></div>
@@ -450,6 +525,44 @@
         margin: 0.5rem 0;
         pointer-events: none;
     }
+    .nested-zone {
+        border: 1px dashed #dee2e6;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        margin-top: 0.75rem;
+        background: #fafbfc;
+        transition: border-color 0.15s, background 0.15s;
+    }
+    .nested-zone-active {
+        border-color: var(--primary-color, #3b82f6);
+        background: #eef4ff;
+    }
+    .nested-zone-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .nested-child-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        margin-bottom: 0.375rem;
+        background: #fff;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+    .nested-child-item:hover { border-color: #c3cbd4; }
+    .nested-child-selected { border-color: var(--primary-color, #3b82f6); box-shadow: 0 0 0 2px rgba(59,130,246,0.18); }
+    .nested-child-label { font-weight: 600; min-width: 5.5rem; }
+    .nested-child-summary { color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .nested-child-controls { display: flex; gap: 0.25rem; }
+    .nested-child-controls .btn { padding: 0.1rem 0.35rem; font-size: 0.65rem; }
+    .nested-zone-empty { border: 1px dashed #e2e5ea; border-radius: 0.375rem; }
+    .nested-child-edit { border-top: 1px dashed #e2e5ea; padding-top: 0.5rem; margin-top: 0.25rem; }
     .block-preview { padding: 1rem; }
     .block-preview img { max-width: 100%; height: auto; border-radius: 0.375rem; }
     .callout-primary { background: #0d6efd20; border-left: 4px solid #0d6efd; padding: 1rem; }
@@ -497,6 +610,10 @@ document.addEventListener('alpine:init', () => {
         reusableDescription: '',
         reusableSaving: false,
         reusableError: '',
+        selectedChildId: null,
+        nestedZoneActive: null,
+        _dragSource: null,
+        _addTargetParent: null,
 
         get canUndo() { return this.past.length > 0; },
         get canRedo() { return this.future.length > 0; },
@@ -519,7 +636,15 @@ document.addEventListener('alpine:init', () => {
                 type: block.type,
                 content: JSON.parse(JSON.stringify(block.content ?? {})),
                 settings: JSON.parse(JSON.stringify(block.settings ?? {})),
-                order: block.order || index + 1
+                order: block.order || index + 1,
+                children: (block.children || []).map((child, cIndex) => ({
+                    id: child.id ?? null,
+                    tempId: 'real-' + child.id,
+                    type: child.type,
+                    content: JSON.parse(JSON.stringify(child.content ?? {})),
+                    settings: JSON.parse(JSON.stringify(child.settings ?? {})),
+                    order: child.order || cIndex + 1
+                }))
             }));
             this.tempCounter = 0;
         },
@@ -566,10 +691,16 @@ document.addEventListener('alpine:init', () => {
             this.blocks = snapshot.blocks.map(b => ({
                 ...b,
                 content: JSON.parse(JSON.stringify(b.content ?? {})),
-                settings: JSON.parse(JSON.stringify(b.settings ?? {}))
+                settings: JSON.parse(JSON.stringify(b.settings ?? {})),
+                children: (b.children ?? []).map(c => ({
+                    ...c,
+                    content: JSON.parse(JSON.stringify(c.content ?? {})),
+                    settings: JSON.parse(JSON.stringify(c.settings ?? {}))
+                }))
             }));
             this.deletedBlocks = snapshot.deletedBlocks.map(b => ({ ...b }));
             this.selectedBlockId = null;
+            this.selectedChildId = null;
         },
 
         undo() {
@@ -617,7 +748,11 @@ document.addEventListener('alpine:init', () => {
         },
 
         // ----- block operations -----
-        addBlock(type) {
+        addBlock(type, parentTempId = null) {
+            if (parentTempId && type === 'columns') {
+                alert('Columns cannot be nested inside another container.');
+                return;
+            }
             this.pushHistory();
             const defaults = this.defaultContentFor(type);
             const newBlock = {
@@ -626,12 +761,88 @@ document.addEventListener('alpine:init', () => {
                 type: type,
                 content: defaults,
                 settings: {},
-                order: this.blocks.length + 1
+                order: 0,
+                children: []
             };
-            this.blocks.push(newBlock);
-            this.selectedBlockId = newBlock.tempId;
+
+            if (parentTempId) {
+                const container = this.blocks.find(b => b.tempId === parentTempId);
+                if (!container) return;
+                newBlock.order = (container.children?.length ?? 0) + 1;
+                container.children = [...(container.children ?? []), newBlock];
+                this.selectedChildId = newBlock.tempId;
+                this.selectedBlockId = container.tempId;
+            } else {
+                newBlock.order = this.blocks.length + 1;
+                this.blocks.push(newBlock);
+                this.selectedBlockId = newBlock.tempId;
+                this.selectedChildId = null;
+            }
+
+            this._addTargetParent = null;
             this.savedMessage = '';
             this.saveError = '';
+        },
+
+        // ----- nested child operations -----
+        findContainerWithChild(childTempId) {
+            return this.blocks.find(b => (b.children ?? []).some(c => c.tempId === childTempId));
+        },
+
+        selectChild(containerTempId, childTempId) {
+            this.selectedChildId = this.selectedChildId === childTempId ? null : childTempId;
+            if (childTempId) this.selectedBlockId = containerTempId;
+        },
+
+        childSummary(child) {
+            const content = child.content ?? {};
+            switch (child.type) {
+                case 'heading': return (content.text ?? '').substring(0, 80);
+                case 'button': return (content.text ?? '').substring(0, 80);
+                case 'image': return (content.image ?? '').substring(0, 60);
+                case 'gallery': return Array.isArray(content.imagesText) ? content.imagesText.length + ' images' : (content.imagesText ?? '').split('\n').filter(s => s.trim()).length + ' images';
+                case 'divider': return '— divider —';
+                case 'spacer': return (content.size ?? 40) + 'px spacer';
+                case 'columns': return (child.children?.length ?? 0) + ' children';
+                default: return (content.text ?? content.html ?? '').substring(0, 80);
+            }
+        },
+
+        moveChild(containerTempId, childTempId, direction) {
+            const container = this.blocks.find(b => b.tempId === containerTempId);
+            if (!container || !container.children) return;
+            const index = container.children.findIndex(c => c.tempId === childTempId);
+            if (index === -1) return;
+            const target = direction === 'up' ? index - 1 : index + 1;
+            if (target < 0 || target >= container.children.length) return;
+
+            this.pushHistory();
+            [container.children[index], container.children[target]] = [container.children[target], container.children[index]];
+            container.children.forEach((c, i) => { c.order = i + 1; });
+        },
+
+        deleteChild(containerTempId, childTempId) {
+            const container = this.blocks.find(b => b.tempId === containerTempId);
+            if (!container || !container.children) return;
+            const index = container.children.findIndex(c => c.tempId === childTempId);
+            if (index === -1) return;
+
+            if (!confirm('Delete this nested block?')) return;
+
+            this.pushHistory();
+            const [child] = container.children.splice(index, 1);
+            if (child.id) {
+                // Persisted child — track for deletion on save.
+                this.deletedBlocks.push({ ...child, parentTempId: containerTempId });
+            }
+            container.children.forEach((c, i) => { c.order = i + 1; });
+            if (this.selectedChildId === childTempId) this.selectedChildId = null;
+            this.savedMessage = '';
+            this.saveError = '';
+        },
+
+        updateChildOrders(container) {
+            (container.children ?? []).forEach((c, i) => { c.order = i + 1; });
         },
 
         defaultContentFor(type) {
@@ -663,8 +874,15 @@ document.addEventListener('alpine:init', () => {
                 // Persisted block — track for deletion on save.
                 this.deletedBlocks.push({ ...block });
             }
-            // Deleting a block removes any child blocks that belong to it in
-            // the database; this is handled server-side by the destroy call.
+            // Children that were dragged into this block (or already persisted
+            // inside it) must be tracked too: the parent delete cascades for
+            // persisted blocks, but children dragged into an unsaved parent
+            // would otherwise linger in the database unseen.
+            for (const child of (block.children ?? [])) {
+                if (child.id) {
+                    this.deletedBlocks.push({ ...child, parentTempId: block.tempId });
+                }
+            }
 
             this.blocks = this.blocks.filter(b => b.tempId !== tempId);
             this.updateBlockOrders();
@@ -697,8 +915,17 @@ document.addEventListener('alpine:init', () => {
         // break the drag. The pre-drag snapshot is captured at dragstart.
         onDragStart(event) {
             this._dragSnapshot = JSON.stringify(this.snapshotState());
+            this._dragSource = { tempId: event.currentTarget.dataset.tempId || '', parentTempId: null };
             event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.setData('text/plain', event.currentTarget.dataset.tempId || '');
+            event.dataTransfer.setData('text/plain', this._dragSource.tempId);
+            event.currentTarget.classList.add('drag-source');
+        },
+
+        onChildDragStart(event, containerTempId) {
+            this._dragSnapshot = JSON.stringify(this.snapshotState());
+            this._dragSource = { tempId: event.currentTarget.dataset.tempId || '', parentTempId: containerTempId };
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', this._dragSource.tempId);
             event.currentTarget.classList.add('drag-source');
         },
 
@@ -731,10 +958,44 @@ document.addEventListener('alpine:init', () => {
             event.preventDefault();
             this.hideIndicator();
 
-            const tempId = event.dataTransfer.getData('text/plain');
+            const source = this._dragSource;
             this.cleanupDragClasses();
-            if (!tempId) return;
+            this.nestedZoneActive = null;
+            if (!source || !source.tempId) return;
 
+            // A nested child dropped onto the top-level list → move it to the
+            // top level.
+            if (source.parentTempId) {
+                const container = this.blocks.find(b => b.tempId === source.parentTempId);
+                if (!container || !container.children) return;
+                const childIndex = container.children.findIndex(c => c.tempId === source.tempId);
+                if (childIndex === -1) return;
+
+                const [child] = container.children.splice(childIndex, 1);
+                this.updateChildOrders(container);
+
+                // Insert at the indicator position in the top-level list.
+                const containerEl = this.$refs.container;
+                const indicator = this.$refs.dropIndicator;
+                const draggedEl = containerEl ? containerEl.querySelector('.block-item.drag-source') : null;
+                const beforeCount = containerEl && indicator
+                    ? [...containerEl.children].filter(el => el.classList.contains('block-item') && el !== draggedEl && el.compareDocumentPosition(indicator) & Node.DOCUMENT_POSITION_FOLLOWING).length
+                    : this.blocks.length;
+
+                child.children = [];
+                child.order = 0;
+                const clamped = Math.max(0, Math.min(beforeCount, this.blocks.length));
+                this.blocks.splice(clamped, 0, child);
+                this.updateBlockOrders();
+                if (this.selectedChildId === source.tempId) this.selectedChildId = null;
+
+                this.recordDragHistory();
+                this.savedMessage = '';
+                this.saveError = '';
+                return;
+            }
+
+            const tempId = source.tempId;
             const draggedIndex = this.blocks.findIndex(b => b.tempId === tempId);
             if (draggedIndex === -1) return;
 
@@ -749,15 +1010,97 @@ document.addEventListener('alpine:init', () => {
             const clamped = Math.max(0, Math.min(beforeCount, this.blocks.length));
             this.blocks.splice(clamped, 0, dragged);
 
-            // Record the pre-drag state in history.
+            this.recordDragHistory();
+
+            this.updateBlockOrders();
+            this.savedMessage = '';
+            this.saveError = '';
+        },
+
+        recordDragHistory() {
             if (this._dragSnapshot) {
                 this.past.push(JSON.parse(this._dragSnapshot));
                 if (this.past.length > 50) this.past.shift();
                 this.future = [];
                 this._dragSnapshot = null;
             }
+        },
 
-            this.updateBlockOrders();
+        // ----- nested container drop -----
+        onNestedDragOver(event, containerTempId) {
+            event.preventDefault();
+            this.nestedZoneActive = containerTempId;
+        },
+
+        onNestedDragLeave() {
+            this.nestedZoneActive = null;
+        },
+
+        onNestedDrop(event, containerTempId) {
+            event.preventDefault();
+            const source = this._dragSource;
+            this.cleanupDragClasses();
+            this.nestedZoneActive = null;
+            if (!source || !source.tempId) return;
+
+            const container = this.blocks.find(b => b.tempId === containerTempId);
+            if (!container || container.type !== 'columns') return;
+
+            // Compute insertion index by child rows above the drop point.
+            const zone = event.currentTarget;
+            const rows = [...zone.querySelectorAll('.nested-child-item')];
+            let index = rows.length;
+            for (let i = 0; i < rows.length; i++) {
+                const rect = rows[i].getBoundingClientRect();
+                if (event.clientY < rect.top + rect.height / 2) {
+                    index = i;
+                    break;
+                }
+            }
+
+            // A container block with children cannot be nested inside another
+            // container (single-level nesting).
+            const draggedFromSource = source.parentTempId
+                ? this.blocks.find(b => b.tempId === source.parentTempId)?.children?.find(c => c.tempId === source.tempId)
+                : this.blocks.find(b => b.tempId === source.tempId);
+            if (draggedFromSource && (draggedFromSource.children ?? []).length > 0) {
+                alert('A container block with nested blocks cannot be nested inside another container.');
+                this.cleanupDragClasses();
+                this.nestedZoneActive = null;
+                this._dragSource = null;
+                this._dragSnapshot = null;
+                return;
+            }
+
+            // Remove the dragged block from wherever it currently lives.
+            let dragged;
+            if (source.parentTempId) {
+                const fromContainer = this.blocks.find(b => b.tempId === source.parentTempId);
+                if (!fromContainer || !fromContainer.children) return;
+                const fromIndex = fromContainer.children.findIndex(c => c.tempId === source.tempId);
+                if (fromIndex === -1) return;
+                [dragged] = fromContainer.children.splice(fromIndex, 1);
+                this.updateChildOrders(fromContainer);
+            } else {
+                const topIndex = this.blocks.findIndex(b => b.tempId === source.tempId);
+                if (topIndex === -1) return;
+                [dragged] = this.blocks.splice(topIndex, 1);
+                this.updateBlockOrders();
+            }
+
+            // Insert into the target container.
+            dragged.children = [];
+            dragged.order = index + 1;
+            container.children = [...(container.children ?? [])];
+            container.children.splice(Math.max(0, Math.min(index, container.children.length)), 0, dragged);
+            this.updateChildOrders(container);
+
+            this.recordDragHistory();
+
+            if (this.selectedBlockId === source.tempId) this.selectedBlockId = null;
+            if (this.selectedChildId === source.tempId) this.selectedChildId = null;
+            this.selectedChildId = source.tempId;
+            this.selectedBlockId = containerTempId;
             this.savedMessage = '';
             this.saveError = '';
         },
@@ -766,10 +1109,12 @@ document.addEventListener('alpine:init', () => {
             this.hideIndicator();
             this.cleanupDragClasses();
             this._dragSnapshot = null;
+            this._dragSource = null;
+            this.nestedZoneActive = null;
         },
 
         cleanupDragClasses() {
-            document.querySelectorAll('.block-item.drag-source').forEach(el => el.classList.remove('drag-source'));
+            document.querySelectorAll('.block-item.drag-source, .nested-child-item.drag-source').forEach(el => el.classList.remove('drag-source'));
         },
 
         hideIndicator() {
@@ -824,7 +1169,8 @@ document.addEventListener('alpine:init', () => {
                 }
                 case 'columns': {
                     const count = Math.max(1, Math.min(6, parseInt(content.columns, 10) || 2));
-                    return `<div class="text-muted small"><i class="fas fa-columns me-1"></i>Columns — ${count}</div>`;
+                    const nestedCount = (block.children ?? []).length;
+                    return `<div class="text-muted small"><i class="fas fa-columns me-1"></i>Columns — ${count}${nestedCount ? ` · ${nestedCount} nested` : ''}</div>`;
                 }
                 default:
                     return `<div class="text-muted"><i class="fas fa-cube me-1"></i>${this.esc(this.getBlockTypeLabel(block.type))}</div>`;
@@ -836,7 +1182,8 @@ document.addEventListener('alpine:init', () => {
         },
 
         // ----- modals & media picker -----
-        openAddModal() {
+        openAddModal(parentTempId = null) {
+            this._addTargetParent = parentTempId;
             new bootstrap.Modal(document.getElementById('blockTypeModal')).show();
         },
 
@@ -925,8 +1272,43 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        insertTemplate(templateBlocks) {
+        insertTemplate(templateBlocks, parentTempId = null) {
             this.pushHistory();
+
+            // Insert into a container if a parent target was given.
+            if (parentTempId) {
+                if (templateBlocks.some(b => b.type === 'columns')) {
+                    alert('Columns cannot be nested inside another container.');
+                    return;
+                }
+                const container = this.blocks.find(b => b.tempId === parentTempId);
+                if (!container) return;
+                const maxOrder = (container.children ?? []).reduce((max, c) => Math.max(max, c.order || 0), 0);
+                templateBlocks.forEach((templateBlock, index) => {
+                    const content = JSON.parse(JSON.stringify(templateBlock.content ?? {}));
+                    if (templateBlock.type === 'gallery' && Array.isArray(content.images)) {
+                        content.imagesText = content.images.join('\n');
+                        delete content.images;
+                    }
+                    container.children = [...(container.children ?? []), {
+                        id: null,
+                        tempId: 'temp-' + (++this.tempCounter),
+                        type: templateBlock.type,
+                        content,
+                        settings: JSON.parse(JSON.stringify(templateBlock.settings ?? {})),
+                        order: maxOrder + index + 1,
+                        children: []
+                    }];
+                });
+                this.updateChildOrders(container);
+                this.selectedChildId = container.children[container.children.length - 1]?.tempId ?? null;
+                this.selectedBlockId = container.tempId;
+                this.savedMessage = '';
+                this.saveError = '';
+                this._addTargetParent = null;
+                return;
+            }
+
             const maxOrder = this.blocks.reduce((max, b) => Math.max(max, b.order || 0), 0);
             templateBlocks.forEach((templateBlock, index) => {
                 const content = JSON.parse(JSON.stringify(templateBlock.content ?? {}));
@@ -941,19 +1323,23 @@ document.addEventListener('alpine:init', () => {
                     content,
                     settings: JSON.parse(JSON.stringify(templateBlock.settings ?? {})),
                     order: maxOrder + index + 1,
+                    children: []
                 });
             });
+            this.updateBlockOrders();
             this.selectedBlockId = this.blocks[this.blocks.length - 1].tempId;
+            this.selectedChildId = null;
             this.savedMessage = '';
             this.saveError = '';
+            this._addTargetParent = null;
         },
 
-        insertReusableBlock(rb) {
-            this.insertTemplate(rb.blocks);
+        insertReusableBlock(rb, parentTempId = null) {
+            this.insertTemplate(rb.blocks, parentTempId);
         },
 
-        insertPattern(pattern) {
-            this.insertTemplate(pattern.blocks);
+        insertPattern(pattern, parentTempId = null) {
+            this.insertTemplate(pattern.blocks, parentTempId);
         },
 
         // ----- live preview -----
@@ -965,7 +1351,16 @@ document.addEventListener('alpine:init', () => {
                     ? { images: (b.content.imagesText ?? '').split('\n').map(s => s.trim()).filter(Boolean) }
                     : { ...b.content },
                 settings: b.settings ?? {},
-                order: b.order
+                order: b.order,
+                children: (b.children ?? []).map(c => ({
+                    id: c.id ?? null,
+                    type: c.type,
+                    content: c.type === 'gallery'
+                        ? { images: (c.content.imagesText ?? '').split('\n').map(s => s.trim()).filter(Boolean) }
+                        : { ...c.content },
+                    settings: c.settings ?? {},
+                    order: c.order
+                }))
             }));
         },
 
@@ -1028,6 +1423,7 @@ document.addEventListener('alpine:init', () => {
 
             try {
                 const createdByTempId = {};
+                const createdChildByTempId = {};
 
                 // 1. Create new (unsaved) blocks.
                 for (const block of this.blocks.filter(b => !b.id)) {
@@ -1044,7 +1440,27 @@ document.addEventListener('alpine:init', () => {
                     createdByTempId[block.tempId] = data.block.id;
                 }
 
-                // 2. Update existing blocks.
+                // 2. Create unsaved children (after their parents exist).
+                for (const block of this.blocks) {
+                    const parentRealId = block.id ?? createdByTempId[block.tempId];
+                    if (!parentRealId) continue;
+                    for (const child of (block.children ?? [])) {
+                        if (child.id) continue;
+                        const payload = this.savePayloadFor(child);
+                        const res = await fetch(this.cfg.urls.store, {
+                            method: 'POST',
+                            headers: this.jsonHeaders(),
+                            body: JSON.stringify({ ...payload, parent_id: parentRealId })
+                        });
+                        const data = await res.json();
+                        if (!res.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to create child block');
+                        }
+                        createdChildByTempId[child.tempId] = data.block.id;
+                    }
+                }
+
+                // 3. Update existing top-level blocks.
                 for (const block of this.blocks.filter(b => b.id)) {
                     const res = await fetch(this.cfg.urls.update.replace('__ID__', block.id), {
                         method: 'PUT',
@@ -1057,19 +1473,42 @@ document.addEventListener('alpine:init', () => {
                     }
                 }
 
-                // 3. Delete blocks removed since load.
+                // 4. Update existing children (including any parent change).
+                for (const block of this.blocks) {
+                    const parentRealId = block.id ?? createdByTempId[block.tempId];
+                    if (!parentRealId) continue;
+                    for (const child of (block.children ?? [])) {
+                        if (!child.id) continue;
+                        const res = await fetch(this.cfg.urls.update.replace('__ID__', child.id), {
+                            method: 'PUT',
+                            headers: this.jsonHeaders(),
+                            body: JSON.stringify({ ...this.savePayloadFor(child), parent_id: parentRealId })
+                        });
+                        const data = await res.json();
+                        if (!res.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to update child block');
+                        }
+                    }
+                }
+
+                // 5. Delete blocks removed since load. A 404 means the block
+                // was already removed (e.g. cascaded with a parent delete) —
+                // treat it as success.
                 for (const block of this.deletedBlocks) {
+                    // Unsaved blocks never existed in the DB.
+                    if (!block.id) continue;
                     const res = await fetch(this.cfg.urls.destroy.replace('__ID__', block.id), {
                         method: 'DELETE',
                         headers: this.jsonHeaders()
                     });
                     const data = await res.json().catch(() => ({}));
+                    if (res.status === 404) continue;
                     if (!res.ok || (data.success === false)) {
                         throw new Error('Failed to delete a removed block');
                     }
                 }
 
-                // 4. Reorder (all real ids, in final order).
+                // 6. Reorder top-level blocks (all real ids, in final order).
                 const finalIds = this.blocks.map(b => b.id ?? createdByTempId[b.tempId]).filter(Boolean);
                 if (finalIds.length > 0) {
                     const res = await fetch(this.cfg.urls.reorder, {
@@ -1083,10 +1522,30 @@ document.addEventListener('alpine:init', () => {
                     }
                 }
 
-                // 5. Update local state with the real ids and clear history.
+                // 7. Reorder children of each container.
+                for (const block of this.blocks) {
+                    if (!block.children || block.children.length === 0) continue;
+                    const childIds = block.children.map(c => c.id ?? createdChildByTempId[c.tempId]).filter(Boolean);
+                    if (childIds.length === 0) continue;
+                    const res = await fetch(this.cfg.urls.reorder, {
+                        method: 'POST',
+                        headers: this.jsonHeaders(),
+                        body: JSON.stringify({ order: childIds })
+                    });
+                    const childReorderData = await res.json().catch(() => ({}));
+                    if (!res.ok || childReorderData.success === false) {
+                        throw new Error('Failed to save child block order');
+                    }
+                }
+
+                // 8. Update local state with the real ids and clear history.
                 this.blocks = this.blocks.map(b => ({
                     ...b,
-                    id: b.id ?? createdByTempId[b.tempId] ?? null
+                    id: b.id ?? createdByTempId[b.tempId] ?? null,
+                    children: (b.children ?? []).map(c => ({
+                        ...c,
+                        id: c.id ?? createdChildByTempId[c.tempId] ?? null
+                    }))
                 }));
                 this.deletedBlocks = [];
                 this.past = [];

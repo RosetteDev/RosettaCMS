@@ -106,9 +106,12 @@ class Block extends Model
 
             $renderer = new $rendererClass();
             $renderer->setAttributes($this->content ?? []);
-            // Only query child blocks for persisted models; unsaved (in-memory)
-            // blocks render standalone to avoid a null-id lazy query.
-            $children = $this->exists ? $this->childBlocks->all() : [];
+            // Use attached children when present (e.g. built by the preview
+            // endpoint); otherwise query the persisted children; unsaved
+            // (in-memory) blocks render standalone to avoid a null-id query.
+            $children = $this->relationLoaded('childBlocks')
+                ? $this->childBlocks->all()
+                : ($this->exists ? $this->childBlocks->all() : []);
             $renderer->setChildren($children, $depth);
 
             return $renderer->render();

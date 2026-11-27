@@ -161,9 +161,9 @@ class PreviewController extends Controller
                     $existing->content = array_merge($existing->content ?? [], $change['content'] ?? []);
                     $existing->settings = $change['settings'] ?? $existing->settings;
                     $existing->order = $change['order'] ?? $existing->order;
-                    $merged->push($existing);
+                    $block = $existing;
                 } else {
-                    $merged->push(new Block([
+                    $block = new Block([
                         'post_id' => $post->id,
                         'site_id' => $post->site_id ?? null,
                         'type' => $change['type'] ?? 'text',
@@ -171,8 +171,46 @@ class PreviewController extends Controller
                         'settings' => $change['settings'] ?? [],
                         'order' => $change['order'] ?? 0,
                         'parent_block_id' => $change['parent_block_id'] ?? null,
-                    ]));
+                    ]);
                 }
+
+                // Build nested children (in-memory blocks; never persisted).
+                if (!empty($change['children']) && is_array($change['children'])) {
+                    $children = collect();
+
+                    foreach ($change['children'] as $child) {
+                        if (!is_array($child)) {
+                            continue;
+                        }
+
+                        $existingChild = !empty($child['id'])
+                            ? ($existing ? $existing->childBlocks->firstWhere('id', $child['id']) : null)
+                            : null;
+
+                        if ($existingChild) {
+                            $existingChild->content = array_merge($existingChild->content ?? [], $child['content'] ?? []);
+                            $existingChild->settings = $child['settings'] ?? $existingChild->settings;
+                            $existingChild->order = $child['order'] ?? $existingChild->order;
+                            $childBlock = $existingChild;
+                        } else {
+                            $childBlock = new Block([
+                                'post_id' => $post->id,
+                                'site_id' => $post->site_id ?? null,
+                                'type' => $child['type'] ?? 'text',
+                                'content' => $child['content'] ?? [],
+                                'settings' => $child['settings'] ?? [],
+                                'order' => $child['order'] ?? 0,
+                                'parent_block_id' => $block->id ?? null,
+                            ]);
+                        }
+
+                        $children->push($childBlock);
+                    }
+
+                    $block->setRelation('childBlocks', $children->sortBy('order')->values());
+                }
+
+                $merged->push($block);
             }
 
             return $merged->sortBy('order')->values();
