@@ -1,0 +1,22 @@
+{
+  "posts": [
+    {
+      "title": "Coastal Light: A Morning in the Fog",
+      "slug": "coastal-light-a-morning-in-the-fog",
+      "excerpt": "Quiet frames from a foggy morning along the coast.",
+      "content": "<p>The fog rolled in just before sunrise. For forty minutes the world was a soft grey wash — the perfect canvas.</p><h2>The setting</h2><p>A small cove, three stones and a line of gulls. Everything else was soft focus.</p><h2>The story</h2><p>These are not portraits of the coast — they are portraits of the light, the patience and the quiet.</p>"
+    },
+    {
+      "title": "Portraits in Soft Window Light",
+      "slug": "portraits-in-soft-window-light",
+      "excerpt": "Natural light, simple backgrounds, honest expressions.",
+      "content": "<p>The best portraits happen when the subject forgets the camera exists. We shoot near large windows at mid-morning.</p><h2>Light</h2><p>Large, soft, directional — it flatters skin without washing out detail.</p><h2>Expression</h2><p>We ask about hobbies and memories. The result is an image that feels like a conversation, not a pose.</p>"
+    },
+    {
+      "title": "Street Photography: City After Rain",
+      "slug": "street-photography-city-after-rain",
+      "excerpt": "Reflections and wet streets after a summer storm.",
+      "content": "<p>An hour after the storm, the city turned into a mirror. Every puddle held the sky.</p><h2>The lens</h2><p>A fast prime, a shallow depth of field and a willingness to wait.</p><p>The images in this series are about contrast — the sharp edge of a building against the soft blur of a wet street.</p>"
+    }
+  ]
+}

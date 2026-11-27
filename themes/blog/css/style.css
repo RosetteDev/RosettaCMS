@@ -1,0 +1,46 @@
+/* Blog theme — clean, typography-focused */
+
+:root {
+    --blog-accent: #f97316;
+}
+
+body {
+    background: #fffdf8;
+    color: #292524;
+    -webkit-font-smoothing: antialiased;
+}
+
+.post-header-hero {
+    text-align: center;
+    padding: 4.5rem 0 2.5rem;
+    border-bottom: 1px solid #e7e0d3;
+}
+.post-header-hero h1 { font-size: 3rem; line-height: 1.15; margin-bottom: 0.75rem; color: #292524; }
+.post-header-hero p { font-family: -apple-system, sans-serif; color: #64748b; font-size: 1rem; }
+
+.post-list .post-item { padding: 2.5rem 0; border-bottom: 1px solid #e7e0d3; }
+.post-list .post-item:last-child { border-bottom: none; }
+.post-list .post-item h2 { font-size: 1.75rem; line-height: 1.25; margin-bottom: 0.5rem; }
+.post-list .post-item h2 a { color: #292524; text-decoration: none; }
+.post-list .post-item h2 a:hover { color: var(--blog-accent); }
+.post-list .post-item p { color: #57534e; line-height: 1.75; margin-bottom: 0.75rem; }
+.post-list .post-item .meta { font-family: -apple-system, sans-serif; font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; color: #a8a29e; margin-bottom: 0.5rem; }
+.post-list .post-item img { width: 100%; border-radius: 0.5rem; margin-bottom: 1.25rem; max-height: 380px; object-fit: cover; }
+
+.single-post-hero { text-align: center; padding: 3.5rem 0 2rem; }
+.single-post-hero h1 { font-size: 2.5rem; line-height: 1.2; margin-bottom: 0.75rem; }
+.single-post-hero .meta { font-family: -apple-system, sans-serif; font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; color: #a8a29e; }
+.single-post-hero img { width: 100%; border-radius: 0.75rem; max-height: 480px; object-fit: cover; margin-bottom: 2rem; }
+
+.single-body { max-width: 700px; margin: 0 auto; padding-bottom: 4rem; }
+.single-body .post-content { font-size: 1.15rem; line-height: 1.85; }
+.single-body .post-content p { margin-bottom: 1.35rem; }
+.single-body .post-content blockquote { border-left: 3px solid var(--blog-accent); padding: 0.5rem 0 0.5rem 1.5rem; margin: 2rem 0; font-style: italic; color: #44403c; font-size: 1.25rem; }
+.single-body .post-content h2 { font-size: 1.75rem; margin: 2.25rem 0 0.75rem; }
+.single-body .post-content h3 { font-size: 1.35rem; margin: 1.75rem 0 0.5rem; }
+.single-body .post-content a { color: #0f766e; text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 768px) {
+    .post-header-hero h1 { font-size: 2.25rem; }
+    .single-post-hero h1 { font-size: 1.9rem; }
+}

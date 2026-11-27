@@ -432,6 +432,7 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
         Route::get('/', [ThemeController::class, 'index'])->name('index');
         Route::get('/{slug}', [ThemeController::class, 'edit'])->name('edit');
         Route::post('/{slug}', [ThemeController::class, 'update'])->name('update');
+        Route::post('/{slug}/demo-content', [ThemeController::class, 'installDemoContent'])->name('demo-content');
         Route::delete('/{slug}', [ThemeController::class, 'destroy'])->name('destroy');
     });
 

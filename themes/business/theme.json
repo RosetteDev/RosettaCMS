@@ -1,0 +1,40 @@
+{
+    "name": "Business",
+    "slug": "business",
+    "version": "1.0.0",
+    "description": "A professional service/company site with hero, services grid, testimonials, contact and team sections.",
+    "author": "Rosetta CMS Team",
+    "author_url": "https://rosetta-cms.com",
+    "screenshot": "screenshot.png",
+    "preview_url": null,
+    "supports": {
+        "features": ["menu", "widgets", "customizer", "thumbnails"],
+        "layouts": ["one-column", "sidebar-right"],
+        "post_types": ["post", "page"]
+    },
+    "settings": {
+        "primary_color": "#1e3a8a",
+        "secondary_color": "#64748b",
+        "accent_color": "#d97706",
+        "background_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "text_color": "#1f2937",
+        "border_color": "#e5e7eb",
+        "font_family": "system-ui, -apple-system, 'Segoe UI', sans-serif",
+        "container_width": "1140px",
+        "body_font_size": "16px",
+        "line_height": "1.65",
+        "block_gap": "2rem",
+        "section_padding": "4rem"
+    },
+    "assets": {
+        "css": ["css/style.css"],
+        "js": ["js/main.js"]
+    },
+    "views": {
+        "layouts": ["layouts/app"],
+        "pages": ["pages/home", "pages/about", "pages/contact"],
+        "posts": ["posts/single", "posts/archive"],
+        "partials": ["partials/header", "partials/footer"]
+    }
+}

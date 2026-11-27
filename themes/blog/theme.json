@@ -1,0 +1,40 @@
+{
+    "name": "Blog",
+    "slug": "blog",
+    "version": "1.0.0",
+    "description": "A clean, typography-focused blog theme with generous reading width and simple, readable post pages.",
+    "author": "Rosetta CMS Team",
+    "author_url": "https://rosetta-cms.com",
+    "screenshot": "screenshot.png",
+    "preview_url": null,
+    "supports": {
+        "features": ["menu", "widgets", "customizer", "thumbnails"],
+        "layouts": ["one-column"],
+        "post_types": ["post", "page"]
+    },
+    "settings": {
+        "primary_color": "#0f766e",
+        "secondary_color": "#64748b",
+        "accent_color": "#f97316",
+        "background_color": "#fffdf8",
+        "bg_color": "#fffdf8",
+        "text_color": "#292524",
+        "border_color": "#e7e0d3",
+        "font_family": "Georgia, 'Times New Roman', serif",
+        "container_width": "760px",
+        "body_font_size": "18px",
+        "line_height": "1.8",
+        "block_gap": "2rem",
+        "section_padding": "4rem"
+    },
+    "assets": {
+        "css": ["css/style.css"],
+        "js": ["js/main.js"]
+    },
+    "views": {
+        "layouts": ["layouts/app"],
+        "pages": ["pages/home", "pages/about", "pages/contact"],
+        "posts": ["posts/single", "posts/archive"],
+        "partials": ["partials/header", "partials/footer"]
+    }
+}

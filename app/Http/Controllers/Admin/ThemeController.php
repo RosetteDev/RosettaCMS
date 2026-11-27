@@ -283,6 +283,26 @@ class ThemeController extends Controller
     }
 
     /**
+     * Install demo content for a theme.
+     */
+    public function installDemoContent(Request $request, $slug)
+    {
+        $request->validate([
+            'site_id' => 'required|exists:sites,id',
+        ]);
+
+        $result = \App\Services\DemoContentService::install($slug, $request->site_id);
+
+        if ($result['error']) {
+            return redirect()->route('admin.themes.index', ['site_id' => $request->site_id])
+                ->with('error', $result['error']);
+        }
+
+        return redirect()->route('admin.themes.index', ['site_id' => $request->site_id])
+            ->with('success', "Installed {$result['created']} demo post(s) for '{$slug}'." . ($result['skipped'] ? " ({$result['skipped']} skipped)" : ''));
+    }
+
+    /**
      * Remove a theme from the system.
      */
     public function destroy($slug)

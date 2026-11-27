@@ -1,0 +1,40 @@
+{
+    "name": "Magazine",
+    "slug": "magazine",
+    "version": "1.0.0",
+    "description": "A bold editorial magazine theme with a feature-first front page, big serif headlines and a two-column story layout.",
+    "author": "Rosetta CMS Team",
+    "author_url": "https://rosetta-cms.com",
+    "screenshot": "screenshot.png",
+    "preview_url": null,
+    "supports": {
+        "features": ["menu", "widgets", "customizer", "thumbnails"],
+        "layouts": ["one-column", "sidebar-right"],
+        "post_types": ["post", "page"]
+    },
+    "settings": {
+        "primary_color": "#111111",
+        "secondary_color": "#555555",
+        "accent_color": "#dc2626",
+        "background_color": "#faf9f7",
+        "bg_color": "#faf9f7",
+        "text_color": "#1a1a1a",
+        "border_color": "#e5e0da",
+        "font_family": "Georgia, 'Times New Roman', serif",
+        "container_width": "1180px",
+        "body_font_size": "17px",
+        "line_height": "1.7",
+        "block_gap": "2rem",
+        "section_padding": "4rem"
+    },
+    "assets": {
+        "css": ["css/style.css"],
+        "js": ["js/main.js"]
+    },
+    "views": {
+        "layouts": ["layouts/app"],
+        "pages": ["pages/home", "pages/about", "pages/contact"],
+        "posts": ["posts/single", "posts/archive"],
+        "partials": ["partials/header", "partials/footer"]
+    }
+}

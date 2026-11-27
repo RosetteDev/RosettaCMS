@@ -1,0 +1,22 @@
+{
+  "posts": [
+    {
+      "title": "Notes on Writing for the Web",
+      "slug": "notes-on-writing-for-the-web",
+      "excerpt": "Shorter sentences, clearer headings, and why it matters.",
+      "content": "<p>People scan. They do not read. That changes how we write.</p><h2>Short sentences</h2><p>One idea per paragraph. One idea per sentence. If a sentence is hard to parse, break it.</p><h2>Clear headings</h2><p>Headings are the map. They tell a reader what the section is before they commit to reading it.</p><p>Writing for the web is an exercise in respect — respect for the reader's time.</p>"
+    },
+    {
+      "title": "The Quiet Power of a Good Title",
+      "slug": "the-quiet-power-of-a-good-title",
+      "excerpt": "A title is the one element that decides whether a post gets read.",
+      "content": "<p>A good title is specific, honest and slightly surprising.</p><h2>Specific beats vague</h2><p>\"Notes on Writing for the Web\" earns more clicks than \"Writing Tips\".</p><h2>Honesty beats hype</h2><p>A title that promises a specific thing and delivers it builds trust. A title that promises everything delivers nothing.</p>"
+    },
+    {
+      "title": "Slow Productivity",
+      "slug": "slow-productivity",
+      "excerpt": "Why deep focus beats constant motion.",
+      "content": "<p>Most days I feel productive because I am busy. Busy is not the same as productive.</p><h2>Deep work</h2><p>Two hours of uninterrupted focus beats six hours of tab-switching.</p><h2>The cost of context switching</h2><p>Every switch costs time to recover. Batch the shallow work and protect the deep work.</p><p>The goal is not to be busy all day — it is to finish something meaningful.</p>"
+    }
+  ]
+}

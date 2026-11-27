@@ -1,0 +1,40 @@
+{
+    "name": "Photography Portfolio",
+    "slug": "photography",
+    "version": "1.0.0",
+    "description": "A dark, image-first portfolio theme with a full-bleed hero, masonry-style grid and immersive single pages.",
+    "author": "Rosetta CMS Team",
+    "author_url": "https://rosetta-cms.com",
+    "screenshot": "screenshot.png",
+    "preview_url": null,
+    "supports": {
+        "features": ["menu", "widgets", "customizer", "thumbnails"],
+        "layouts": ["one-column"],
+        "post_types": ["post", "page"]
+    },
+    "settings": {
+        "primary_color": "#f8fafc",
+        "secondary_color": "#94a3b8",
+        "accent_color": "#f59e0b",
+        "background_color": "#0f172a",
+        "bg_color": "#0f172a",
+        "text_color": "#f1f5f9",
+        "border_color": "#1e293b",
+        "font_family": "Georgia, 'Times New Roman', serif",
+        "container_width": "1280px",
+        "body_font_size": "17px",
+        "line_height": "1.7",
+        "block_gap": "2.5rem",
+        "section_padding": "5rem"
+    },
+    "assets": {
+        "css": ["css/style.css"],
+        "js": ["js/main.js"]
+    },
+    "views": {
+        "layouts": ["layouts/app"],
+        "pages": ["pages/home", "pages/about", "pages/contact"],
+        "posts": ["posts/single", "posts/archive"],
+        "partials": ["partials/header", "partials/footer"]
+    }
+}

@@ -1,0 +1,22 @@
+{
+  "posts": [
+    {
+      "title": "How We Build Reliable Websites",
+      "slug": "how-we-build-reliable-websites",
+      "excerpt": "A look at the process behind every business website we ship.",
+      "content": "<p>Every website starts with a conversation. We learn what the business does, who it serves and what a visitor should do on arrival.</p><h2>Discovery first</h2><p>We map the buyer journey before a single pixel is placed. That keeps the design focused on outcomes, not decoration.</p><h2>Built to convert</h2><p>Layouts, calls to action and page structure are chosen to guide visitors toward a decision — a phone call, a form submission or a purchase.</p><p>The result is a site that looks professional and works hard for the business.</p>"
+    },
+    {
+      "title": "Case Study: Local Clinic Grows Online Bookings",
+      "slug": "case-study-local-clinic-grows-online-bookings",
+      "excerpt": "How a local clinic replaced phone-only booking with a fast, modern site.",
+      "content": "<p>A busy local clinic was losing patients to slow phone lines. We rebuilt their site around an online booking flow.</p><h2>The challenge</h2><p>Visitors had to call during business hours and wait on hold. Phone volume peaked at lunch and on weekends.</p><h2>The solution</h2><p>A focused website with a one-page booking flow. Patients can now choose a service, a time and a provider in under two minutes.</p><p>Online bookings now account for the majority of new appointments.</p>"
+    },
+    {
+      "title": "Why Local Businesses Need a Real Website",
+      "slug": "why-local-businesses-need-a-real-website",
+      "excerpt": "Your website is the one asset you fully control.",
+      "content": "<p>Social feeds change. Listings expire. Your website is the one channel you fully control.</p><h2>Credibility</h2><p>A clear, well-built site signals that a business is established and worth trusting.</p><h2>Control</h2><p>You choose what the site says, how it looks and where visitors go — no algorithm in between.</p><p>Investing in a real website pays back in visibility, trust and leads.</p>"
+    }
+  ]
+}

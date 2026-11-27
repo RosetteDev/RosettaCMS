@@ -1,0 +1,22 @@
+{
+  "posts": [
+    {
+      "title": "The New Economy of Attention",
+      "slug": "the-new-economy-of-attention",
+      "excerpt": "Why attention — not money — is the scarcest resource.",
+      "content": "<p>Every product competes for the same thing: a few seconds of a reader's time.</p><h2>Attention is the new currency</h2><p>Brands that earn attention earn loyalty. Brands that interrupt it churn it away.</p><h2>The long game</h2><p>The companies that win are the ones that respect the reader's time enough to be worth reading.</p>"
+    },
+    {
+      "title": "Designing for Calm",
+      "slug": "designing-for-calm",
+      "excerpt": "What the best interfaces share.",
+      "content": "<p>The best interfaces feel calm. They are quiet, predictable and honest.</p><h2>Less chrome, more content</h2><p>Every decorative element is a small tax on the reader. Remove it where it does not earn its place.</p><h2>Honest states</h2><p>Loading, empty and error states should be designed, not defaulted. They are where the user notices whether the product respects them.</p>"
+    },
+    {
+      "title": "The Rise of Slow Media",
+      "slug": "the-rise-of-slow-media",
+      "excerpt": "In an age of infinite scroll, depth is a feature.",
+      "content": "<p>The feed rewards novelty. Slow media rewards depth.</p><h2>Why slow wins</h2><p>Depth is harder to copy. A two-thousand-word essay cannot be replaced by a thread.</p><h2>The promise of the magazine</h2><p>The magazine format is not a throwback — it is a deliberate bet on the reader's time being well spent.</p>"
+    }
+  ]
+}

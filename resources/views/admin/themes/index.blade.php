@@ -124,6 +124,15 @@
                                         </button>
                                     @endif
                                 </form>
+                                @if(file_exists(base_path('themes/' . $theme['slug'] . '/demo-content.json')))
+                                    <form action="{{ route('admin.themes.demo-content', $theme['slug']) }}" method="POST" class="flex-shrink-0">
+                                        @csrf
+                                        <input type="hidden" name="site_id" value="{{ $currentSite->id ?? '' }}">
+                                        <button type="submit" class="btn btn-outline-secondary" title="Install demo content for this theme">
+                                            <i class="fas fa-gift"></i>
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </div>
                     </div>
