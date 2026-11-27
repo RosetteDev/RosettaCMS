@@ -242,6 +242,33 @@
                                                   x-model="block.content.imagesText" @focus="onFieldFocus()" @change="onFieldChange()"
                                                   placeholder="One image URL per line..."></textarea>
                                         <small class="text-muted">One image URL per line</small>
+                                        <div class="d-flex gap-3 mt-2 flex-wrap">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="small text-muted">Layout</span>
+                                                <select class="form-select form-select-sm" style="width:auto" @focus="onFieldFocus()" x-model="block.content.layout" @change="onFieldChange()">
+                                                    <option value="grid">Grid</option>
+                                                    <option value="carousel">Carousel</option>
+                                                </select>
+                                            </div>
+                                            <template x-if="(block.content.layout || 'grid') === 'grid'">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="small text-muted">Columns</span>
+                                                    <select class="form-select form-select-sm" style="width:auto" @focus="onFieldFocus()" x-model="block.content.columns" @change="onFieldChange()">
+                                                        <option value="1">1</option>
+                                                        <option value="2">2</option>
+                                                        <option value="3">3</option>
+                                                        <option value="4">4</option>
+                                                        <option value="5">5</option>
+                                                        <option value="6">6</option>
+                                                    </select>
+                                                </div>
+                                            </template>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="small text-muted">Gap</span>
+                                                <input type="range" class="form-range" min="0" max="40" @focus="onFieldFocus()" x-model="block.content.gap" @change="onFieldChange()">
+                                                <span class="small" x-text="(block.content.gap ?? 10) + 'px'"></span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                                 <template x-if="block.type === 'columns'">
@@ -631,6 +658,18 @@ document.addEventListener('alpine:init', () => {
                 (item.alt || '').toLowerCase().includes(q));
         },
 
+        normalizeBlockContent(type, content) {
+            const c = JSON.parse(JSON.stringify(content ?? {}));
+            if (type === 'gallery' && Array.isArray(c.images)) {
+                c.imagesText = c.images.map(i => typeof i === 'string' ? i : (i?.url ?? '')).filter(Boolean).join('\n');
+                delete c.images;
+                c.layout = c.layout || 'grid';
+                c.columns = c.columns ?? 3;
+                c.gap = c.gap ?? 10;
+            }
+            return c;
+        },
+
         init() {
             this.blockTypes = this.cfg.blockTypes || {};
             this.patterns = this.cfg.patterns || [];
@@ -639,14 +678,14 @@ document.addEventListener('alpine:init', () => {
                 id: block.id ?? null,
                 tempId: 'real-' + block.id,
                 type: block.type,
-                content: JSON.parse(JSON.stringify(block.content ?? {})),
+                content: this.normalizeBlockContent(block.type, block.content ?? {}),
                 settings: JSON.parse(JSON.stringify(block.settings ?? {})),
                 order: block.order || index + 1,
                 children: (block.children || []).map((child, cIndex) => ({
                     id: child.id ?? null,
                     tempId: 'real-' + child.id,
                     type: child.type,
-                    content: JSON.parse(JSON.stringify(child.content ?? {})),
+                    content: this.normalizeBlockContent(child.type, child.content ?? {}),
                     settings: JSON.parse(JSON.stringify(child.settings ?? {})),
                     order: child.order || cIndex + 1
                 }))
@@ -894,7 +933,7 @@ document.addEventListener('alpine:init', () => {
                 case 'spacer': return { size: 40 };
                 case 'video': return { url: '', caption: '' };
                 case 'html': return { html: '' };
-                case 'gallery': return { imagesText: '' };
+                case 'gallery': return { imagesText: '', layout: 'grid', columns: 3, gap: 10 };
                 case 'columns': return { columns: 2, gutter: 20 };
                 default: return {};
             }
@@ -1202,7 +1241,8 @@ document.addEventListener('alpine:init', () => {
                     return `<div class="text-muted small"><i class="fas fa-code me-1"></i>Custom HTML — ${this.esc((content.html ?? '').substring(0, 60))}</div>`;
                 case 'gallery': {
                     const count = (content.imagesText ?? '').split('\n').filter(s => s.trim()).length;
-                    return `<div class="text-muted small"><i class="fas fa-images me-1"></i>Gallery — ${count} image${count === 1 ? '' : 's'}</div>`;
+                    const layout = content.layout || 'grid';
+                    return `<div class="text-muted small"><i class="fas fa-images me-1"></i>Gallery — ${count} image${count === 1 ? '' : 's'} · ${layout}</div>`;
                 }
                 case 'columns': {
                     const count = Math.max(1, Math.min(6, parseInt(content.columns, 10) || 2));
@@ -1324,7 +1364,7 @@ document.addEventListener('alpine:init', () => {
                 templateBlocks.forEach((templateBlock, index) => {
                     const content = JSON.parse(JSON.stringify(templateBlock.content ?? {}));
                     if (templateBlock.type === 'gallery' && Array.isArray(content.images)) {
-                        content.imagesText = content.images.join('\n');
+                        content.imagesText = content.images.map(i => typeof i === 'string' ? i : (i?.url ?? '')).filter(Boolean).join('\n');
                         delete content.images;
                     }
                     container.children = [...(container.children ?? []), {
@@ -1350,7 +1390,7 @@ document.addEventListener('alpine:init', () => {
             templateBlocks.forEach((templateBlock, index) => {
                 const content = JSON.parse(JSON.stringify(templateBlock.content ?? {}));
                 if (templateBlock.type === 'gallery' && Array.isArray(content.images)) {
-                    content.imagesText = content.images.join('\n');
+                    content.imagesText = content.images.map(i => typeof i === 'string' ? i : (i?.url ?? '')).filter(Boolean).join('\n');
                     delete content.images;
                 }
                 this.blocks.push({
@@ -1602,6 +1642,11 @@ document.addEventListener('alpine:init', () => {
             if (block.type === 'gallery' && content.imagesText !== undefined) {
                 content.images = content.imagesText.split('\n').map(s => s.trim()).filter(Boolean);
                 delete content.imagesText;
+            }
+            if (block.type === 'gallery') {
+                content.layout = content.layout || 'grid';
+                content.columns = parseInt(content.columns, 10) || 3;
+                content.gap = parseInt(content.gap, 10) || 10;
             }
             return {
                 type: block.type,

@@ -16,9 +16,13 @@
             <a href="{{ $media->url }}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                 View File
             </a>
+            <button onclick="document.getElementById('replace-file-input').click()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                Replace file
+            </button>
             <button onclick="deleteMedia()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
                 Delete
             </button>
+            <input type="file" id="replace-file-input" class="hidden" accept="image/*,video/*,application/pdf,audio/*" onchange="replaceFile(this.files[0])">
         </div>
     </div>
 
@@ -36,6 +40,7 @@
                     @php
                         $isImage = Str::startsWith($media->mime_type, 'image/');
                         $isVideo = Str::startsWith($media->mime_type, 'video/');
+                        $isAudio = Str::startsWith($media->mime_type, 'audio/');
                         $isPdf = $media->mime_type === 'application/pdf';
                     @endphp
                     
@@ -48,6 +53,15 @@
                             <video src="{{ $media->url }}" controls class="w-full h-auto max-h-[500px]">
                                 Your browser does not support the video tag.
                             </video>
+                        </div>
+                    @elseif($isAudio)
+                        <div class="bg-gray-100 rounded-lg overflow-hidden p-8 flex flex-col items-center gap-4">
+                            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 6L3 9v13l6-3m0-13v13"/>
+                            </svg>
+                            <audio src="{{ $media->url }}" controls preload="none" class="w-full max-w-md">
+                                Your browser does not support the audio element.
+                            </audio>
                         </div>
                     @elseif($isPdf)
                         <div class="bg-white rounded-lg p-8 flex items-center justify-center min-h-[400px]">
@@ -138,35 +152,45 @@
                     
                     <div>
                         <h2 class="text-xl font-semibold text-gray-800 mb-4">Accessibility & Metadata</h2>
-                        
-                        <div class="space-y-4">
+
+                        <form id="metadata-form" class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-600">Alt Text</label>
-                                <p class="mt-1 text-gray-800">
-                                    @if($media->alt_text)
-                                        {{ $media->alt_text }}
-                                    @else
-                                        <span class="text-gray-500 italic">No alt text provided</span>
+                                <label for="alt-text-input" class="block text-sm font-medium text-gray-600">Alt Text</label>
+                                <div class="flex gap-2 mt-1">
+                                    <input type="text" id="alt-text-input" maxlength="255"
+                                           value="{{ $media->alt_text }}"
+                                           class="flex-1 border border-gray-300 rounded px-3 py-2 text-gray-800"
+                                           placeholder="Describe the image…">
+                                    @if(Str::startsWith($media->mime_type, 'image/'))
+                                        <button type="button" onclick="generateAlt()" class="bg-gray-100 text-gray-700 px-3 py-2 rounded border border-gray-300 text-sm hover:bg-gray-200">
+                                            Generate
+                                        </button>
                                     @endif
-                                </p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Required for images. Alt text describes the image for screen readers and SEO.</p>
                             </div>
-                            
-                            @if($media->caption)
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-600">Caption</label>
-                                    <div class="mt-1 text-gray-800">{{ $media->caption }}</div>
+
+                            <div>
+                                <label for="caption-input" class="block text-sm font-medium text-gray-600">Caption</label>
+                                <textarea id="caption-input" rows="2"
+                                          class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-gray-800"
+                                          placeholder="Optional caption…">{{ $media->caption }}</textarea>
+                            </div>
+
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm">
+                                Save metadata
+                            </button>
+                            <p id="metadata-status" class="text-sm text-gray-600"></p>
+                        </form>
+
+                        @if($media->meta)
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-600">Meta Data</label>
+                                <div class="mt-1 bg-gray-50 p-3 rounded text-sm font-mono">
+                                    <pre class="whitespace-pre-wrap">{{ json_encode($media->meta, JSON_PRETTY_PRINT) }}</pre>
                                 </div>
-                            @endif
-                            
-                            @if($media->meta)
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-600">Meta Data</label>
-                                    <div class="mt-1 bg-gray-50 p-3 rounded text-sm font-mono">
-                                        <pre class="whitespace-pre-wrap">{{ json_encode($media->meta, JSON_PRETTY_PRINT) }}</pre>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -175,6 +199,83 @@
 </div>
 
 <script>
+function replaceFile(file) {
+    if (!file) return;
+    if (!confirm('Replace the file for "{{ $media->file_name }}"? The old file will be overwritten.')) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch("{{ route('admin.media.replace', $media) }}", {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error replacing file');
+    });
+}
+
+function generateAlt() {
+    fetch("{{ route('admin.media.generateAlt', $media) }}", {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.alt_text) {
+            document.getElementById('alt-text-input').value = data.alt_text;
+        } else {
+            alert('Error: ' + (data.message || 'Could not generate alt text'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error generating alt text');
+    });
+}
+
+document.getElementById('metadata-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append('alt_text', document.getElementById('alt-text-input').value);
+    formData.append('caption', document.getElementById('caption-input').value);
+
+    const status = document.getElementById('metadata-status');
+    status.textContent = 'Saving…';
+
+    fetch("{{ route('admin.media.updateMetadata', $media) }}", {
+        method: 'PUT',
+        body: formData,
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            status.textContent = 'Saved.';
+            status.className = 'text-sm text-green-600';
+        } else {
+            status.textContent = 'Error: ' + (data.message || 'Unknown error');
+            status.className = 'text-sm text-red-600';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        status.textContent = 'Error saving metadata';
+        status.className = 'text-sm text-red-600';
+    });
+});
+
 function deleteMedia() {
     if (confirm('Are you sure you want to delete this media? This action cannot be undone.')) {
         const formData = new FormData();

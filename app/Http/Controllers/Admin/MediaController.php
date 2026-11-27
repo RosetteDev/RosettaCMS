@@ -251,8 +251,10 @@ class MediaController extends Controller
         $validated = $request->validate([
             'ids' => 'required|array|min:1',
             'ids.*' => 'required|exists:media,id',
-            'action' => 'required|in:delete,move_to_folder',
+            'action' => 'required|in:delete,move_to_folder,rename,set_alt_text',
             'folder' => 'nullable|string|max:255|regex:/^([A-Za-z0-9_\-]+\/)*[A-Za-z0-9_\-]*$/',
+            'name_base' => 'nullable|string|max:120|regex:/^[A-Za-z0-9_\-]+$/',
+            'alt_text' => 'nullable|string|max:255',
         ]);
 
         $mediaItems = Media::whereIn('id', $validated['ids'])->get();
@@ -272,19 +274,162 @@ class MediaController extends Controller
                     $oldPath = $media->file_path;
                     $filename = basename($media->file_path);
                     $newPath = $folder ? $folder . '/' . $filename : 'uploads/' . $filename;
-                    
+
                     if (\Storage::disk('public')->exists($oldPath)) {
                         \Storage::disk('public')->move($oldPath, $newPath);
                     }
-                    
+
                     $media->folder = $folder ?: null;
                     $media->file_path = $newPath;
                     $media->save();
                 }
                 return response()->json(['success' => true, 'message' => count($mediaItems) . ' media items moved.']);
+
+            case 'rename':
+                $base = $validated['name_base'] ?? null;
+                if (!$base) {
+                    return response()->json(['success' => false, 'message' => 'A name base is required to rename.'], 422);
+                }
+                $index = 0;
+                foreach ($mediaItems as $media) {
+                    $index++;
+                    $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
+                    $filename = $index === 1 && count($mediaItems) === 1
+                        ? $base . '.' . $extension
+                        : $base . '-' . $index . '.' . $extension;
+                    $folder = trim((string) $media->folder, '/');
+                    $newPath = ($folder ? $folder . '/' : 'uploads/') . $filename;
+                    $oldPath = $media->file_path;
+
+                    // Avoid overwriting an existing file.
+                    $candidate = $newPath;
+                    $suffix = 2;
+                    while (\Storage::disk('public')->exists($candidate) && $candidate !== $oldPath) {
+                        $candidate = ($folder ? $folder . '/' : 'uploads/') . $base . '-' . $suffix . '.' . $extension;
+                        $suffix++;
+                    }
+                    $newPath = $candidate;
+                    $filename = basename($newPath);
+
+                    if (\Storage::disk('public')->exists($oldPath) && $oldPath !== $newPath) {
+                        \Storage::disk('public')->move($oldPath, $newPath);
+                    }
+
+                    $media->file_name = $filename;
+                    $media->file_path = $newPath;
+                    $media->save();
+                }
+                return response()->json(['success' => true, 'message' => count($mediaItems) . ' media items renamed.']);
+
+            case 'set_alt_text':
+                $alt = trim((string) ($validated['alt_text'] ?? ''));
+                if (!$alt) {
+                    return response()->json(['success' => false, 'message' => 'Alt text is required.'], 422);
+                }
+                $updated = 0;
+                foreach ($mediaItems as $media) {
+                    if (!str_starts_with((string) $media->mime_type, 'image/')) {
+                        continue; // Alt text only applies to images.
+                    }
+                    $media->alt_text = $alt;
+                    $media->save();
+                    $updated++;
+                }
+                if ($updated === 0) {
+                    return response()->json(['success' => false, 'message' => 'No images selected — alt text only applies to images.'], 422);
+                }
+                return response()->json(['success' => true, 'message' => $updated . ' image(s) updated.']);
         }
 
         return response()->json(['success' => false, 'message' => 'Invalid action.'], 400);
+    }
+
+    /**
+     * Replace the file behind a media item (keeps the same record/path).
+     */
+    public function replace(Request $request, Media $media)
+    {
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'max:' . (10 * 1024), 'mimes:jpeg,jpg,png,gif,webp,pdf,mp4,mov,webm,mp3,wav,ogg'],
+        ]);
+
+        $file = $request->file('file');
+        $detectedMime = $file->getMimeType();
+
+        $allowedMimeTypes = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+            'application/pdf',
+            'video/mp4', 'video/quicktime', 'video/webm',
+            'audio/mpeg', 'audio/wav', 'audio/ogg',
+        ];
+
+        if (!in_array($detectedMime, $allowedMimeTypes, true)) {
+            return response()->json(['success' => false, 'message' => 'Invalid file type.'], 422);
+        }
+
+        $disk = \Storage::disk('public');
+
+        // Move the old file aside so the new one can take its place.
+        $oldPath = $media->file_path;
+        $newExtension = strtolower($file->getClientOriginalExtension()) ?: pathinfo($oldPath, PATHINFO_EXTENSION);
+        $newPath = $oldPath; // keep the same path/filename so references stay valid
+
+        // Store the new file at the same path.
+        $stream = fopen($file->getRealPath(), 'rb');
+        $disk->put($newPath, $stream);
+        fclose($stream);
+
+        // Re-optimize images (original + webp + responsive variants).
+        if (str_starts_with($detectedMime, 'image/')) {
+            $fullPath = storage_path('app/public/' . $newPath);
+            $this->convertToWebP($fullPath);
+            $this->generateResponsiveImages($fullPath);
+            $this->optimizeImage($fullPath);
+        }
+
+        $media->update([
+            'file_size' => $file->getSize(),
+            'mime_type' => $detectedMime,
+            'meta' => array_merge((array) $media->meta, ['replaced_at' => now()->toIso8601String()]),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'File replaced.', 'size' => $file->getSize()]);
+    }
+
+    /**
+     * Suggest an alt text derived from the file name.
+     */
+    public function generateAlt(Media $media)
+    {
+        if (!str_starts_with((string) $media->mime_type, 'image/')) {
+            return response()->json(['success' => false, 'message' => 'Alt text only applies to images.'], 422);
+        }
+
+        $suggested = $this->suggestAltText($media);
+
+        return response()->json(['success' => true, 'alt_text' => $suggested]);
+    }
+
+    /**
+     * Derive a human-friendly alt text from the stored file name.
+     */
+    protected function suggestAltText(Media $media): string
+    {
+        $name = pathinfo((string) $media->file_name, PATHINFO_FILENAME);
+
+        // Strip the generated "<timestamp>_<random>_" prefix.
+        $name = preg_replace('/^\d{10,}_[A-Za-z0-9]{4,}_/', '', $name) ?? $name;
+
+        $name = str_replace(['_', '-', '.'], ' ', $name);
+        $name = trim(preg_replace('/\s+/', ' ', $name) ?? '');
+
+        if ($name === '') {
+            $name = 'image';
+        }
+
+        $suggested = ucwords(strtolower($name));
+
+        return mb_substr($suggested, 0, 255);
     }
 
     /**

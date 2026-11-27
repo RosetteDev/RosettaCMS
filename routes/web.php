@@ -228,6 +228,8 @@ Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function
 
         // Metadata update
         Route::put('/{media}/metadata', [MediaController::class, 'updateMetadata'])->name('updateMetadata');
+        Route::post('/{media}/replace', [MediaController::class, 'replace'])->name('replace');
+        Route::post('/{media}/generate-alt', [MediaController::class, 'generateAlt'])->name('generateAlt');
 
         Route::get('/{media}', [MediaController::class, 'show'])->whereNumber('media')->name('show');
         Route::delete('/{media}', [MediaController::class, 'destroy'])->whereNumber('media')->name('destroy');

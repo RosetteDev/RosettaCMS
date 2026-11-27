@@ -1,6 +1,7 @@
 @php
     $isImage = Str::startsWith($media->mime_type, 'image/');
     $isVideo = Str::startsWith($media->mime_type, 'video/');
+    $isAudio = Str::startsWith($media->mime_type, 'audio/');
     $isPdf = $media->mime_type === 'application/pdf';
     $fileUrl = $media->url;
 @endphp
@@ -16,6 +17,15 @@
             <video src="{{ $fileUrl }}" controls class="w-full h-full object-cover">
                 Your browser does not support the video tag.
             </video>
+        @elseif($isAudio)
+            <div class="audio-preview">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-8 h-8 text-gray-400">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 6L3 9v13l6-3m0-13v13"/>
+                </svg>
+                <audio src="{{ $fileUrl }}" controls preload="none">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
         @elseif($isPdf)
             <div class="file-icon">
                 <svg fill="currentColor" viewBox="0 0 24 24">

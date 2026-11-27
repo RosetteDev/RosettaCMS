@@ -597,6 +597,24 @@
         border-color: #94a3b8;
     }
 
+    .audio-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        width: 100%;
+        height: 100%;
+        background: #f8fafc;
+    }
+
+    .audio-preview audio {
+        width: 100%;
+        max-width: 220px;
+        height: 36px;
+    }
+
     .btn-icon-danger {
         color: #dc2626;
         border-color: #dc2626;
@@ -651,6 +669,8 @@
                 @endforeach
                 <option value="__new__">Create new folder...</option>
             </select>
+            <button onclick="showBulkRenameModal()" class="btn btn-secondary">Rename</button>
+            <button onclick="showBulkAltModal()" class="btn btn-secondary">Set alt text</button>
             <button onclick="bulkDelete()" class="btn btn-danger">Delete</button>
             <button onclick="bulkMoveToFolder()" class="btn btn-primary">Move</button>
             <button onclick="deselectAll()" class="btn btn-secondary">Cancel</button>
@@ -746,6 +766,48 @@
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeFolderModal()">Cancel</button>
             <button class="btn btn-primary" onclick="createFolder()">Create Folder</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Rename Modal -->
+<div id="bulk-rename-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Rename Selected</h3>
+            <button class="modal-close" onclick="closeBulkRenameModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="rename-base">Name base</label>
+                <input type="text" id="rename-base" placeholder="e.g. product-photo" maxlength="120">
+                <p class="text-xs text-gray-500 mt-1">Files become <code>base.ext</code> (single) or <code>base-1.ext</code>, <code>base-2.ext</code>… Existing files are not overwritten.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeBulkRenameModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="executeBulkRename()">Rename</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Alt Text Modal -->
+<div id="bulk-alt-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Set Alt Text</h3>
+            <button class="modal-close" onclick="closeBulkAltModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="bulk-alt-text">Alt text</label>
+                <input type="text" id="bulk-alt-text" placeholder="Describe the image…" maxlength="255">
+                <p class="text-xs text-gray-500 mt-1">Applied to all selected <strong>images</strong>. Non-image items are skipped.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeBulkAltModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="executeBulkSetAlt()">Apply</button>
         </div>
     </div>
 </div>
@@ -846,6 +908,98 @@ function deselectAll() {
     });
     selectedIds.clear();
     document.getElementById('bulk-actions').classList.remove('show');
+}
+
+function showBulkRenameModal() {
+    if (selectedIds.size === 0) return;
+    document.getElementById('rename-base').value = '';
+    document.getElementById('bulk-rename-modal').classList.add('show');
+    setTimeout(() => document.getElementById('rename-base').focus(), 50);
+}
+
+function closeBulkRenameModal() {
+    document.getElementById('bulk-rename-modal').classList.remove('show');
+}
+
+function executeBulkRename() {
+    const base = document.getElementById('rename-base').value.trim();
+    if (!base) {
+        alert('Please enter a name base');
+        return;
+    }
+    if (!/^[A-Za-z0-9_-]+$/.test(base)) {
+        alert('Name base may only contain letters, numbers, dashes and underscores');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('action', 'rename');
+    formData.append('name_base', base);
+    selectedIds.forEach(id => formData.append('ids[]', id));
+
+    fetch("{{ route('admin.media.bulk') }}", {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeBulkRenameModal();
+            deselectAll();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error renaming media');
+    });
+}
+
+function showBulkAltModal() {
+    if (selectedIds.size === 0) return;
+    document.getElementById('bulk-alt-text').value = '';
+    document.getElementById('bulk-alt-modal').classList.add('show');
+    setTimeout(() => document.getElementById('bulk-alt-text').focus(), 50);
+}
+
+function closeBulkAltModal() {
+    document.getElementById('bulk-alt-modal').classList.remove('show');
+}
+
+function executeBulkSetAlt() {
+    const alt = document.getElementById('bulk-alt-text').value.trim();
+    if (!alt) {
+        alert('Please enter alt text');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('action', 'set_alt_text');
+    formData.append('alt_text', alt);
+    selectedIds.forEach(id => formData.append('ids[]', id));
+
+    fetch("{{ route('admin.media.bulk') }}", {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeBulkAltModal();
+            deselectAll();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error setting alt text');
+    });
 }
 
 function bulkDelete() {
