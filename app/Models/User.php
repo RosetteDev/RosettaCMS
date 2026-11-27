@@ -26,6 +26,9 @@ class User extends Authenticatable
         'admin_theme',
         'show_welcome_tour',
         'dashboard_widgets',
+        'two_factor_enabled_at',
+        'failed_login_attempts',
+        'locked_until',
     ];
 
     /**
@@ -36,6 +39,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
     ];
 
     /**
@@ -49,6 +53,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'dashboard_widgets' => 'array',
+            'two_factor_enabled_at' => 'datetime',
+            'locked_until' => 'datetime',
         ];
     }
 
@@ -58,6 +64,51 @@ class User extends Authenticatable
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class)->withTimestamps();
+    }
+
+    /**
+     * Whether two-factor authentication is enabled for the user.
+     */
+    public function hasTwoFactor(): bool
+    {
+        return !empty($this->two_factor_secret) && !is_null($this->two_factor_enabled_at);
+    }
+
+    /**
+     * Whether the user is currently locked out (brute-force protection).
+     */
+    public function isLocked(): bool
+    {
+        return $this->locked_until !== null && $this->locked_until->isFuture();
+    }
+
+    /**
+     * Record a failed login attempt, locking the account after 5 failures.
+     */
+    public function registerFailedLogin(int $threshold = 5, int $lockMinutes = 15): void
+    {
+        $this->failed_login_attempts = ($this->failed_login_attempts ?? 0) + 1;
+
+        if ($this->failed_login_attempts >= $threshold) {
+            $this->locked_until = now()->addMinutes($lockMinutes);
+            $this->failed_login_attempts = 0;
+        }
+
+        $this->save();
+    }
+
+    /**
+     * Reset the failed-login counter and any active lockout.
+     */
+    public function resetFailedLogins(): void
+    {
+        if (empty($this->failed_login_attempts) && is_null($this->locked_until)) {
+            return;
+        }
+
+        $this->failed_login_attempts = 0;
+        $this->locked_until = null;
+        $this->save();
     }
 
     /**

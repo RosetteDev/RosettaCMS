@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(\App\Http\Middleware\SetActiveLanguage::class);
         $middleware->append(\App\Http\Middleware\CurrentSite::class);
+        $middleware->append(\App\Http\Middleware\CheckSiteIpRules::class);
         $middleware->append(\App\Http\Middleware\CheckMaintenanceMode::class);
         $middleware->append(\App\Http\Middleware\InlineEdit::class);
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'api.key' => \App\Http\Middleware\AuthenticateApiKey::class,
+            'log.activity' => \App\Http\Middleware\LogAdminActivity::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

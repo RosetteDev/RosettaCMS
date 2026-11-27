@@ -4,6 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TwoFactorController;
+use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\HealthController;
+use App\Http\Controllers\Admin\IpRulesController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\MediaController;
@@ -126,6 +130,11 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Two-factor authentication (self-service)
+    Route::post('/profile/2fa/enable', [TwoFactorController::class, 'enable'])->name('profile.2fa.enable');
+    Route::post('/profile/2fa/confirm', [TwoFactorController::class, 'confirm'])->name('profile.2fa.confirm');
+    Route::post('/profile/2fa/disable', [TwoFactorController::class, 'disable'])->name('profile.2fa.disable');
 });
 
 // Inline editing routes
@@ -147,6 +156,11 @@ Route::middleware('auth')->group(function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
+
+    // Two-factor challenge (session carries the pending user id)
+    Route::get('/login/2fa', [LoginController::class, 'showTwoFactorForm'])->name('login.2fa');
+    Route::post('/login/2fa', [LoginController::class, 'verifyTwoFactor'])->name('login.2fa.verify')
+        ->middleware('throttle:10,1');
     
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
@@ -171,7 +185,7 @@ Route::middleware('auth')->prefix('admin/api-keys')->name('admin.api-keys.')->gr
 });
 
 // Admin routes
-Route::middleware(['auth', 'role:admin|editor'])->group(function () {
+Route::middleware(['auth', 'role:admin|editor', 'log.activity'])->group(function () {
     // Admin dashboard
     Route::get('/admin', function () {
         return redirect()->route('dashboard');
@@ -361,6 +375,21 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         Route::post('/', [SettingsController::class, 'update'])->name('update');
     });
     
+    // Security & trust - Admin only
+    Route::prefix('admin/activity')->middleware('role:admin')->name('admin.activity.')->group(function () {
+        Route::get('/', [ActivityLogController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('admin/health')->middleware('role:admin')->name('admin.health.')->group(function () {
+        Route::get('/', [HealthController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('admin/ip-rules')->middleware('role:admin')->name('admin.ip-rules.')->group(function () {
+        Route::get('/', [IpRulesController::class, 'index'])->name('index');
+        Route::post('/', [IpRulesController::class, 'store'])->name('store');
+        Route::delete('/{rule}', [IpRulesController::class, 'destroy'])->name('destroy');
+    });
+
     // Languages - Admin only
     Route::prefix('admin/languages')->middleware('role:admin')->name('admin.languages.')->group(function () {
         Route::get('/', [LanguageController::class, 'index'])->name('index');

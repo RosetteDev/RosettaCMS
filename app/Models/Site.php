@@ -46,6 +46,14 @@ class Site extends Model
     }
 
     /**
+     * Get the IP allow/block rules for the site.
+     */
+    public function ipRules()
+    {
+        return $this->hasMany(SiteIpRule::class);
+    }
+
+    /**
      * Get the posts for the site.
      */
     public function posts()

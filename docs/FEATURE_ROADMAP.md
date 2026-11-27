@@ -166,13 +166,33 @@ The `languages` and `language_content` tables are now wired up.
 - Cron-driven maintenance: `posts:purge` permanently deletes trashed posts
   older than 30 days (`--days` to override); runs daily at 04:00
 
-### 6. Security and admin trust
-- 2FA/TOTP for admin accounts (WordPress needs plugins for this; core
-  support would differentiate)
-- Brute-force rate limiting and login lockout
-- Activity log / audit trail of admin actions (who changed what, when)
-- IP allowlist/blocklist per site
-- Security headers and CSP (already in place) + a site-health report
+### 6. Security and admin trust — ✅ done (2026-11)
+
+**Done (2026-11):**
+
+- **2FA/TOTP for admin accounts** — RFC 6238 TOTP (`spomky-labs/otphp`)
+  with self-service setup in the profile page (secret shown once with an
+  `otpauth://` provisioning URI, ±25 s drift tolerance), a login-time
+  challenge (`/login/2fa`) and a password-gated disable path. `auth.login` /
+  `auth.two_factor_failed` / `auth.two_factor_enabled` / `auth.two_factor_disabled`
+  are all written to the activity log.
+- **Brute-force rate limiting and login lockout** — IP-keyed rate limiting
+  (5 attempts) plus per-account lockout: 5 failed attempts lock the account
+  for 15 minutes (even with the correct password); a successful login resets
+  the counter; the lock expires automatically.
+- **Activity log / audit trail** — every mutating admin request is recorded
+  (`activity_logs`: user, action, subject, description, IP, user agent,
+  timestamp) via a `log.activity` middleware on the admin group, plus explicit
+  `auth.*` entries from the login flow. Browsable at `/admin/activity` with
+  user and action filters.
+- **IP allowlist/blocklist per site** — `site_ip_rules` (block always wins;
+  allow-list applies only when at least one allow rule exists; login,
+  registration, password reset, logout, install and the health check stay
+  reachable). Managed at `/admin/ip-rules` (validated CIDR/IP).
+- **Security headers and CSP** (already in place) + a site-health report at
+  `/admin/health` (database connectivity, storage writable, mail configured,
+  latest backup present, security headers registered, HTTPS APP_URL, PHP
+  version) with a pass/fail summary.
 
 ### 7. Backups, restore and migration
 - [x] Scheduled backups (database + media) with offsite storage (S3/B2)
