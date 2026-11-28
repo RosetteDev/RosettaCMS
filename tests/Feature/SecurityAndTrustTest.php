@@ -398,4 +398,13 @@ class SecurityAndTrustTest extends TestCase
 
         $this->assertContains($response->status(), [403, 302]);
     }
+
+    // --- HSTS (audit #19) -------------------------------------------------
+
+    public function test_responses_carry_strict_transport_security_header(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
 }
