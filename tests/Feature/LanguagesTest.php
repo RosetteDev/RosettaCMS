@@ -122,8 +122,8 @@ class LanguagesTest extends TestCase
         $this->defaultLanguage();
         $this->frenchLanguage();
 
-        $this->get(route('language.switch', 'fr'))
-            ->assertRedirect();
+        $this->get(route('language.switch', 'fr'), ['HTTP_REFERER' => url('/')])
+            ->assertRedirect(url('/'));
 
         $this->assertSame('fr', session('active_language'));
     }
@@ -132,8 +132,30 @@ class LanguagesTest extends TestCase
     {
         $this->defaultLanguage();
 
-        $this->get(route('language.switch', 'xx'))
-            ->assertRedirect();
+        $this->get(route('language.switch', 'xx'), ['HTTP_REFERER' => url('/')])
+            ->assertRedirect(url('/'));
+
+        $this->assertNull(session('active_language'));
+    }
+
+    public function test_language_switcher_ignores_cross_origin_referer(): void
+    {
+        $this->defaultLanguage();
+        $this->frenchLanguage();
+
+        $response = $this->get(route('language.switch', 'fr'), ['HTTP_REFERER' => 'https://evil.example.com/phish']);
+
+        $response->assertRedirect('/');
+        $this->assertNull(session('active_language'));
+    }
+
+    public function test_language_switcher_redirects_to_home_without_referer(): void
+    {
+        $this->defaultLanguage();
+        $this->frenchLanguage();
+
+        $this->get(route('language.switch', 'fr'))
+            ->assertRedirect('/');
 
         $this->assertNull(session('active_language'));
     }

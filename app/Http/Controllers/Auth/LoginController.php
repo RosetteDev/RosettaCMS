@@ -59,7 +59,9 @@ class LoginController extends Controller
             ActivityLog::record('auth.locked', 'Login blocked: account locked until ' . $user->locked_until->toDayDateTimeString(), 'user', $user->id, $user->id);
 
             throw ValidationException::withMessages([
-                'email' => "Account temporarily locked. Try again after " . $user->locked_until->format('H:i') . '.',
+                // Identical to the generic failure — the client must not learn
+                // that the account is locked or when it unlocks.
+                'email' => 'The provided credentials do not match our records.',
             ]);
         }
 

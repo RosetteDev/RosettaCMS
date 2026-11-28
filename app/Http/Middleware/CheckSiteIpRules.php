@@ -93,7 +93,7 @@ class CheckSiteIpRules
 
     protected function forbidden()
     {
-        return response('Access denied.', 403)
-            ->header('Content-Type', 'text/plain; charset=utf-8');
+        // Same status and body as every other blocked path (e.g. RoleMiddleware).
+        abort(403, 'Unauthorized action.');
     }
 }

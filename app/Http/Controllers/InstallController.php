@@ -20,6 +20,9 @@ class InstallController extends Controller
      */
     public function check(Request $request)
     {
+        // Installation must be explicitly enabled by the server administrator.
+        abort_unless(config('app.install_enabled', false), 403);
+
         $preflight = $this->installer->preflight(config('database.default'));
 
         return view('install.check', compact('preflight'));
@@ -30,6 +33,9 @@ class InstallController extends Controller
      */
     public function form(Request $request)
     {
+        // Installation must be explicitly enabled by the server administrator.
+        abort_unless(config('app.install_enabled', false), 403);
+
         $preflight = $this->installer->preflight(config('database.default'));
 
         if (!$preflight['all_passed']) {

@@ -25,10 +25,11 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'string', 'email'],
         ]);
 
-        $status = Password::sendResetLink($request->only('email'));
+        // Neutral response: always the same status message, whether or not the
+        // email is registered. The client must not learn whether an account
+        // exists; the real outcome is only visible in the server log.
+        Password::sendResetLink($request->only('email'));
 
-        return $status === Password::RESET_LINK_SENT
-            ? back()->with('status', __($status))
-            : back()->withInput($request->only('email'))->withErrors(['email' => __($status)]);
+        return back()->with('status', 'If your email is registered, a reset link has been sent.');
     }
 }

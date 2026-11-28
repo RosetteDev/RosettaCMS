@@ -520,6 +520,46 @@ class SEOPassTest extends TestCase
         $this->assertStringContainsString('410', $html);
     }
 
+    // --- Anonymous 404/410 pages reveal no site internals (audit #28) -----
+
+    public function test_anonymous_404_page_is_generic_and_leaks_no_site_details(): void
+    {
+        $site = Site::create(['name' => 'Secret Internal Site', 'slug' => 'secret-internal-site', 'domain' => 'secret.test']);
+        SiteSetting::forSite($site);
+
+        $response = $this->get('/definitely-does-not-exist-' . uniqid());
+
+        $response->assertStatus(404);
+        $response->assertSee('Page not found');
+        $response->assertSee('noindex', false);
+        // No theme identity, site name, menus, or settings.
+        $response->assertDontSee('Secret Internal Site');
+        $response->assertDontSee('themes/');
+        $response->assertDontSee('stylesheet');
+    }
+
+    public function test_anonymous_410_page_is_generic(): void
+    {
+        $html = view('errors.410', ['status' => 410])->render();
+
+        $this->assertStringContainsString('410', $html);
+        $this->assertStringContainsString('noindex', $html);
+        $this->assertStringNotContainsString('themes/', $html);
+        $this->assertStringNotContainsString('stylesheet', $html);
+    }
+
+    public function test_authenticated_404_page_keeps_the_branded_layout(): void
+    {
+        $site = Site::create(['name' => 'Branded Test Site', 'slug' => 'branded-test-site', 'domain' => 'branded.test']);
+        SiteSetting::forSite($site);
+
+        $response = $this->actingAs($this->user)->get('/definitely-does-not-exist-' . uniqid());
+
+        $response->assertStatus(404);
+        // Branded page renders the theme stylesheet link, not the generic one.
+        $response->assertSee('themes/', false);
+    }
+
     public function test_settings_page_renders_og_image_picker(): void
     {
         $response = $this->actingAs($this->user)->get('/admin/settings/seo');

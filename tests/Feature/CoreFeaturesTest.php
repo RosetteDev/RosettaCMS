@@ -81,6 +81,22 @@ class CoreFeaturesTest extends TestCase
             ->assertSee('Send Reset Link');
     }
 
+    public function test_forgot_password_returns_the_same_message_for_unknown_and_known_emails(): void
+    {
+        $user = User::factory()->create(['email' => 'known-reset@example.com']);
+
+        $known = $this->post('/forgot-password', ['email' => $user->email]);
+        $unknown = $this->post('/forgot-password', ['email' => 'no-such-user@example.com']);
+
+        $message = 'If your email is registered, a reset link has been sent.';
+
+        $known->assertSessionHas('status', $message);
+        $known->assertSessionHasNoErrors();
+
+        $unknown->assertSessionHas('status', $message);
+        $unknown->assertSessionHasNoErrors();
+    }
+
     public function test_wordpress_shortcodes_are_expanded_by_the_content_filter(): void
     {
         $compat = app('wordpress.compat');

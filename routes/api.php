@@ -9,6 +9,9 @@ Route::middleware('throttle:120,1')->group(function () {
     // Versioned API — the canonical public namespace.
     Route::prefix('v1')->group(function () {
         Route::get('/', [ContentController::class, 'index'])->name('api.index');
+
+        // Public API docs — hidden unless explicitly enabled (audit #28).
+        // The controller 404s when disabled; see DocsController::ensurePublicDocsEnabled().
         Route::get('/openapi.json', [DocsController::class, 'spec'])->name('api.openapi');
         Route::get('/docs', [DocsController::class, 'docs'])->name('api.docs');
         Route::get('/swagger', [DocsController::class, 'swagger'])->name('api.swagger');

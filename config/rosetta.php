@@ -17,6 +17,13 @@ return [
     'inline_edit_enabled' => env('ROSETTA_INLINE_EDIT_ENABLED', false),
 
     /**
+     * Public API docs (/api/v1/openapi.json, /docs, /swagger).
+     * Disabled by default — opt in explicitly with API_PUBLIC_DOCS=true.
+     * When disabled, those routes do not exist (404).
+     */
+    'public_api_docs' => env('API_PUBLIC_DOCS', false),
+
+    /**
      * Default theme settings.
      */
     'theme' => [

@@ -14,9 +14,10 @@ class DocsController extends Controller
      */
     public function spec(): JsonResponse
     {
-        return response()->json(OpenApi::spec(), 200, [
-            'Access-Control-Allow-Origin' => '*',
-        ]);
+        $this->ensurePublicDocsEnabled();
+
+        // CORS is handled by the allowlist in config/cors.php — no wildcard.
+        return response()->json(OpenApi::spec(), 200);
     }
 
     /**
@@ -24,6 +25,8 @@ class DocsController extends Controller
      */
     public function docs(): Response
     {
+        $this->ensurePublicDocsEnabled();
+
         return response()->view('api.docs', [
             'spec' => OpenApi::spec(),
         ]);
@@ -34,8 +37,19 @@ class DocsController extends Controller
      */
     public function swagger(): Response
     {
+        $this->ensurePublicDocsEnabled();
+
         return response()->view('api.swagger', [
             'spec' => OpenApi::spec(),
         ]);
+    }
+
+    /**
+     * Public API docs are hidden unless explicitly enabled (audit #28).
+     * When disabled the endpoints 404 rather than reveal the spec.
+     */
+    protected function ensurePublicDocsEnabled(): void
+    {
+        abort_unless(config('rosetta.public_api_docs'), 404);
     }
 }

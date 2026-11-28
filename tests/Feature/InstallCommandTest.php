@@ -152,6 +152,8 @@ class InstallCommandTest extends TestCase
 
     public function test_web_install_check_page_renders_real_preflight_results(): void
     {
+        config(['app.install_enabled' => true]);
+
         $response = $this->get('/install/check');
 
         $response->assertOk();
@@ -165,11 +167,21 @@ class InstallCommandTest extends TestCase
 
     public function test_web_install_form_renders(): void
     {
+        config(['app.install_enabled' => true]);
+
         $response = $this->get('/install');
 
         $response->assertOk();
         $response->assertSee('db_connection');
         $response->assertSee('SQLite');
+    }
+
+    public function test_web_install_check_and_form_require_install_enabled(): void
+    {
+        config(['app.install_enabled' => false]);
+
+        $this->get('/install/check')->assertForbidden();
+        $this->get('/install')->assertForbidden();
     }
 
     public function test_web_install_process_requires_install_enabled(): void

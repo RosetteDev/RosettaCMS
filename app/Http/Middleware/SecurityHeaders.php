@@ -24,11 +24,14 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
-        // CSP header - enforced. 'unsafe-inline' is required by inline scripts and
-        // styles in existing views (tighten over time). CDN hosts are allowlisted
-        // for Bootstrap, Font Awesome, and the font providers used across views.
+        // CSP header - enforced. 'unsafe-eval' was removed (no eval() in the app
+        // or its CDN dependencies). 'unsafe-inline' stays for now: 91 inline
+        // event handlers and 32 inline <script> tags across views still rely on
+        // it — the full nonce migration is filed as a follow-up (#25). CDN hosts
+        // are allowlisted for Bootstrap, Font Awesome, and the font providers
+        // used across views.
         $csp = "default-src 'self'; " .
-               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; " .
+               "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " .
                "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.bunny.net; " .
                "img-src 'self' data: https:; " .
                "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.gstatic.com https://fonts.bunny.net; " .

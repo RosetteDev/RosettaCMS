@@ -9,6 +9,15 @@ class ApiDocsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Docs are hidden by default; enable them for tests that exercise the
+        // spec/docs itself (audit #28).
+        config(['rosetta.public_api_docs' => true]);
+    }
+
     public function test_openapi_document_is_served_as_json(): void
     {
         $response = $this->getJson('/api/v1/openapi.json')
@@ -73,5 +82,42 @@ class ApiDocsTest extends TestCase
     {
         $this->get('/api/v1/openapi.json')->assertOk();
         $this->get('/api/v1/docs')->assertOk();
+    }
+
+    // --- Docs hidden by default (audit #28) -------------------------------
+
+    public function test_docs_routes_do_not_exist_when_public_docs_disabled(): void
+    {
+        config(['rosetta.public_api_docs' => false]);
+
+        $this->get('/api/v1/openapi.json')->assertNotFound();
+        $this->get('/api/v1/docs')->assertNotFound();
+        $this->get('/api/v1/swagger')->assertNotFound();
+    }
+
+    // --- CORS allowlist (audit #23) ---------------------------------------
+
+    public function test_api_responses_allow_listed_origins_only(): void
+    {
+        $allowed = $this->getJson('/api/v1/posts', ['Origin' => 'https://cms.rosettedevelopment.com']);
+        $allowed->assertHeader('Access-Control-Allow-Origin', 'https://cms.rosettedevelopment.com');
+
+        $disallowed = $this->getJson('/api/v1/posts', ['Origin' => 'https://evil.example.com']);
+        $this->assertNull($disallowed->headers->get('Access-Control-Allow-Origin'));
+    }
+
+    public function test_openapi_spec_does_not_use_wildcard_cors(): void
+    {
+        $response = $this->getJson('/api/v1/openapi.json', ['Origin' => 'https://evil.example.com']);
+        $this->assertNull($response->headers->get('Access-Control-Allow-Origin'));
+
+        $response = $this->getJson('/api/v1/openapi.json', ['Origin' => 'https://cms.rosettedevelopment.com']);
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://cms.rosettedevelopment.com');
+    }
+
+    public function test_legacy_api_routes_are_not_cors_enabled(): void
+    {
+        $response = $this->getJson('/api/posts', ['Origin' => 'https://cms.rosettedevelopment.com']);
+        $this->assertNull($response->headers->get('Access-Control-Allow-Origin'));
     }
 }

@@ -114,12 +114,26 @@ Route::get('/sitemap-tags.xml', [FrontendController::class, 'sitemapTags'])->nam
 Route::get('/feed', [FrontendController::class, 'feed'])->name('feed');
 Route::get('/robots.txt', [FrontendController::class, 'robots'])->name('robots');
 Route::get('/language/{code}', function (string $code) {
+    // Only mutate session state for same-origin requests. redirect()->back()
+    // would trust the Referer header, letting a cross-origin page drive the
+    // language switch and bounce the user to an attacker-controlled path.
+    $referer = request()->headers->get('referer');
+    $sameOrigin = false;
+    if ($referer) {
+        $host = parse_url($referer, PHP_URL_HOST);
+        $sameOrigin = $host !== null && strcasecmp($host, request()->getHost()) === 0;
+    }
+
+    if (!$sameOrigin) {
+        return redirect('/');
+    }
+
     $language = \App\Models\Language::where('code', $code)->where('is_active', true)->first();
     if (!$language) {
-        return redirect()->back();
+        return redirect($referer);
     }
     session(['active_language' => $language->code]);
-    return redirect()->back();
+    return redirect($referer);
 })->name('language.switch');
 
 // Public storefront (e-commerce foundation)
@@ -190,7 +204,8 @@ Route::middleware('auth')->group(function () {
 // Authentication routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/login', [LoginController::class, 'login'])
+        ->middleware('throttle:10,1');
 
     // Two-factor challenge (session carries the pending user id)
     Route::get('/login/2fa', [LoginController::class, 'showTwoFactorForm'])->name('login.2fa');
@@ -198,7 +213,8 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:10,1');
     
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [RegisterController::class, 'register']);
+    Route::post('/register', [RegisterController::class, 'register'])
+        ->middleware('throttle:5,1');
 
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email')

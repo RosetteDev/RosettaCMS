@@ -198,9 +198,10 @@ class SecurityAndTrustTest extends TestCase
         $this->user->refresh();
         $this->assertTrue($this->user->isLocked());
 
-        // Correct password is rejected while locked.
+        // Correct password is rejected while locked, with the generic message.
         $response = $this->post('/login', ['email' => $email, 'password' => 'correct-horse']);
         $response->assertSessionHasErrors('email');
+        $response->assertSessionHasErrors('email', 'The provided credentials do not match our records.');
         $this->assertGuest();
 
         $this->assertDatabaseHas('activity_logs', [
@@ -397,5 +398,36 @@ class SecurityAndTrustTest extends TestCase
         $response = $this->actingAs($user)->get('/admin/health');
 
         $this->assertContains($response->status(), [403, 302]);
+    }
+
+    // --- POST throttles (audit #24) ---------------------------------------
+
+    public function test_login_post_is_throttled_after_ten_attempts(): void
+    {
+        $email = 'security-admin@test.dev';
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->post('/login', ['email' => $email, 'password' => 'wrong-password']);
+        }
+
+        $response = $this->post('/login', ['email' => $email, 'password' => 'wrong-password']);
+        $response->assertStatus(429);
+    }
+
+    public function test_ip_block_response_matches_other_blocked_paths(): void
+    {
+        // A blocked IP gets the same plain-text status/body as a role denial
+        // (403, "Unauthorized action."), not a WAF-specific wording.
+        $this->actingAs($this->user)->post('/admin/ip-rules', [
+            'type' => 'block',
+            'cidr' => '127.0.0.0/8',
+            'label' => 'block test ip',
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertStatus(403);
+        $response->assertSee('Unauthorized action.');
+        $response->assertDontSee('Access denied');
     }
 }
