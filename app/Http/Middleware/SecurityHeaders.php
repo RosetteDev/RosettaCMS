@@ -24,10 +24,6 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
-        // HSTS — enforce HTTPS for a year. Mirrors the .htaccess rule so every
-        // app-rendered response carries it too (defense in depth).
-        $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-
         // CSP header - enforced. 'unsafe-inline' is required by inline scripts and
         // styles in existing views (tighten over time). CDN hosts are allowlisted
         // for Bootstrap, Font Awesome, and the font providers used across views.
